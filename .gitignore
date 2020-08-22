@@ -510,3 +510,4 @@ build_*.*
 testCommandToFile-output.soar
 soarversion
 build_time_date
+.vscode/
