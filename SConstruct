@@ -39,7 +39,7 @@ print "   Build Type:        --dbg, --opt*, --static"
 print "   Custom Paths:      --out, --build, --tcl"
 print "   Compilation time:  --no-svs, --scu*, --no-scu, --no-scu-kernel, --no-scu-cli"
 print "   Customizations:    --cc, --cxx, --cflags, --lnflags, --no-default-flags, --verbose"
-print "   Dependencies:      --use-ros"
+print "   Dependencies:      --use-opencv --use-ros"
 print "================================================================================"
 
 def execute(cmd):
@@ -151,6 +151,7 @@ AddOption('--dbg', action='store_true', dest='dbg', default=False, help='Enable 
 AddOption('--opt', action='store_false', dest='dbg', default=False, help='Enable optimized build.  Enables compiler optimizations, removes debugging symbols, debug trace statements and assertions')
 AddOption('--verbose', action='store_true', dest='verbose', default=False, help='Output full compiler commands')
 AddOption('--no-svs', action='store_true', dest='nosvs', default=False, help='Build Soar without SVS functionality')
+AddOption('--use-opencv', action='store_true', dest='useopencv', default=False, help='Enable the use of opencv for SVS operations.')
 AddOption('--use-ros', action='store_true', dest='useros', default=False, help='Enable ROS SVS interface. Requires ROS and PCL dependencies.')
 
 msvc_version = "12.0"
@@ -215,6 +216,9 @@ if compiler == 'g++':
     libs += [ 'pthread', 'dl', 'm' ]
     if GetOption('nosvs'):
         cflags.append('-DNO_SVS')
+    if GetOption('useopencv'):
+        cflags.append('-DENABLE_OPENCV')
+        libs += ['opencv_core', 'opencv_imgproc', 'opencv_highgui']
     if GetOption('useros'):
         cflags.append('-DENABLE_ROS')
         libs += ['roscpp', 'libpcl_common']
@@ -254,6 +258,9 @@ elif compiler == 'msvc':
     cflags = ['/EHsc', '/D', '_CRT_SECURE_NO_DEPRECATE', '/D', '_WIN32', '/W2', '/bigobj', '/nowarn:4503']
     if GetOption('nosvs'):
         cflags.extend(' /D NO_SVS'.split())
+    if GetOption('useopencv'):
+        cflags.append('/D ENABLE_OPENCV'.split())
+        libs += ['opencv_core', 'opencv_imgproc', 'opencv_highgui']
     if GetOption('useros'):
         cflags.extend(' /D ENABLE_ROS'.split())
         libs += ['roscpp', 'libpcl_common']

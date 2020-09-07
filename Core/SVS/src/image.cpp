@@ -1,5 +1,10 @@
-#include "image.h"
 #include <iostream>
+
+#include "image.h"
+
+////////////////
+// IMAGE_BASE //
+////////////////
 
 // Sets the source string and notifies any listening image_descriptors
 // of the change so that it will be reflected in the image wme
@@ -27,6 +32,11 @@ void image_base::notify_listeners() {
     }
 }
 
+
+/////////////////
+// BASIC_IMAGE //
+/////////////////
+
 basic_image::basic_image() { source = "none"; }
 
 void basic_image::update_image(std::vector<std::vector<pixel> >& new_img) {
@@ -52,6 +62,140 @@ bool basic_image::is_empty() {
     if (img_array[0].empty()) return true;
     return false;
 }
+
+bool basic_image::operator==(basic_image& other) {
+    if (get_width() != other.get_width()) { return false; }
+    if (get_height() != other.get_height()) { return false; }
+
+    pixel this_pixel;
+    pixel other_pixel;
+    for (int col = 0; col < get_width(); col++) {
+        for (int row = 0; row < get_height(); row++) {
+            this_pixel = img_array.at(col).at(row);
+            other_pixel = other.img_array.at(col).at(row);
+            if (this_pixel.r != other_pixel.r ||
+                this_pixel.g != other_pixel.g ||
+                this_pixel.b != other_pixel.b) { return false; }
+        }
+    }
+    
+    return true;
+}
+
+float basic_image::compare(basic_image* other) {
+    if (get_width() != other->get_width()) { return 0.0f; }
+    if (get_height() != other->get_height()) { return 0.0f; }
+
+    pixel this_pixel;
+    pixel other_pixel;
+    int diff_r, diff_g, diff_b;
+    int diff_total = 0;
+    for (int col = 0; col < get_width(); col++) {
+        for (int row = 0; row < get_height(); row++) {
+            this_pixel = img_array.at(col).at(row);
+            other_pixel = other->img_array.at(col).at(row);
+            diff_r = abs(this_pixel.r - other_pixel.r);
+            diff_g = abs(this_pixel.g - other_pixel.g);
+            diff_b = abs(this_pixel.b - other_pixel.b);
+            diff_total += diff_r + diff_g + diff_b;
+        }
+    }
+
+    int max_error = get_width() * get_height() * 3 * 255;
+    float error_quotient = (float)diff_total/(float)max_error;
+    float error = 1.0f - error_quotient;
+    return error;
+}
+
+
+//////////////////
+// OPENCV_IMAGE //
+//////////////////
+#ifdef ENABLE_OPENCV
+opencv_image::opencv_image() { source = "none"; }
+
+void opencv_image::update_image(cv::Mat& new_img) {
+    bool prev_empty = is_empty();
+    new_img.copyTo(img);
+    if (is_empty() != prev_empty) notify_listeners();
+}
+
+void opencv_image::copy_from(opencv_image* other) {
+    other->img.copyTo(img);
+    source = "copy";
+}
+
+bool opencv_image::is_empty() {
+    return img.empty();
+}
+
+bool opencv_image::operator==(opencv_image& other) {
+    cv::Mat difference_mat = img - other.img;
+    cv::Scalar channel_diffs = cv::sum(difference_mat);
+    double total_diff = channel_diffs.val[0] + channel_diffs.val[1] + channel_diffs.val[2] + channel_diffs.val[3];
+    return (total_diff == 0.0);
+}
+
+float opencv_image::compare(opencv_image* other) {
+    /// SOURCE: https://docs.opencv.org/2.4/doc/tutorials/highgui/video-input-psnr-ssim/video-input-psnr-ssim.html#videoinputpsnrmssim
+    const double C1 = 6.5025, C2 = 58.5225;
+    /***************************** INITS **********************************/
+    int d = CV_32F;
+
+    cv::Mat I1, I2;
+    img.convertTo(I1, d);            // cannot calculate on one byte large values
+    other->img.convertTo(I2, d);
+
+    cv::Mat I2_2   = I2.mul(I2);        // I2^2
+    cv::Mat I1_2   = I1.mul(I1);        // I1^2
+    cv::Mat I1_I2  = I1.mul(I2);        // I1 * I2
+
+    /*************************** END INITS **********************************/
+
+    cv::Mat mu1, mu2;                   // PRELIMINARY COMPUTING
+    cv::GaussianBlur(I1, mu1, cv::Size(11, 11), 1.5);
+    cv::GaussianBlur(I2, mu2, cv::Size(11, 11), 1.5);
+
+    cv::Mat mu1_2   =   mu1.mul(mu1);
+    cv::Mat mu2_2   =   mu2.mul(mu2);
+    cv::Mat mu1_mu2 =   mu1.mul(mu2);
+
+    cv::Mat sigma1_2, sigma2_2, sigma12;
+
+    cv::GaussianBlur(I1_2, sigma1_2, cv::Size(11, 11), 1.5);
+    sigma1_2 -= mu1_2;
+
+    cv::GaussianBlur(I2_2, sigma2_2, cv::Size(11, 11), 1.5);
+    sigma2_2 -= mu2_2;
+
+    cv::GaussianBlur(I1_I2, sigma12, cv::Size(11, 11), 1.5);
+    sigma12 -= mu1_mu2;
+
+    ///////////////////////////////// FORMULA ////////////////////////////////
+    cv::Mat t1, t2, t3;
+
+    t1 = 2 * mu1_mu2 + C1;
+    t2 = 2 * sigma12 + C2;
+    t3 = t1.mul(t2);                 // t3 = ((2*mu1_mu2 + C1).*(2*sigma12 + C2))
+
+    t1 = mu1_2 + mu2_2 + C1;
+    t2 = sigma1_2 + sigma2_2 + C2;
+    t1 = t1.mul(t2);                 // t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2))
+
+    cv::Mat ssim_map;
+    cv::divide(t3, t1, ssim_map);        // ssim_map =  t3./t1;
+
+    cv::Scalar mssim = cv::mean(ssim_map);   // mssim = average of ssim map
+
+    return mssim.val[0] + mssim.val[1] + mssim.val[2] + mssim.val[3];
+}
+
+#endif
+
+
+///////////////
+// PCL_IMAGE //
+///////////////
 
 #ifdef ENABLE_ROS
 pcl_image::pcl_image() { source = "none"; }
@@ -83,11 +227,32 @@ void pcl_image::copy_from(pcl_image* other) {
     source = "copy";
 }
 
-
 bool pcl_image::is_empty() {
     return (pc.width == 0 && pc.height == 0);
 }
+
+bool pcl_image::operator==(pcl_image& other) {
+    if (!pc.isOrganized() || ~other.pc.isOrganized()) { return false; }
+    if (pc.width != other.pc.width) { return false; }
+    if (pc.height != other.pc.height) { return false; }
+
+    for (int row = 0; row < pc.width; row++) {
+        for (int col = 0; col < pc.height; col++) {
+            if (pcl::squaredEuclideanDistance(pc(col, row), other.pc(col, row)) > 0.0f) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 #endif
+
+
+//////////////////////
+// IMAGE_DESCRIPTOR //
+//////////////////////
 
 // These are the names of the attributes of an image descriptor in WM
 const std::string image_descriptor::source_tag = "source";
