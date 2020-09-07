@@ -1,9 +1,14 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#ifdef ENABLE_OPENCV
+#include <opencv2/opencv.hpp>
+#endif
+
 #ifdef ENABLE_ROS
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/common/distances.h>
 #endif
 
 #include <list>
@@ -68,10 +73,41 @@ public:
     int get_width();
     int get_height();
     bool is_empty();
+    bool operator==(basic_image& other);
+
+    float compare(basic_image* other);
 
 private:
     std::vector<std::vector<pixel> > img_array;
 };
+
+#ifdef ENABLE_OPENCV
+/**
+ * @brief The derived image class for holding an OpenCV Mat object representing
+ * an image. Allows for far more flexibility and use of the OpenCV algorithms
+ * compared to basic_image, but requires including OpenCV.
+ * 
+ */
+class opencv_image: public image_base
+{
+public:
+    opencv_image();
+
+    void update_image(cv::Mat& new_img);
+    void copy_from(opencv_image* other);
+
+    int get_width() {return img.cols; }
+    int get_height() { return img.rows; }
+    bool is_empty();
+    bool operator==(opencv_image& other);
+
+    float compare(opencv_image* other);
+private:
+    cv::Mat img;
+};
+
+#endif
+
 
 /*
  * pcl_image class
@@ -95,6 +131,7 @@ public:
     int get_width() { return pc.width; }
     int get_height() { return pc.height; }
     bool is_empty();
+    bool operator==(pcl_image& other);
 
 private:
     pcl::PointCloud<pcl::PointXYZRGB> pc;
