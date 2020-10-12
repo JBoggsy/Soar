@@ -3,8 +3,6 @@
 
 // C++ STD libraries
 #include <string>
-// Forward declarations
-class image_base;
 
 /**
  * @brief A visual_archetype instance holds visual knowledge of a particular
@@ -20,13 +18,21 @@ class image_base;
  * visual knowledge is represented. Instead, it provides an interface which
  * concrete sub-classes are guaranteed to implement. Different approaches to
  * visual knowledge representation can be used by creating concrete sub-classes
- * which each commit to one particular representation.
+ * which each commit to one particular representation. 
+ * 
+ * visual_archetype and its concrete implementations are all templated, allowing
+ * specialization for different types of visual input, including OpenCV and PCL
+ * images.
  * 
  * visual_archetype instances only exist and are exclusively managed and 
  * accessed by the visual_memory instance connected to the agent.
  * 
  * @sa visual_memory
+ * @sa image_base
+ * @sa opencv_image
+ * @sa pcl_image
  */
+template<typename img_t>
 class visual_archetype {
 protected:
     /**
@@ -45,7 +51,7 @@ public:
      * 
      * @param percept The new visual percept to be integrated.
      */
-    virtual void store_percept(image_base* percept) = 0;
+    virtual void store_percept(img_t percept) = 0;
 
     /**
      * @brief Indicate how likely a percept is to contain this entity.
@@ -56,14 +62,14 @@ public:
      * 
      * @param percept The visual percept which should be compared against.
      */
-    virtual float compare(image_base* percept) = 0;
+    virtual float compare(img_t percept) = 0;
 
     /**
      * @brief Generate a mental image of the entity this archetype represents.
      * 
      * @param output image_base which the reconstruction will be stored in.
      */
-    virtual void reconstruct(image_base* output) = 0;
+    virtual void reconstruct(img_t output) = 0;
 };
 
 #endif

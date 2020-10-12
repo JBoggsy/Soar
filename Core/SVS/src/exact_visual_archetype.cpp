@@ -6,24 +6,24 @@
 #include "image.h"
 
 
-template<typename image_type>
-exact_visual_archetype<image_type>::exact_visual_archetype(std::string entity_id) {
+template<typename img_t>
+exact_visual_archetype<img_t>::exact_visual_archetype(std::string entity_id) {
     _entity_id = entity_id;
-    _percept = image_type();
+    _percept = img_t();
 }
 
-template<typename image_type>
-void exact_visual_archetype<image_type>::store_percept(image_type* example) {
+template<typename img_t>
+void exact_visual_archetype<img_t>::store_percept(img_t example) {
     _percept.copy_from(example);
 }
 
-template<typename image_type>
-float exact_visual_archetype<image_type>::compare(image_type* percept) {
+template<typename img_t>
+float exact_visual_archetype<img_t>::compare(img_t percept) {
     if (percept == _percept) { return 1.0f; }
-    return _percept.compare(percept);
+    else { return 0.0f; }
 }
 
-template<typename image_type>
-void exact_visual_archetype<image_type>::reconstruct(image_type* output) {
+template<typename img_t>
+void exact_visual_archetype<img_t>::reconstruct(img_t* output) {
     output->copy_from(_percept);
 }
