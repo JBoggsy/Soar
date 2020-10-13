@@ -227,10 +227,12 @@ void svs_state::init()
     }
     if (!img) {
 #ifdef ENABLE_ROS
-        img = new pcl_image();
-#else
-        img = new basic_image();
+        img_pcl = new pcl_image();
 #endif
+#ifdef ENABLE_OPENCV
+        img_opencv = new opencv_image();
+#endif
+        img = new basic_image();
         if (parent) {
             img->copy_from(parent->img);
         }
@@ -508,14 +510,25 @@ void svs::input_callback()
 void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img)
 {
     if (!enabled) return;
-    if (!state_stack.front()->get_image()) return;
+    if (!state_stack.front()->get_image_pcl()) return;
 
     // Updates only the top state image for now.
-    state_stack.front()->get_image()->update_image(new_img);
+    state_stack.front()->get_image_pcl()->update_image(new_img);
 
-    if (ri->get_image_source() != state_stack.front()->get_image()->get_source()) {
-        state_stack.front()->get_image()->set_source(ri->get_image_source());
+    if (ri->get_image_source() != state_stack.front()->get_image_pcl()->get_source()) {
+        state_stack.front()->get_image_pcl()->set_source(ri->get_image_source());
     }
+}
+#endif
+
+#ifdef ENABLE_OPENCV
+void svs::image_callback(const cv::Mat& new_img)
+{
+    if (!enabled) return;
+    if (!state_stack.front()->get_image_opencv()) return;
+
+    // Updates only the top state image for now.
+    state_stack.front()->get_image_opencv()->update_image(new_img);
 }
 #endif
 

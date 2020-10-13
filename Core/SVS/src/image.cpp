@@ -114,7 +114,7 @@ float basic_image::compare(basic_image* other) {
 #ifdef ENABLE_OPENCV
 opencv_image::opencv_image() { source = "none"; }
 
-void opencv_image::update_image(cv::Mat& new_img) {
+void opencv_image::update_image(const cv::Mat& new_img) {
     bool prev_empty = is_empty();
     new_img.copyTo(img);
     if (is_empty() != prev_empty) notify_listeners();
