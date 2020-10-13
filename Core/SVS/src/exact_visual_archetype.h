@@ -1,5 +1,5 @@
-#ifndef SVS_EXACT_VISUAL_ARCHETYPE
-#define  SVS_EXACT_VISUAL_ARCHETYPE
+#ifndef SVS_EXACT_VISUAL_ARCHETYPE_H
+#define  SVS_EXACT_VISUAL_ARCHETYPE_H
 // C++ STD libraries
 #include <string>
 // SVS includes
@@ -28,10 +28,15 @@
  * @sa pcl_image
  */
 template<typename img_t>
-class exact_visual_archetype : public visual_archetype {
+class exact_visual_archetype : public visual_archetype<img_t> {
     protected:
         img_t _percept;
-    
+        /**
+         * @brief An identifier for the entity type/token this instance represents. 
+         * 
+         */
+        std::string _entity_id;
+        
     public:
         exact_visual_archetype(std::string entity_id);
 

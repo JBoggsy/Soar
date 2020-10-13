@@ -1,8 +1,9 @@
-#ifndef SVS_VISUAL_ARCHETYPE
-#define SVS_VISUAL_ARCHETYPE
+#ifndef SVS_VISUAL_ARCHETYPE_H
+#define SVS_VISUAL_ARCHETYPE_H
 
 // C++ STD libraries
 #include <string>
+
 
 /**
  * @brief A visual_archetype instance holds visual knowledge of a particular
@@ -40,7 +41,6 @@ protected:
      * 
      */
     std::string _entity_id;
-    
 public:
     /**
      * @brief Store a new percept in the archetype.
@@ -69,7 +69,7 @@ public:
      * 
      * @param output image_base which the reconstruction will be stored in.
      */
-    virtual void reconstruct(img_t output) = 0;
+    virtual void reconstruct(img_t* output) = 0;
 };
 
 #endif
