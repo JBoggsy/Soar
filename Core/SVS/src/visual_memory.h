@@ -8,7 +8,10 @@
 // Forward declarations
 class svs;  // "svs.h"
 class image_base;  // "image.h"
-class visual_archetype;  // "visual_archetype.h"
+class basic_image;
+class opencv_image;
+class pcl_image;
+class archetype_base;  // "visual_archetype.h"
 
 /**
  * @brief 
@@ -26,6 +29,7 @@ class visual_archetype;  // "visual_archetype.h"
  * 
  * @sa visual_archetype
  */
+template <typename img_T, template<typename T> class atype_T>
 class visual_memory {
 private:
     /**
@@ -38,7 +42,7 @@ private:
      * @brief List of all of the agent's known visual archetypes.
      * 
      */
-    std::vector<visual_archetype*> _archetypes;
+    std::vector<atype_T<img_T>*> _archetypes;
     /**
      * @brief Maintains a connection to the svs instance.
      * 
@@ -47,6 +51,13 @@ private:
     svs* _svs;
 
 public:
+    /**
+     * @brief Convenient type reference for the archetypes held in this instance
+     * of visual memory.
+     * 
+     */
+    typedef atype_T<img_T> archetype_T;
+
     /**
      * @brief Constructor for the visual_memory class.
      * 
@@ -71,10 +82,10 @@ public:
      * @param entity_id The string identifier of the entity type or token the
      * percept is associated with.
      * 
-     * @sa image_base
+     * @sa basic_image
      * @sa visual_archetype
      */
-    void store_percept(image_base* percept, std::string entity_id);
+    void store_percept(img_T* percept, std::string entity_id);
 
     /**
      * @brief Given a point cloud, return a likely entity type/token.
@@ -91,7 +102,7 @@ public:
      * @return std::string The identifier of the entity type/token which best
      * matches the percept.
      */
-    std::string match(image_base* percept);
+    std::string match(img_T* percept);
 
     /**
      * @brief Given the string identifier of a VisualArchetype instance presumed
@@ -100,10 +111,10 @@ public:
      * 
      * @param entity_id The string identifier of the entity type/token to be
      * recalled.
-     * @param output An image_base class pointer which will receive the result
+     * @param output An basic_image pointer which will receive the result
      * of recalling the specified entity.
      */
-    void recall(std::string entity_id, image_base* output);
+    void recall(std::string entity_id, img_T* output);
 
     /**
      * @brief Given a percept and a confidence threshold, return a list of the
@@ -116,7 +127,7 @@ public:
      * @return std::vector<std::string> The list of all known entity ids which
      * are probably in the percept.
      */
-    std::vector<std::string> search(image_base* percept, float threshold);
+    std::vector<std::string> search(img_T* percept, float threshold);
 };
 
 #endif
