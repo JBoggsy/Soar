@@ -93,7 +93,7 @@ class opencv_image: public image_base
 public:
     opencv_image();
 
-    void update_image(cv::Mat& new_img);
+    void update_image(const cv::Mat& new_img);
     void copy_from(opencv_image* other);
 
     int get_width() {return img.cols; }

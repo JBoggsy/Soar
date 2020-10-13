@@ -10,11 +10,15 @@
 #include "svs_interface.h"
 #include "cliproxy.h"
 
+#ifdef ENABLE_OPENCV
+#include <opencv2/opencv.hpp>
+#endif
 #ifdef ENABLE_ROS
 #include <boost/thread.hpp>
 #include "ros_interface.h"
 #endif
 
+// FORWARD DECLARATIONS
 class command;
 class scene;
 class drawer;
@@ -22,9 +26,24 @@ class image_descriptor;
 
 #ifdef ENABLE_ROS
 class pcl_image;
-#else
-class basic_image;
 #endif
+#ifdef ENABLE_OPENCV
+class opencv_image;
+#endif
+class basic_image;
+
+template<typename img_t>
+class exact_visual_archetype;
+
+template <typename img_T, template<typename T> class atype_T>
+class visual_memory;
+
+class svs;
+
+
+//////////////////
+// END PREAMBLE //
+//////////////////
 
 /* working memory scene graph object - mediates between wmes and scene graph nodes */
 class sgwme : public sgnode_listener
@@ -64,9 +83,6 @@ class sgwme : public sgnode_listener
         
         std::map<std::string, wme*> tags;
 };
-
-
-class svs;
 
 struct command_entry
 {
@@ -113,11 +129,22 @@ class svs_state : public cliproxy
         {
             return scn;
         }
+
 #ifdef ENABLE_ROS
-        pcl_image*         get_image() const
-#else
-        basic_image*       get_image() const
+        pcl_image*         get_image_pcl() const
+        {
+            return img_pcl;
+        }
 #endif
+
+#ifdef ENABLE_OPENCV
+        opencv_image*      get_image_opencv() const
+        {
+            return img_opencv;
+        }
+#endif
+
+        basic_image*       get_image_basic() const
         {
             return img;
         }
@@ -152,10 +179,12 @@ class svs_state : public cliproxy
         image_descriptor* imwme;
         soar_interface* si;
 #ifdef ENABLE_ROS
-        pcl_image*      img;
-#else
-        basic_image*    img;
+        pcl_image*      img_pcl;
 #endif
+#ifdef ENABLE_OPENCV
+        opencv_image*   img_opencv;
+#endif
+        basic_image*    img;
 
         Symbol* state;
         Symbol* svs_link;
@@ -184,6 +213,9 @@ class svs : public svs_interface, public cliproxy
         void add_input(const std::string& in);
         std::string svs_query(const std::string& query);
 
+#ifdef ENABLE_OPENCV
+        void image_callback(const cv::Mat& new_img);
+#endif
 #ifdef ENABLE_ROS
         void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
 #endif
@@ -236,7 +268,21 @@ class svs : public svs_interface, public cliproxy
 #ifdef ENABLE_ROS
         ros_interface*            ri;
         boost::mutex              input_mtx;
+       
+        visual_memory
+        <pcl_image, 
+        exact_visual_archetype>*  v_mem_pcl;
 #endif
+
+#ifdef ENABLE_OPENCV
+        visual_memory
+        <opencv_image,
+        exact_visual_archetype>*  v_mem_opencv;
+#endif
+
+        visual_memory
+        <basic_image,
+        exact_visual_archetype>*  v_mem_basic;
 
         soar_interface*           si;
         std::vector<svs_state*>   state_stack;
