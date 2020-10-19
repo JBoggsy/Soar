@@ -12,6 +12,7 @@
 
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
+#include "vision_interface.h"
 #endif
 #ifdef ENABLE_ROS
 #include <boost/thread.hpp>
@@ -275,6 +276,8 @@ class svs : public svs_interface, public cliproxy
 #endif
 
 #ifdef ENABLE_OPENCV
+        vision_interface*         vi;
+
         visual_memory
         <opencv_image,
         exact_visual_archetype>*  v_mem_opencv;
