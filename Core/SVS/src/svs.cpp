@@ -387,6 +387,10 @@ svs::svs(agent* a)
     ri = new ros_interface(this);
     ri->start_ros();
 #endif
+
+#ifdef ENABLE_OPENCV
+    vi = new vision_interface(this);
+#endif
 }
 
 bool svs::filter_dirty_bit = true;
@@ -573,12 +577,15 @@ void svs::proxy_get_children(map<string, cliproxy*>& c)
 #ifdef ENABLE_ROS
     c["ros"] = ri;
 #endif
+#ifdef ENABLE_OPENCV
+    c["vision"] = vi;
 
     for (size_t j = 0, jend = state_stack.size(); j < jend; ++j)
     {
         c[state_stack[j]->get_name()] = state_stack[j];
     }
 }
+#endif
 
 bool svs::do_cli_command(const vector<string>& args, string& output)
 {
