@@ -1,0 +1,108 @@
+#ifndef VISION_INTERFACE_H
+#define VISION_INTERFACE_H
+/**
+ * @file vision_interface.h
+ * @author James Boggs
+ * @brief Provides a `cliproxy` sub-class for manipulating visual input. In the
+ * future this may be extended to providing programmatic ways of getting visual
+ * input directly from a source, e.g., a webcam. 
+ * 
+ * @details 
+ * CLI USAGE:
+ * 
+ * `svs vision` - Prints the last file uploaded to the agent, then this help
+ *      text.
+ * 
+ * `svs vision.setfile <FILEPATH>` - Sets the image upload target to the given
+ *      filepath.
+ * 
+ * `svs vision.load` - Loaads the current image upload target into the agent's 
+ *      vision.
+ * 
+ * `svs vision.save <FILEPATH>` - Saves the current state of the agent's vision
+ *      to the specified path.
+ * 
+ * @version 0.1
+ * @date 2020-10-19
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
+
+// C++ standard libraries
+#include <string>
+#include <map>
+// SVS inlcudes
+#include "cliproxy.h"
+// Forward declarations
+class svs;
+
+
+
+/**
+ * @brief The interface class which enables CLI commands which manipulate an
+ * agent's vision.
+ * 
+ */
+class vision_interface : public cliproxy {
+public:
+    vision_interface(svs* svs_ptr);
+   ~vision_interface();
+
+private:
+    /////////////////
+    // ATTRIBUTES //
+    ///////////////
+    svs* _svs_ptr;
+    std::string _target_filepath;
+
+    //////////////
+    // METHODS //
+    ////////////
+    /**
+     * @brief Provide a map of the sub-commands for this command to the CLI 
+     * parser.
+     * 
+     * @details The `svs vision` command family is outlined at the top of this
+     * file.
+     * 
+     * @param c A mapping of string identifiers to `cliproxy` instance.
+     */
+    void proxy_get_children(std::map<std::string, cliproxy*>& c);
+
+    /**
+     * @brief Provides the "base" functionality for the `svs vision` command.
+     * In particular, it writes the current target image file and a help message.
+     * 
+     * @param args The args sent to the command. These are discarded.
+     * @param os The output stream to write to.
+     */
+    void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Sets the target image file for the load command.
+     * 
+     * @param args The args sent to the command. Should include a file path.
+     * @param os The output stream to write to.
+     */
+    void setfile(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Loads the target image file into the agent's visual input.
+     * 
+     * @param args The args sent to the command. These are discarded.
+     * @param os The output stream to write to.
+     */
+    void load(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Saves the agent's visual input to a file specified in the command.
+     * 
+     * @param args The args sent to the command. Should include a file path.
+     * @param os The output stream to write to.
+     */
+    void save(const std::vector<std::string>& args, std::ostream& os);
+
+    bool _file_exists(std::string filepath);
+};
+#endif
