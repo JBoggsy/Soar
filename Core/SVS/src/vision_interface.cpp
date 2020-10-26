@@ -8,8 +8,10 @@
 #include <opencv2/imgcodecs.hpp>
 // SVS includes
 #include "svs.h"
-#include "vision_interface.h"
 #include "image.h"
+#include "visual_memory.h"
+#include "vision_interface.h"
+#include "exact_visual_archetype.h"
 
 vision_interface::vision_interface(svs* svs_ptr) {
     _svs_ptr = svs_ptr;
@@ -25,6 +27,12 @@ void vision_interface::proxy_get_children(std::map<std::string, cliproxy*>& c) {
     
     c["save"] = new memfunc_proxy<vision_interface>(this, &vision_interface::save);
     c["save"]->add_arg("FILEPATH", "The path of the file to save the image to.");
+
+    c["remember"] = new memfunc_proxy<vision_interface>(this, &vision_interface::remember);
+    c["remember"]->add_arg("ID", "The id to store the percept in.");
+
+    c["recall"] = new memfunc_proxy<vision_interface>(this, &vision_interface::recall);
+    c["recall"]->add_arg("ID", "The id to retrieve the percept from.");
 }
 
 void vision_interface::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
@@ -33,7 +41,7 @@ void vision_interface::proxy_use_sub(const std::vector<std::string>& args, std::
     os << "CLI USAGE:" << std::endl << std::endl;
     os << "svs vision - Prints the last file uploaded to the agent, then this help text."<< std::endl;
     os << "svs vision.setfile <FILEPATH> - Sets the image upload target to the given filepath."<< std::endl;
-    os << "svs vision.load - Loaads the current image upload target into the agent's vision."<< std::endl;
+    os << "svs vision.load - Loads the current image upload target into the agent's vision."<< std::endl;
     os << "svs vision.save <FILEPATH> - Saves the current state of the agent's vision to the specified path."<< std::endl;
     os << "svs vision.remember <ID> - Adds the current visual input to visual memory." << std::endl;
     os << "svs vision.recall <ID> - Retrieves the specified archetype from visual memory and sets the visual input to the result." << std::endl;
@@ -66,8 +74,17 @@ void vision_interface::load(const std::vector<std::string>& args, std::ostream& 
 }
 
 void vision_interface::save(const std::vector<std::string>& args, std::ostream& os) {
-    os << "Saving visual input state is not implemented yet." << std::endl;
-    return;
+    if (args.empty()) {
+        os << "Specify a file path to write to." << std::endl;
+        return;
+    }
+    std::string filepath = args[0]; 
+
+    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    cv::Mat image = percept->get_image();
+
+    cv::imwrite(filepath, image);
+    os << "Wrote image to file " << filepath << std::endl;
 }
 
 void vision_interface::remember(const std::vector<std::string>& args, std::ostream& os) {
@@ -77,7 +94,10 @@ void vision_interface::remember(const std::vector<std::string>& args, std::ostre
     }
 
     std::string name = args[0];
-
+    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    _svs_ptr->get_v_mem_opencv()->store_percept(percept, name);
+    os << "Remembered current percept as " << name << std::endl;
+    return;
 }
 
 void vision_interface::recall(const std::vector<std::string>& args, std::ostream& os) {
