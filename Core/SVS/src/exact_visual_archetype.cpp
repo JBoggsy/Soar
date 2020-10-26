@@ -14,7 +14,7 @@ exact_visual_archetype<img_t>::exact_visual_archetype(std::string entity_id) {
 
 template<typename img_t>
 void exact_visual_archetype<img_t>::store_percept(img_t example) {
-    _percept.copy_from(example);
+    _percept.copy_from(&example);
 }
 
 template<typename img_t>
@@ -25,5 +25,15 @@ float exact_visual_archetype<img_t>::compare(img_t percept) {
 
 template<typename img_t>
 void exact_visual_archetype<img_t>::reconstruct(img_t* output) {
-    output->copy_from(_percept);
+    output->copy_from(&_percept);
 }
+
+
+// Explicit instantiations of EVAs
+template class exact_visual_archetype<basic_image>;
+#ifdef ENABLE_OPENCV
+template class exact_visual_archetype<opencv_image>;
+#endif
+#ifdef ENABLE_ROS
+template class exact_visual_archetype<pcl_image>;
+#endif
