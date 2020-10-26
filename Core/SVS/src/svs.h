@@ -9,7 +9,6 @@
 #include "common.h"
 #include "svs_interface.h"
 #include "cliproxy.h"
-
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "vision_interface.h"
@@ -98,9 +97,16 @@ struct command_entry
 };
 typedef std::set<command_entry> command_set;
 typedef command_set::iterator command_set_it;
-/*
- Each state in the state stack has its own SVS link, scene, etc.
-*/
+
+
+/////////////////////
+// SVS_STATE CLASS //
+/////////////////////
+
+
+/* 
+ * Each state in the state stack has its own SVS link, scene, etc.
+ */
 class svs_state : public cliproxy
 {
     public:
@@ -200,6 +206,10 @@ class svs_state : public cliproxy
         command_set curr_cmds;
 };
 
+
+///////////////
+// SVS CLASS //
+///////////////
 
 class svs : public svs_interface, public cliproxy
 {

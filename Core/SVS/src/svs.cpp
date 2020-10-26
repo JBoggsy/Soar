@@ -7,20 +7,23 @@
 #include <utility>
 #include <algorithm>
 #include <fstream>
-
+// SVS core includes
 #include "svs.h"
-#include "command.h"
 #include "sgnode.h"
-#include "soar_interface.h"
 #include "scene.h"
-#include "image.h"
-#include "exact_visual_archetype.h"
 #include "common.h"
+#include "symbol.h"
+// SVS interface includes
+#include "command.h"
+#include "soar_interface.h"
 #include "filter_table.h"
 #include "command_table.h"
+// SVS visualization includes
 #include "drawer.h"
-
-#include "symbol.h"
+// SVS vision includes
+#include "image.h"
+#include "exact_visual_archetype.h"
+#include "visual_memory.h"
 
 using namespace std;
 
@@ -166,6 +169,10 @@ void sgwme::delete_tag(const string& tag_name)
     }
 }
 
+
+/////////////////////
+// SVS_STATE CLASS //
+/////////////////////
 
 svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
     : svsp(svsp), parent(NULL), state(state), si(si), level(0),
@@ -376,6 +383,10 @@ void svs_state::disown_scene()
     delete root;
     scn = NULL;
 }
+
+///////////////
+// SVS CLASS //
+///////////////
 
 svs::svs(agent* a)
     : scn_cache(NULL), enabled(false)
