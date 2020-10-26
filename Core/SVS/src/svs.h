@@ -214,11 +214,22 @@ class svs : public svs_interface, public cliproxy
         void add_input(const std::string& in);
         std::string svs_query(const std::string& query);
 
+        svs_state* get_state() { return state_stack.at(0); }
+
+        typedef visual_memory<basic_image, exact_visual_archetype> exact_basic_mem;
+        exact_basic_mem* get_v_mem_basic() { return v_mem_basic; }
+
 #ifdef ENABLE_OPENCV
+        typedef visual_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
+
         void image_callback(const cv::Mat& new_img);
+        exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
 #endif
 #ifdef ENABLE_ROS
+        typedef visual_memory<opencv_image, exact_visual_archetype> exact_pcl_mem;
+
         void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
+        exact_pcl_mem* get_v_mem_pcl() {  return v_mem_pcl; }
 #endif
 
         soar_interface* get_soar_interface()
@@ -270,22 +281,16 @@ class svs : public svs_interface, public cliproxy
         ros_interface*            ri;
         boost::mutex              input_mtx;
        
-        visual_memory
-        <pcl_image, 
-        exact_visual_archetype>*  v_mem_pcl;
+        exact_pcl_mem*            v_mem_pcl;
 #endif
 
 #ifdef ENABLE_OPENCV
         vision_interface*         vi;
 
-        visual_memory
-        <opencv_image,
-        exact_visual_archetype>*  v_mem_opencv;
+        exact_opencv_mem*         v_mem_opencv;
 #endif
 
-        visual_memory
-        <basic_image,
-        exact_visual_archetype>*  v_mem_basic;
+        exact_basic_mem*          v_mem_basic;
 
         soar_interface*           si;
         std::vector<svs_state*>   state_stack;
