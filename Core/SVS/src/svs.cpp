@@ -14,6 +14,7 @@
 #include "soar_interface.h"
 #include "scene.h"
 #include "image.h"
+#include "exact_visual_archetype.h"
 #include "common.h"
 #include "filter_table.h"
 #include "command_table.h"
@@ -381,15 +382,18 @@ svs::svs(agent* a)
 {
     si = new soar_interface(a);
     draw = new drawer();
+    v_mem_basic = new visual_memory<basic_image, exact_visual_archetype>(this);
 
 #ifdef ENABLE_ROS
     ros_interface::init_ros();
     ri = new ros_interface(this);
     ri->start_ros();
+    v_mem_pcl = new visual_memory<pcl_image, exact_visual_archetype>(this);
 #endif
 
 #ifdef ENABLE_OPENCV
     vi = new vision_interface(this);
+    v_mem_opencv = new visual_memory<opencv_image, exact_visual_archetype>(this);
 #endif
 }
 
@@ -529,7 +533,7 @@ void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_
 void svs::image_callback(const cv::Mat& new_img)
 {
     if (!enabled) return;
-    if (!state_stack.front()->get_image_opencv()) return;
+    if (!state_stack.front()->get_image_opencv()) { return; }
 
     // Updates only the top state image for now.
     state_stack.front()->get_image_opencv()->update_image(new_img);

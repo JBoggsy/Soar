@@ -9,6 +9,7 @@
 // SVS includes
 #include "svs.h"
 #include "vision_interface.h"
+#include "image.h"
 
 vision_interface::vision_interface(svs* svs_ptr) {
     _svs_ptr = svs_ptr;
@@ -34,6 +35,8 @@ void vision_interface::proxy_use_sub(const std::vector<std::string>& args, std::
     os << "svs vision.setfile <FILEPATH> - Sets the image upload target to the given filepath."<< std::endl;
     os << "svs vision.load - Loaads the current image upload target into the agent's vision."<< std::endl;
     os << "svs vision.save <FILEPATH> - Saves the current state of the agent's vision to the specified path."<< std::endl;
+    os << "svs vision.remember <ID> - Adds the current visual input to visual memory." << std::endl;
+    os << "svs vision.recall <ID> - Retrieves the specified archetype from visual memory and sets the visual input to the result." << std::endl;
     os << "======================================" << std::endl;
 }
 
@@ -56,6 +59,7 @@ void vision_interface::setfile(const std::vector<std::string>& args, std::ostrea
 
 void vision_interface::load(const std::vector<std::string>& args, std::ostream& os) {
     cv::Mat new_image = cv::imread(_target_filepath.c_str());
+    printf("Loaded image: %d\n", (int)new_image.empty());
     _svs_ptr->image_callback(new_image);
     os << "Wrote image in " << _target_filepath << " to visual input." << std::endl;
     return;
@@ -64,6 +68,19 @@ void vision_interface::load(const std::vector<std::string>& args, std::ostream& 
 void vision_interface::save(const std::vector<std::string>& args, std::ostream& os) {
     os << "Saving visual input state is not implemented yet." << std::endl;
     return;
+}
+
+void vision_interface::remember(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "This command needs an ID parameter." << std::endl;
+        return;
+    }
+
+    std::string name = args[0];
+
+}
+
+void vision_interface::recall(const std::vector<std::string>& args, std::ostream& os) {
 }
 
 bool vision_interface::_file_exists(std::string filepath) {
