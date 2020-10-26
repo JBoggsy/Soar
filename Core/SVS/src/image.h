@@ -96,6 +96,7 @@ public:
     void update_image(const cv::Mat& new_img);
     void copy_from(opencv_image* other);
 
+    cv::Mat get_image() {return img; }
     int get_width() {return img.cols; }
     int get_height() { return img.rows; }
     bool is_empty();
