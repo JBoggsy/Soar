@@ -224,7 +224,8 @@ class svs : public svs_interface, public cliproxy
         void add_input(const std::string& in);
         std::string svs_query(const std::string& query);
 
-        svs_state* get_state() { return state_stack.at(0); }
+        svs_state* get_root_state() { return state_stack.at(0); }
+        svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
 
         typedef visual_memory<basic_image, exact_visual_archetype> exact_basic_mem;
         exact_basic_mem* get_v_mem_basic() { return v_mem_basic; }
@@ -236,7 +237,7 @@ class svs : public svs_interface, public cliproxy
         exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
 #endif
 #ifdef ENABLE_ROS
-        typedef visual_memory<opencv_image, exact_visual_archetype> exact_pcl_mem;
+        typedef visual_memory<pcl_image, exact_visual_archetype> exact_pcl_mem;
 
         void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
         exact_pcl_mem* get_v_mem_pcl() {  return v_mem_pcl; }
