@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <opencv2/opencv.hpp>
+
 #include "image.h"
 
 ////////////////
@@ -116,21 +118,24 @@ opencv_image::opencv_image() { source = "none"; }
 
 void opencv_image::update_image(const cv::Mat& new_img) {
     bool prev_empty = is_empty();
-    new_img.copyTo(img);
+    _img = new cv::Mat;
+    *_img = new_img.clone();
     if (is_empty() != prev_empty) notify_listeners();
 }
 
 void opencv_image::copy_from(opencv_image* other) {
-    other->img.copyTo(img);
+    cv::Mat* other_image = other->get_image();
+    update_image(*other_image);
     source = "copy";
 }
 
 bool opencv_image::is_empty() {
-    return img.empty();
+    if (_img == NULL) { return true; }
+    return _img->empty();
 }
 
 bool opencv_image::operator==(opencv_image& other) {
-    cv::Mat difference_mat = img - other.img;
+    cv::Mat difference_mat = *_img - *other._img;
     cv::Scalar channel_diffs = cv::sum(difference_mat);
     double total_diff = channel_diffs.val[0] + channel_diffs.val[1] + channel_diffs.val[2] + channel_diffs.val[3];
     return (total_diff == 0.0);
@@ -143,8 +148,8 @@ float opencv_image::compare(opencv_image* other) {
     int d = CV_32F;
 
     cv::Mat I1, I2;
-    img.convertTo(I1, d);            // cannot calculate on one byte large values
-    other->img.convertTo(I2, d);
+    _img->convertTo(I1, d);            // cannot calculate on one byte large values
+    other->_img->convertTo(I2, d);
 
     cv::Mat I2_2   = I2.mul(I2);        // I2^2
     cv::Mat I1_2   = I1.mul(I1);        // I1^2
