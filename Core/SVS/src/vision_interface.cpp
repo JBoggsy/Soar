@@ -81,7 +81,7 @@ void vision_interface::save(const std::vector<std::string>& args, std::ostream& 
     std::string filepath = args[0]; 
 
     opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    cv::Mat image = percept->get_image();
+    cv::Mat image = *percept->get_image();
 
     cv::imwrite(filepath, image);
     os << "Wrote image to file " << filepath << std::endl;
@@ -92,8 +92,8 @@ void vision_interface::remember(const std::vector<std::string>& args, std::ostre
         os << "This command needs an ID parameter." << std::endl;
         return;
     }
-
     std::string name = args[0];
+
     opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
     _svs_ptr->get_v_mem_opencv()->store_percept(percept, name);
     os << "Remembered current percept as " << name << std::endl;
@@ -101,6 +101,15 @@ void vision_interface::remember(const std::vector<std::string>& args, std::ostre
 }
 
 void vision_interface::recall(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "This command needs an ID parameter." << std::endl;
+        return;
+    }
+    std::string name = args[0];
+    opencv_image* percept = new opencv_image();
+    _svs_ptr->get_v_mem_opencv()->recall(name, percept);
+    _svs_ptr->image_callback(*percept->get_image());
+    os << "Recalled percept " << name << std::endl;
 }
 
 bool vision_interface::_file_exists(std::string filepath) {
