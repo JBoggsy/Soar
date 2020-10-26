@@ -50,3 +50,13 @@ template <typename img_T, template<typename T> class atype_T>
 std::vector<std::string> visual_memory<img_T, atype_T>::search(img_T* percept, float threshold) {
     throw "Not implemented yet";
 }
+
+
+// Explicit instantiation of visual memory classes
+template class visual_memory<basic_image, exact_visual_archetype>;
+#ifdef ENABLE_OPENCV
+template class visual_memory<opencv_image, exact_visual_archetype>;
+#endif
+#ifdef ENABLE_ROS
+template class visual_memory<pcl_image, exact_visual_archetype>;
+#endif
