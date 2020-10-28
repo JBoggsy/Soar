@@ -13,6 +13,24 @@ class opencv_image;
 class pcl_image;
 class archetype_base;  // "visual_archetype.h"
 
+
+/**
+ * @brief Encapsulates a result of an attempt to identify a percept via the
+ * visual_memory::match or visual_memory::search methods.
+ * 
+ */
+typedef struct vmem_match {
+    std::string entity_id;
+    float confidence;
+
+    vmem_match();
+    vmem_match(std::string id, float conf) {
+        entity_id = id;
+        confidence = conf;
+    }
+} vmem_match;
+
+
 /**
  * @brief 
  * Encapsulates an agent's knowledge of visual percepts.
@@ -102,7 +120,7 @@ public:
      * @return std::string The identifier of the entity type/token which best
      * matches the percept.
      */
-    std::string match(img_T* percept);
+    vmem_match match(img_T* percept);
 
     /**
      * @brief Given the string identifier of a VisualArchetype instance presumed
@@ -127,7 +145,7 @@ public:
      * @return std::vector<std::string> The list of all known entity ids which
      * are probably in the percept.
      */
-    std::vector<std::string> search(img_T* percept, float threshold);
+    std::vector<vmem_match> search(img_T* percept, float threshold);
 };
 
 #endif

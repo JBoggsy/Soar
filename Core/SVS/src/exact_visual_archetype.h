@@ -40,6 +40,9 @@ class exact_visual_archetype : public visual_archetype<img_t> {
     public:
         exact_visual_archetype(std::string entity_id);
 
+        std::string get_id() { return _entity_id; }
+        img_t get_raw_percept() { return _percept; }
+
         /**
          * @brief Store a new percept in the archetype.
          * 
