@@ -33,6 +33,8 @@ void vision_interface::proxy_get_children(std::map<std::string, cliproxy*>& c) {
 
     c["recall"] = new memfunc_proxy<vision_interface>(this, &vision_interface::recall);
     c["recall"]->add_arg("ID", "The id to retrieve the percept from.");
+
+    c["match"] = new memfunc_proxy<vision_interface>(this, &vision_interface::match);
 }
 
 void vision_interface::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
@@ -110,6 +112,17 @@ void vision_interface::recall(const std::vector<std::string>& args, std::ostream
     _svs_ptr->get_v_mem_opencv()->recall(name, percept);
     _svs_ptr->image_callback(*percept->get_image());
     os << "Recalled percept " << name << std::endl;
+    return;
+}
+
+void vision_interface::match(const std::vector<std::string>& args, std::ostream& os) {
+    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    vmem_match match = _svs_ptr->get_v_mem_opencv()->match(percept);
+    std::string match_id = match.entity_id;
+    float match_confidence = match.confidence;
+
+    os << "Matched the current percept to " << match_id << " with " << match_confidence << " conf." << std::endl;    
+    return;
 }
 
 bool vision_interface::_file_exists(std::string filepath) {

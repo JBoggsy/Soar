@@ -63,6 +63,7 @@ vmem_match visual_memory<opencv_image, exact_visual_archetype>::match(opencv_ima
         exact_visual_archetype<opencv_image>* archetype = *atype_iterator;
         opencv_image vmem_percept = archetype->get_raw_percept();
         float similarity = percept->compare(&vmem_percept);
+        printf("Similarity of %s: %f\n",archetype->get_id(), similarity);
 
         if (similarity > best_similarity) { 
             best_similarity = similarity;
