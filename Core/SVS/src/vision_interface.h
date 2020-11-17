@@ -126,6 +126,16 @@ private:
      * @param os The output stream to write to.
      */
     void recall(const std::vector<std::string>& args, std::ostream& os);
+    
+    /**
+     * @brief Match the current percept to the best-fitting percept stored in
+     * visual memory and return the ID of that match. 
+     * 
+     * @param args The args sent to the command. None are expected.
+     * @param os The output stream to write to. Will write the ID and confidence
+     * of the match.
+     */
+    void match(const std::vector<std::string>& args, std::ostream& os);
 
     bool _file_exists(std::string filepath);
 };
