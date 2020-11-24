@@ -27,6 +27,9 @@
  * `svs vision.recall <ID>` - Retrieves the specified archetype from visual 
  *      memory and sets the visual input to the result.
  * 
+ * `svs vision.rotate <ANGLE>` - Rotates the current percept by 90, 180, or 270
+ *      degrees clockwise.
+ * 
  * @version 0.1
  * @date 2020-10-19
  * 
@@ -136,6 +139,16 @@ private:
      * of the match.
      */
     void match(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Rotate the current percept by 90, 180, or 270 degrees in the 
+     * clockwise direction.
+     * 
+     * @param args The args sent to the command. One of "90", "180", or "270" is
+     * expected.
+     * @param os The output stream to write to.
+     */
+    void rotate(const std::vector<std::string>& args, std::ostream& os);
 
     bool _file_exists(std::string filepath);
 };
