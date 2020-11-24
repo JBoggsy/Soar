@@ -104,13 +104,40 @@ typedef command_set::iterator command_set_it;
 /////////////////////
 
 
-/* 
- * Each state in the state stack has its own SVS link, scene, etc.
+/**
+ * @brief Represents a state in the SVS state stack, Like working memory, SVS
+ * can have multiple "states" held in a state stack. In general, there is a
+ * separate SVS state for each state in orking memory. Each state in the state
+ * stack has its own SVS link, scene, visual input, etc. These states handle
+ * are what receive filters, visual operations, and so on. 
+ * 
  */
 class svs_state : public cliproxy
 {
     public:
+        /**
+         * @brief Construct a new svs state object as the root of the svs state
+         * stack.
+         * 
+         * @param svsp A pointer to the `svs` object whose state stack this 
+         * state will be the root of. Essentially the `svs` object which owns
+         * this state and its children.
+         * @param state The working memory `Symbol` representing this state in
+         * working memory. 
+         * @param soar An interface for interacting with Soar's working memory.
+         * @param scn A pointer to a scene graph.
+         */
         svs_state(svs* svsp, Symbol* state, soar_interface* soar, scene* scn);
+
+        /**
+         * @brief Construct a new svs state object which is not the root of its
+         * state stack.
+         * 
+         * @param state The working memory `Symbol` representing this state in
+         * working memory. 
+         * @param parent The `svs_state` in the state stack which is the parent 
+         * of this one.
+         */
         svs_state(Symbol* state, svs_state* parent);
         
         ~svs_state();
