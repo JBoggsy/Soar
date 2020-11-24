@@ -22,6 +22,14 @@
  * `svs vision.save <FILEPATH>` - Saves the current state of the agent's vision
  *      to the specified path.
  * 
+ * `svs vision.remember <ID>` - Adds the current visual input to visual memory.
+ * 
+ * `svs vision.recall <ID>` - Retrieves the specified archetype from visual 
+ *      memory and sets the visual input to the result.
+ * 
+ * `svs vision.rotate <ANGLE>` - Rotates the current percept by 90, 180, or 270
+ *      degrees clockwise.
+ * 
  * @version 0.1
  * @date 2020-10-19
  * 
@@ -102,6 +110,45 @@ private:
      * @param os The output stream to write to.
      */
     void save(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Adds the current visual input to visual memory.
+     * 
+     * @param args The args sent to the command. Must include an ID string for
+     * the archetype.
+     * @param os The output stream to write to.
+     */
+    void remember(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Retrieves the specified archetype from visual memory and sets the
+     * visual input to the result.
+     * 
+     * @param args The args sent to the command. Must include an archetype ID to
+     * retrieve.
+     * @param os The output stream to write to.
+     */
+    void recall(const std::vector<std::string>& args, std::ostream& os);
+    
+    /**
+     * @brief Match the current percept to the best-fitting percept stored in
+     * visual memory and return the ID of that match. 
+     * 
+     * @param args The args sent to the command. None are expected.
+     * @param os The output stream to write to. Will write the ID and confidence
+     * of the match.
+     */
+    void match(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Rotate the current percept by 90, 180, or 270 degrees in the 
+     * clockwise direction.
+     * 
+     * @param args The args sent to the command. One of "90", "180", or "270" is
+     * expected.
+     * @param os The output stream to write to.
+     */
+    void rotate(const std::vector<std::string>& args, std::ostream& os);
 
     bool _file_exists(std::string filepath);
 };

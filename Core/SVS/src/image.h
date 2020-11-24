@@ -96,14 +96,16 @@ public:
     void update_image(const cv::Mat& new_img);
     void copy_from(opencv_image* other);
 
-    int get_width() {return img.cols; }
-    int get_height() { return img.rows; }
+    cv::Mat* get_image() { return _img; }
+    void set_image(cv::Mat* image) { _img = image; }
+    int get_width() {return _img->cols; }
+    int get_height() { return _img->rows; }
     bool is_empty();
     bool operator==(opencv_image& other);
 
     float compare(opencv_image* other);
 private:
-    cv::Mat img;
+    cv::Mat* _img = NULL;
 };
 
 #endif

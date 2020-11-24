@@ -42,11 +42,44 @@ void visual_memory<img_T, atype_T>::recall(std::string entity_id, img_T* output)
 }
 
 template <typename img_T, template<typename T> class atype_T>
-std::string visual_memory<img_T, atype_T>::match(img_T* percept) {
+vmem_match visual_memory<img_T, atype_T>::match(img_T* percept) {
     throw "Not implemented yet";
 }
 
 template <typename img_T, template<typename T> class atype_T>
-std::vector<std::string> visual_memory<img_T, atype_T>::search(img_T* percept, float threshold) {
+std::vector<vmem_match> visual_memory<img_T, atype_T>::search(img_T* percept, float threshold) {
     throw "Not implemented yet";
 }
+
+
+// Explicit definition of visual_memory::match and ::search methods
+template <>
+vmem_match visual_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept) {
+    std::string best_match_name;
+    float best_similarity = 0.0;
+
+    std::vector<exact_visual_archetype<opencv_image>*>::iterator atype_iterator;
+    for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
+        exact_visual_archetype<opencv_image>* archetype = *atype_iterator;
+        opencv_image vmem_percept = archetype->get_raw_percept();
+        float similarity = percept->compare(&vmem_percept);
+        printf("Similarity of %s: %f\n",archetype->get_id(), similarity);
+
+        if (similarity > best_similarity) { 
+            best_similarity = similarity;
+            best_match_name = archetype->get_id();
+        }
+    }
+
+    return vmem_match(best_match_name, best_similarity);
+}
+
+
+// Explicit instantiation of visual memory classes
+template class visual_memory<basic_image, exact_visual_archetype>;
+#ifdef ENABLE_OPENCV
+template class visual_memory<opencv_image, exact_visual_archetype>;
+#endif
+#ifdef ENABLE_ROS
+template class visual_memory<pcl_image, exact_visual_archetype>;
+#endif
