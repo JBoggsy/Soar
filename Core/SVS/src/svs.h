@@ -225,6 +225,7 @@ class svs_state : public cliproxy
         Symbol* scene_link;
         Symbol* img_link;
         Symbol* cmd_link;
+        Symbol* imagine_link;
         
         int scene_num;
         wme* scene_num_wme;

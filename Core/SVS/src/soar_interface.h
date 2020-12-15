@@ -31,7 +31,7 @@ class common_syms
         common_syms(soar_interface* si);
         ~common_syms();
 
-        Symbol* svs, *cmd, *scene, *image, *child, *result, *id, *status;
+        Symbol* svs, *cmd, *scene, *image, *child, *result, *id, *status, *imagination;
 
     private:
         soar_interface* si;
