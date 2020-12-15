@@ -219,6 +219,7 @@ void svs_state::init()
     cmd_link = si->get_wme_val(si->make_id_wme(svs_link, cs.cmd));
     scene_link = si->get_wme_val(si->make_id_wme(svs_link, cs.scene));
     img_link = si->get_wme_val(si->make_id_wme(svs_link, cs.image));
+    imagine_link = si->get_wme_val(si->make_id_wme(svs_link, cs.imagination));
 
     if (!scn)
     {
