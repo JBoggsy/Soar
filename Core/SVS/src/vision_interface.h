@@ -30,6 +30,9 @@
  * `svs vision.rotate <ANGLE>` - Rotates the current percept by 90, 180, or 270
  *      degrees clockwise.
  * 
+ * `svs vision.match` - Match the current percept to the best-fitting percept
+ *      stored in visual memory and return the ID of that match. 
+ * 
  * @version 0.1
  * @date 2020-10-19
  * 
@@ -44,7 +47,7 @@
 #include "cliproxy.h"
 // Forward declarations
 class svs;
-
+struct vmem_match;
 
 
 /**
@@ -56,13 +59,6 @@ class vision_interface : public cliproxy {
 public:
     vision_interface(svs* svs_ptr);
    ~vision_interface();
-
-private:
-    /////////////////
-    // ATTRIBUTES //
-    ///////////////
-    svs* _svs_ptr;
-    std::string _target_filepath;
 
     //////////////
     // METHODS //
@@ -90,10 +86,9 @@ private:
     /**
      * @brief Sets the target image file for the load command.
      * 
-     * @param args The args sent to the command. Should include a file path.
-     * @param os The output stream to write to.
+     * @param filepath The target image file. Must exist.
      */
-    void setfile(const std::vector<std::string>& args, std::ostream& os);
+    void setfile(std::string filepath);
 
     /**
      * @brief Loads the target image file into the agent's visual input.
@@ -101,7 +96,75 @@ private:
      * @param args The args sent to the command. These are discarded.
      * @param os The output stream to write to.
      */
-    void load(const std::vector<std::string>& args, std::ostream& os);
+    void load();
+
+    /**
+     * @brief Saves the agent's visual input to a file specified in the command.
+     * 
+     * @param filepath The path to save the current visual input to.
+     */
+    void save(std::string filepath);
+
+    /**
+     * @brief Adds the current visual input to visual memory.
+     * 
+     * @param ID The string ID of the visual archetype the current visual 
+     * input should be stored as.
+     */
+    void remember(std::string ID);
+
+    /**
+     * @brief Retrieves the specified archetype from visual memory and sets the
+     * visual input to the result.
+     * 
+     * @param ID The string ID of the archetype to retrieve.
+     */
+    void recall(std::string ID);
+    
+    /**
+     * @brief Match the current percept to the best-fitting percept stored in
+     * visual memory and return the ID of that match. 
+     * 
+     * @param output A `vmem_match` pointer for the function to write the best
+     * match to.
+     */
+    void match(vmem_match* output);
+
+    /**
+     * @brief Rotate the current percept by 90, 180, or 270 degrees in the 
+     * clockwise direction.
+     * 
+     * @param amount The amount of rotation in degrees. Must be one of 90, 180,
+     * or 270.
+     */
+    void rotate(int amount);
+
+    bool _file_exists(std::string filepath);
+private:
+    /////////////////
+    // ATTRIBUTES //
+    ///////////////
+    svs* _svs_ptr;
+    std::string _target_filepath;
+    
+    //////////////
+    // METHODS //
+    ////////////
+    /**
+     * @brief Sets the target image file for the load command.
+     * 
+     * @param args The args sent to the command. Should include a file path.
+     * @param os The output stream to write to.
+     */
+    void cli_setfile(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Loads the target image file into the agent's visual input.
+     * 
+     * @param args The args sent to the command. These are discarded.
+     * @param os The output stream to write to.
+     */
+    void cli_load(const std::vector<std::string>& args, std::ostream& os);
 
     /**
      * @brief Saves the agent's visual input to a file specified in the command.
@@ -109,7 +172,7 @@ private:
      * @param args The args sent to the command. Should include a file path.
      * @param os The output stream to write to.
      */
-    void save(const std::vector<std::string>& args, std::ostream& os);
+    void cli_save(const std::vector<std::string>& args, std::ostream& os);
 
     /**
      * @brief Adds the current visual input to visual memory.
@@ -118,7 +181,7 @@ private:
      * the archetype.
      * @param os The output stream to write to.
      */
-    void remember(const std::vector<std::string>& args, std::ostream& os);
+    void cli_remember(const std::vector<std::string>& args, std::ostream& os);
 
     /**
      * @brief Retrieves the specified archetype from visual memory and sets the
@@ -128,7 +191,7 @@ private:
      * retrieve.
      * @param os The output stream to write to.
      */
-    void recall(const std::vector<std::string>& args, std::ostream& os);
+    void cli_recall(const std::vector<std::string>& args, std::ostream& os);
     
     /**
      * @brief Match the current percept to the best-fitting percept stored in
@@ -138,7 +201,7 @@ private:
      * @param os The output stream to write to. Will write the ID and confidence
      * of the match.
      */
-    void match(const std::vector<std::string>& args, std::ostream& os);
+    void cli_match(const std::vector<std::string>& args, std::ostream& os);
 
     /**
      * @brief Rotate the current percept by 90, 180, or 270 degrees in the 
@@ -148,8 +211,6 @@ private:
      * expected.
      * @param os The output stream to write to.
      */
-    void rotate(const std::vector<std::string>& args, std::ostream& os);
-
-    bool _file_exists(std::string filepath);
+    void cli_rotate(const std::vector<std::string>& args, std::ostream& os);
 };
 #endif
