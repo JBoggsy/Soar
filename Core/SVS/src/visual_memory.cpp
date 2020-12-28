@@ -42,36 +42,42 @@ void visual_memory<img_T, atype_T>::recall(std::string entity_id, img_T* output)
 }
 
 template <typename img_T, template<typename T> class atype_T>
-vmem_match visual_memory<img_T, atype_T>::match(img_T* percept) {
+void visual_memory<img_T, atype_T>::match(img_T* percept, vmem_match* output) {
     throw "Not implemented yet";
 }
 
 template <typename img_T, template<typename T> class atype_T>
-std::vector<vmem_match> visual_memory<img_T, atype_T>::search(img_T* percept, float threshold) {
+void visual_memory<img_T, atype_T>::search(img_T* percept, float threshold, std::vector<vmem_match*>* output) {
     throw "Not implemented yet";
 }
 
 
 // Explicit definition of visual_memory::match and ::search methods
 template <>
-vmem_match visual_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept) {
+void visual_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, vmem_match* output) {
     std::string best_match_name;
     float best_similarity = 0.0;
+
+    std::string current_id;
+    float current_similarity;
 
     std::vector<exact_visual_archetype<opencv_image>*>::iterator atype_iterator;
     for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
         exact_visual_archetype<opencv_image>* archetype = *atype_iterator;
         opencv_image vmem_percept = archetype->get_raw_percept();
-        float similarity = percept->compare(&vmem_percept);
-        printf("Similarity of %s: %f\n",archetype->get_id(), similarity);
+        
+        archetype->get_id(current_id);
+        current_similarity = percept->compare(&vmem_percept); 
+        printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
 
-        if (similarity > best_similarity) { 
-            best_similarity = similarity;
-            best_match_name = archetype->get_id();
+        if (current_similarity > best_similarity) { 
+            best_similarity = current_similarity;
+            best_match_name.assign(current_id);
         }
     }
 
-    return vmem_match(best_match_name, best_similarity);
+    output->entity_id = best_match_name;
+    output->confidence = best_similarity/3;  // div 3 because similarity metric is 0-3
 }
 
 

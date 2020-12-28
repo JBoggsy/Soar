@@ -31,6 +31,16 @@ command_table_entry* delete_node_command_entry();
 command_table_entry* set_tag_command_entry();
 command_table_entry* delete_tag_command_entry();
 
+command_table_entry* set_file_command_entry();
+command_table_entry* save_percept_command_entry();
+command_table_entry* load_percept_command_entry();
+
+command_table_entry* remember_percept_command_entry();
+command_table_entry* recall_percept_command_entry();
+command_table_entry* match_percept_command_entry();
+
+command_table_entry* rotate_percept_command_entry();
+
 
 command_table::command_table()
 {
@@ -42,12 +52,21 @@ command_table::command_table()
     add(add_node_command_entry());
     add(copy_node_command_entry());
     add(set_transform_command_entry());
-		add(copy_transform_command_entry());
+	add(copy_transform_command_entry());
     add(delete_node_command_entry());
     
     add(set_tag_command_entry());
     add(delete_tag_command_entry());
+
+    add(set_file_command_entry());
+    add(save_percept_command_entry());
+    add(load_percept_command_entry());
     
+    add(remember_percept_command_entry());
+    add(recall_percept_command_entry());
+    add(match_percept_command_entry());
+
+    add(rotate_percept_command_entry());
 }
 
 command* command_table::make_command(svs_state* state, wme* w)

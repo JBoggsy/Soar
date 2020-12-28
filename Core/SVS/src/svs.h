@@ -252,6 +252,12 @@ class svs : public svs_interface, public cliproxy
         void add_input(const std::string& in);
         std::string svs_query(const std::string& query);
 
+        /**
+         * @brief Gets the root `svs_state` from the `state_stack`.
+         * 
+         * @note The "root" of the state stack is actually the *most recent*
+         * `svs_state` object to be created, the top of the stack.
+         */
         svs_state* get_root_state() { return state_stack.at(0); }
         svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
 
@@ -275,6 +281,11 @@ class svs : public svs_interface, public cliproxy
         {
             return si;
         }
+
+        vision_interface* get_vision_interface() {
+            return vi;
+        }
+
         drawer* get_drawer() const
         {
             return draw;

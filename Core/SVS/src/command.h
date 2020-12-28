@@ -61,7 +61,6 @@ class command
         size_t             subtree_size;
         uint64_t           prev_max_time;
         bool            first;
-        
 };
 
 #endif

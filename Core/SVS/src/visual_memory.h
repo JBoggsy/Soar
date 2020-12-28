@@ -23,7 +23,7 @@ typedef struct vmem_match {
     std::string entity_id;
     float confidence;
 
-    vmem_match();
+    vmem_match() {}
     vmem_match(std::string id, float conf) {
         entity_id = id;
         confidence = conf;
@@ -117,10 +117,9 @@ public:
      * as the match.
      * 
      * @param percept The percept to be identified.
-     * @return std::string The identifier of the entity type/token which best
-     * matches the percept.
+     * @param output A `vmem_match` object to write the best match into.
      */
-    vmem_match match(img_T* percept);
+    void match(img_T* percept, vmem_match* output);
 
     /**
      * @brief Given the string identifier of a VisualArchetype instance presumed
@@ -142,10 +141,9 @@ public:
      * @param percept The percept to search in.
      * @param threshold The minimum confidence value an archetype must return
      * from its comapre method to be included in the results of this method.
-     * @return std::vector<std::string> The list of all known entity ids which
-     * are probably in the percept.
+     * @param output A vector to write the matches to.
      */
-    std::vector<vmem_match> search(img_T* percept, float threshold);
+    void search(img_T* percept, float threshold, std::vector<vmem_match*>* output);
 };
 
 #endif
