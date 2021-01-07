@@ -19,6 +19,9 @@ command_table& get_command_table()
     return inst;
 }
 
+// SCENE GRAPH COMMANDS
+///////////////////////
+
 command_table_entry* extract_command_entry();
 command_table_entry* extract_once_command_entry();
 
@@ -31,6 +34,9 @@ command_table_entry* delete_node_command_entry();
 command_table_entry* set_tag_command_entry();
 command_table_entry* delete_tag_command_entry();
 
+// VISION COMMANDS
+//////////////////
+
 command_table_entry* set_file_command_entry();
 command_table_entry* save_percept_command_entry();
 command_table_entry* load_percept_command_entry();
@@ -41,32 +47,50 @@ command_table_entry* match_percept_command_entry();
 
 command_table_entry* rotate_percept_command_entry();
 
+// IMAGINATION COMMANDS
+///////////////////////
+
+command_table_entry* imagine_add_percept_command_entry();
+command_table_entry* imagine_remove_percept_command_entry();
+command_table_entry* imagine_move_percept_command_entry();
+command_table_entry* imagine_translate_percept_command_entry();
+command_table_entry* imagine_rotate_percept_command_entry();
+command_table_entry* imagine_flip_percept_command_entry();
 
 command_table::command_table()
 {
     set_help("Prints out a list of all soar commands");
     
+    // Scene graph
+
     add(extract_command_entry());
     add(extract_once_command_entry());
-    
     add(add_node_command_entry());
     add(copy_node_command_entry());
     add(set_transform_command_entry());
 	add(copy_transform_command_entry());
     add(delete_node_command_entry());
-    
     add(set_tag_command_entry());
     add(delete_tag_command_entry());
+
+    // Vision
 
     add(set_file_command_entry());
     add(save_percept_command_entry());
     add(load_percept_command_entry());
-    
     add(remember_percept_command_entry());
     add(recall_percept_command_entry());
     add(match_percept_command_entry());
-
     add(rotate_percept_command_entry());
+
+    // Imagination
+
+    add(imagine_add_percept_command_entry());
+    add(imagine_remove_percept_command_entry());
+    add(imagine_move_percept_command_entry());
+    add(imagine_translate_percept_command_entry());
+    add(imagine_rotate_percept_command_entry());
+    add(imagine_flip_percept_command_entry());
 }
 
 command* command_table::make_command(svs_state* state, wme* w)
