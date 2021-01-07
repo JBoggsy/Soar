@@ -181,6 +181,7 @@ svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
 {
     assert(state->is_top_state());
     state->get_id_name(name);
+    imagination = imagination_opencv();
     init();
 }
 
@@ -190,6 +191,7 @@ svs_state::svs_state(Symbol* state, svs_state* parent)
       scene_num_wme(NULL), scn(NULL), img(NULL),
       scene_link(NULL)
 {
+    imagination = imagination_opencv();
     assert(state->get_parent_state() == parent->state);
     init();
 }
@@ -208,6 +210,7 @@ svs_state::~svs_state()
         svsp->get_drawer()->delete_scene(scn->get_name());
         delete scn; // results in root being deleted also
     }
+    imagination = imagination_opencv();
 }
 
 void svs_state::init()
