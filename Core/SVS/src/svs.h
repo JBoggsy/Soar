@@ -9,6 +9,7 @@
 #include "common.h"
 #include "svs_interface.h"
 #include "cliproxy.h"
+#include "imagination.h"
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "vision_interface.h"
@@ -172,9 +173,13 @@ class svs_state : public cliproxy
 #endif
 
 #ifdef ENABLE_OPENCV
-        opencv_image*      get_image_opencv() const
+        opencv_image* get_image_opencv() const
         {
             return img_opencv;
+        }
+        imagination_opencv* get_imagination()
+        {
+            return &imagination;
         }
 #endif
 
@@ -217,6 +222,7 @@ class svs_state : public cliproxy
 #endif
 #ifdef ENABLE_OPENCV
         opencv_image*   img_opencv;
+        imagination_opencv imagination;
 #endif
         basic_image*    img;
 
