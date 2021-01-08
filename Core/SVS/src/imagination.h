@@ -22,7 +22,7 @@ public:
     /**
      * @brief Copy the current state of the imagination to the output percept
      */
-    virtual void get_image(percept_t output) = 0;
+    virtual void get_image(percept_t& output) = 0;
 
     /**
      * @brief "Imagine" a new percept by adding it to the imagination.
@@ -80,7 +80,7 @@ public:
     /**
      * @brief Copy the current state of the imagination to the output percept
      */
-    void get_image(opencv_image output);
+    void get_image(opencv_image& output);
     /**
      * @brief "Imagine" a new percept by adding it to the imagination.
      * @returns A unique ID identifying the percept in the imagination.

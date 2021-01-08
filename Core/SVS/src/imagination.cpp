@@ -12,7 +12,7 @@ imagination_opencv::imagination_opencv() {}
 ///////////////////
 // MANIPULATION //
 /////////////////
-void imagination_opencv::get_image(opencv_image output) {
+void imagination_opencv::get_image(opencv_image& output) {
     _draw_canvas();
     output.update_image(canvas);
 }
@@ -34,6 +34,7 @@ int imagination_opencv::add_percept(opencv_image new_percept, int x, int y) {
     percepts[new_percept_ID] = new_percept;
     metadata[new_percept_ID] = new_percept_metadata;
 
+    next_percept_id++;
     dirty = true;
     return new_percept_ID;
 }
@@ -89,7 +90,10 @@ void imagination_opencv::flip_percept_vert(int percept_ID) {
 void imagination_opencv::_generate_canvas() {
     typedef std::unordered_map<int, opencv_image>::iterator percept_iterator;
     
-    int left_bound, right_bound, top_bound, bottom_bound;
+    int left_bound = 0;
+    int right_bound = 0;
+    int top_bound = 0;
+    int bottom_bound = 0;
     percept_iterator percept = percepts.begin();
     for (; percept != percepts.end(); percept++) {
 
@@ -112,8 +116,11 @@ void imagination_opencv::_generate_canvas() {
 
     int canvas_width = right_bound - left_bound;
     int canvas_height = bottom_bound - top_bound;
-    canvas = cv::Mat(canvas_height, canvas_width, CV_16UC3);
-    origin = cv::Point2i(left_bound, top_bound);
+    canvas_width = MAX(canvas_width, 2);
+    canvas_height = MAX(canvas_height, 2);
+
+    canvas = cv::Mat::zeros(canvas_height, canvas_width, CV_8UC3);
+    origin = cv::Point2i(-left_bound, -top_bound);
 }
 
 void imagination_opencv::_draw_percept(opencv_image percept, imagination_opencv_percept_metadata mdata) {
@@ -130,7 +137,10 @@ void imagination_opencv::_draw_percept(opencv_image percept, imagination_opencv_
         cv::flip(drawn_img, drawn_img, 1);
     }
 
-    drawn_img.copyTo(canvas(cv::Rect(mdata.x, mdata.y, drawn_img.cols, drawn_img.rows)));
+    int left_bound = mdata.x - drawn_img.cols/2;
+    int top_bound = mdata.y - drawn_img.rows/2;
+
+    drawn_img.copyTo(canvas(cv::Rect(left_bound+origin.x, top_bound+origin.y, drawn_img.cols, drawn_img.rows)));
 
 }
 
@@ -142,6 +152,8 @@ void imagination_opencv::_draw_canvas() {
     for (; percept != percepts.end(); percept++) {
         _draw_percept(percept->second, metadata[percept->first]);
     }
+
+    cv::resize(canvas, canvas, cv::Size(128, 128));
 
     dirty = false;
 }
