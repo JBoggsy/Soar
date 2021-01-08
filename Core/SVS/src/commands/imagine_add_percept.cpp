@@ -62,7 +62,7 @@ bool imagine_add_percept_command::update_sub() {
         y = 0;
     }
 
-    opencv_image percept_copy;
+    opencv_image percept_copy = opencv_image();
     state->get_svs()->get_v_mem_opencv()->recall(id, &percept_copy);
     imagination->add_percept(percept_copy, x, y);
 
