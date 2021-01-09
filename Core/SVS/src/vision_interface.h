@@ -33,6 +33,9 @@
  * `svs vision.match` - Match the current percept to the best-fitting percept
  *      stored in visual memory and return the ID of that match. 
  * 
+ * `svs vision.export_imagination <FILEPATH` - Like `vision.save`, but for the
+ *      imagination buffer.
+ * 
  * @version 0.1
  * @date 2020-10-19
  * 
@@ -212,5 +215,10 @@ private:
      * @param os The output stream to write to.
      */
     void cli_rotate(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Export the current state of imagination to the given file.
+     */
+    void cli_export_imagination(const std::vector<std::string>& args, std::ostream& os);
 };
 #endif

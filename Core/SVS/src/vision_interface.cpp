@@ -39,6 +39,9 @@ void vision_interface::proxy_get_children(std::map<std::string, cliproxy*>& c) {
 
     c["rotate"] = new memfunc_proxy<vision_interface>(this, &vision_interface::cli_rotate);
     c["rotate"]->add_arg("ANGLE", "The amount to rotate the percept, one of 90, 180, or 270.");
+
+    c["export_imagination"] = new memfunc_proxy<vision_interface>(this, &vision_interface::cli_export_imagination);
+    c["export_imagination"]->add_arg("FILEPATH", "The path of the file to save the image to.");
 }
 
 void vision_interface::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
@@ -52,6 +55,7 @@ void vision_interface::proxy_use_sub(const std::vector<std::string>& args, std::
     os << "svs vision.remember <ID> - Adds the current visual input to visual memory." << std::endl;
     os << "svs vision.recall <ID> - Retrieves the specified archetype from visual memory and sets the visual input to the result." << std::endl;
     os << "svs vision.rotate <ANGLE> - Rotates the current percept by 90, 180, or 270 degrees clockwise." << std::endl;
+    os << "svs vision.export_imagination <FILEPATH> - Export the currentstate of the root svs state imagination to the given file." << std::endl;
     os << "======================================" << std::endl;
 }
 
@@ -203,6 +207,21 @@ void vision_interface::cli_rotate(const std::vector<std::string>& args, std::ost
 
     os << "Rotated the current percept by " << args[0] << std::endl;    
     return;
+}
+
+void vision_interface::cli_export_imagination(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "Specify a file path to write to." << std::endl;
+        return;
+    }
+    std::string filepath = args[0]; 
+
+    opencv_image imagined_percept = opencv_image();
+    _svs_ptr->get_root_state()->get_imagination()->get_image(imagined_percept);
+    cv::Mat* image = imagined_percept.get_image();
+
+    cv::imwrite(filepath, *image);
+    os << "Wrote image to file " << filepath << std::endl;
 }
 
 bool vision_interface::_file_exists(std::string filepath) {
