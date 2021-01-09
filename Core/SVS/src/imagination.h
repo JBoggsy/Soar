@@ -69,7 +69,7 @@ protected:
  */
 typedef struct imagination_opencv_percept_metadata {
     int x, y;
-    float rotation;
+    double rotation;
     bool h_mirror, v_mirror;
 } imagination_opencv_percept_metadata;
 
@@ -120,12 +120,12 @@ public:
      * @brief Rotate the percept with the given ID by the specified number of 
      * radians. Positive is clockwise.
      */
-    void rotate_percept_rad(int percept_ID, float rads);
+    void rotate_percept_rad(int percept_ID, double rads);
     /**
      * @brief Rotate the percept with the given ID by the specified number of 
      * degrees. Positive is clockwise.
      */
-    void rotate_percept_deg(int percept_ID, float degs);
+    void rotate_percept_deg(int percept_ID, double degs);
 
     /**
      * @brief Flip (i.e., mirror) the percept with the given ID across the x-axis.

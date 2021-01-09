@@ -63,12 +63,12 @@ void imagination_opencv::move_percept(int percept_ID, int new_x, int new_y) {
     dirty = true;
 }
 
-void imagination_opencv::rotate_percept_rad(int percept_ID, float rads) {
+void imagination_opencv::rotate_percept_rad(int percept_ID, double rads) {
     float degs = rads * 180.0/M_PI;
     rotate_percept_deg(percept_ID, degs);
     dirty = true;
 }
-void imagination_opencv::rotate_percept_deg(int percept_ID, float degs) {
+void imagination_opencv::rotate_percept_deg(int percept_ID, double degs) {
     metadata[percept_ID].rotation = degs;
     dirty = true;
 }
@@ -152,8 +152,6 @@ void imagination_opencv::_draw_canvas() {
     for (; percept != percepts.end(); percept++) {
         _draw_percept(percept->second, metadata[percept->first]);
     }
-
-    cv::resize(canvas, canvas, cv::Size(128, 128));
 
     dirty = false;
 }
