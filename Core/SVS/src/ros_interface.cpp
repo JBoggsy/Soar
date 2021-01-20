@@ -240,6 +240,27 @@ void ros_interface::joints_callback(const sensor_msgs::JointState::ConstPtr& msg
 // Updates the images in SVS states when a new point cloud is received
 void ros_interface::pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg) {
     svs_ptr->image_callback(msg);
+
+    if (!msg->isOrganized()) { return; }  // Can't convert unorganized cloud to cv::Mat
+
+    // Convert to OpenCV Mat and update OpenCV image as well
+    int img_rows = msg->height;
+    int img_cols = msg->width;
+
+    cv::Mat depth_map = cv::Mat(img_rows, img_cols, CV_32FC1);
+    cv::Mat flat_image = cv::Mat(img_rows, img_cols, CV_8UC3);
+    
+    for(int r=0; r < img_rows; r++) {
+        for(int c=0; c < img_cols; c++) {
+            pcl::PointXYZRGB point = msg->at(r, c);
+            cv::Vec3b point_color = cv::Vec3b(point.b, point.g, point.r);
+
+            depth_map.at<float>(r, c) = point.z;
+            flat_image.at<cv::Vec3b>(r, c) = point_color;
+        }
+    }
+
+    svs_ptr->image_callback(flat_image);
 }
 
 void ros_interface::proxy_get_children(std::map<std::string, cliproxy*>& c) {
