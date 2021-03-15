@@ -9,6 +9,7 @@
 #include "common.h"
 #include "svs_interface.h"
 #include "cliproxy.h"
+#include "imagination.h"
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "vision_interface.h"
@@ -172,9 +173,13 @@ class svs_state : public cliproxy
 #endif
 
 #ifdef ENABLE_OPENCV
-        opencv_image*      get_image_opencv() const
+        opencv_image* get_image_opencv() const
         {
             return img_opencv;
+        }
+        imagination_opencv* get_imagination()
+        {
+            return &imagination;
         }
 #endif
 
@@ -217,6 +222,7 @@ class svs_state : public cliproxy
 #endif
 #ifdef ENABLE_OPENCV
         opencv_image*   img_opencv;
+        imagination_opencv imagination;
 #endif
         basic_image*    img;
 
@@ -225,6 +231,7 @@ class svs_state : public cliproxy
         Symbol* scene_link;
         Symbol* img_link;
         Symbol* cmd_link;
+        Symbol* imagine_link;
         
         int scene_num;
         wme* scene_num_wme;
@@ -251,6 +258,12 @@ class svs : public svs_interface, public cliproxy
         void add_input(const std::string& in);
         std::string svs_query(const std::string& query);
 
+        /**
+         * @brief Gets the root `svs_state` from the `state_stack`.
+         * 
+         * @note The "root" of the state stack is actually the *most recent*
+         * `svs_state` object to be created, the top of the stack.
+         */
         svs_state* get_root_state() { return state_stack.at(0); }
         svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
 
@@ -274,6 +287,11 @@ class svs : public svs_interface, public cliproxy
         {
             return si;
         }
+
+        vision_interface* get_vision_interface() {
+            return vi;
+        }
+
         drawer* get_drawer() const
         {
             return draw;

@@ -511,5 +511,4 @@ testCommandToFile-output.soar
 soarversion
 build_time_date
 .vscode/
-
-.vscode/
+SoarManual.pdf
