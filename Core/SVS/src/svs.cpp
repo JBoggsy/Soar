@@ -240,9 +240,15 @@ void svs_state::init()
     if (!img) {
 #ifdef ENABLE_ROS
         img_pcl = new pcl_image();
+        if (parent) {
+            img_pcl->copy_from(parent->img_pcl);
+        }
 #endif
 #ifdef ENABLE_OPENCV
         img_opencv = new opencv_image();
+        if (parent) {
+            img_opencv->copy_from(parent->img_opencv);
+        }
 #endif
         img = new basic_image();
         if (parent) {
