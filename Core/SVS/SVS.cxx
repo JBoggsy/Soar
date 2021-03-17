@@ -38,4 +38,4 @@
 #include "src/sgnode_algs.cpp"
 #include "src/soar_interface.cpp"
 #include "src/svs.cpp"
-#include "visual_memory.cpp"
+#include "src/visual_memory.cpp"

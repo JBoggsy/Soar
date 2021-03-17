@@ -9,7 +9,7 @@
 // SVS includes
 #include "svs.h"
 #include "image.h"
-#include "visual_memory.h"
+#include "visual_long_term_memory.h"
 #include "vision_operations.h"
 #include "vision_interface.h"
 #include "exact_visual_archetype.h"

@@ -1,7 +1,7 @@
 #include "svs.h"
 #include "symbol.h"
 #include "vision_interface.h"
-#include "visual_memory.h"
+#include "visual_long_term_memory.h"
 #include "command.h"
 #include "command_table.h"
 
