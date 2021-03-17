@@ -23,7 +23,7 @@
 // SVS vision includes
 #include "image.h"
 #include "exact_visual_archetype.h"
-#include "visual_memory.h"
+#include "visual_long_term_memory.h"
 
 using namespace std;
 
@@ -403,18 +403,16 @@ svs::svs(agent* a)
 {
     si = new soar_interface(a);
     draw = new drawer();
-    v_mem_basic = new visual_memory<basic_image, exact_visual_archetype>(this);
 
 #ifdef ENABLE_ROS
     ros_interface::init_ros();
     ri = new ros_interface(this);
     ri->start_ros();
-    v_mem_pcl = new visual_memory<pcl_image, exact_visual_archetype>(this);
 #endif
 
 #ifdef ENABLE_OPENCV
     vi = new vision_interface(this);
-    v_mem_opencv = new visual_memory<opencv_image, exact_visual_archetype>(this);
+    v_mem_opencv = new visual_long_term_memory<opencv_image, exact_visual_archetype>(this);
 #endif
 }
 
@@ -538,15 +536,7 @@ void svs::input_callback()
 #ifdef ENABLE_ROS
 void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img)
 {
-    if (!enabled) return;
-    if (!state_stack.front()->get_image_pcl()) return;
-
-    // Updates only the top state image for now.
-    state_stack.front()->get_image_pcl()->update_image(new_img);
-
-    if (ri->get_image_source() != state_stack.front()->get_image_pcl()->get_source()) {
-        state_stack.front()->get_image_pcl()->set_source(ri->get_image_source());
-    }
+    // TODO: Rework function to work with visual_sensory_memory class
 }
 #endif
 

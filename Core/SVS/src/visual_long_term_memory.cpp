@@ -5,19 +5,19 @@
 #include <exception>
 // SVS Includes
 #include "image.h"
-#include "visual_memory.h"
+#include "visual_long_term_memory.h"
 #include "visual_archetype.h"
 #include "exact_visual_archetype.h"
 
 template <typename img_T, template<typename T> class atype_T>
-visual_memory<img_T, atype_T>::visual_memory(svs* svs_parent) {
+visual_long_term_memory<img_T, atype_T>::visual_long_term_memory(svs* svs_parent) {
     _svs = svs_parent;
     _archetypes = std::vector<archetype_T*>();
     _id_index_map = std::unordered_map<std::string, int>();
 }
 
 template <typename img_T, template<typename T> class atype_T>
-void visual_memory<img_T, atype_T>::store_percept(img_T* percept, std::string entity_id) {
+void visual_long_term_memory<img_T, atype_T>::store_percept(img_T* percept, std::string entity_id) {
     // Check if entity already had an entry
     if (_id_index_map.find(entity_id) != _id_index_map.end()) {
         // If so, update the existing entry with the new percept
@@ -35,26 +35,26 @@ void visual_memory<img_T, atype_T>::store_percept(img_T* percept, std::string en
 }
 
 template <typename img_T, template<typename T> class atype_T>
-void visual_memory<img_T, atype_T>::recall(std::string entity_id, img_T* output) {
+void visual_long_term_memory<img_T, atype_T>::recall(std::string entity_id, img_T* output) {
     int target_idx = _id_index_map[entity_id];
     archetype_T* target_archetype = _archetypes.at(target_idx);
     target_archetype->reconstruct(output);
 }
 
 template <typename img_T, template<typename T> class atype_T>
-void visual_memory<img_T, atype_T>::match(img_T* percept, vmem_match* output) {
+void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match* output) {
     throw "Not implemented yet";
 }
 
 template <typename img_T, template<typename T> class atype_T>
-void visual_memory<img_T, atype_T>::search(img_T* percept, float threshold, std::vector<vmem_match*>* output) {
+void visual_long_term_memory<img_T, atype_T>::search(img_T* percept, float threshold, std::vector<vmem_match*>* output) {
     throw "Not implemented yet";
 }
 
 
 // Explicit definition of visual_memory::match and ::search methods
 template <>
-void visual_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, vmem_match* output) {
+void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, vmem_match* output) {
     std::string best_match_name;
     float best_similarity = 0.0;
 
@@ -82,10 +82,6 @@ void visual_memory<opencv_image, exact_visual_archetype>::match(opencv_image* pe
 
 
 // Explicit instantiation of visual memory classes
-template class visual_memory<basic_image, exact_visual_archetype>;
 #ifdef ENABLE_OPENCV
-template class visual_memory<opencv_image, exact_visual_archetype>;
-#endif
-#ifdef ENABLE_ROS
-template class visual_memory<pcl_image, exact_visual_archetype>;
+template class visual_long_term_memory<opencv_image, exact_visual_archetype>;
 #endif
