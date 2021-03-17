@@ -13,6 +13,7 @@
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "vision_interface.h"
+#include "visual_sensory_memory.h"
 #endif
 #ifdef ENABLE_ROS
 #include <boost/thread.hpp>
@@ -342,6 +343,7 @@ class svs : public svs_interface, public cliproxy
 
 #ifdef ENABLE_OPENCV
         vision_interface*         vi;
+        visual_sensory_memory*    vsm;
 
         exact_opencv_mem*         v_mem_opencv;
 #endif
