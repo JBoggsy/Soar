@@ -104,6 +104,8 @@ public:
     bool operator==(opencv_image& other);
 
     float compare(opencv_image* other);
+
+    void draw_image(std::string filename);
 private:
     cv::Mat* _img = NULL;
 };
