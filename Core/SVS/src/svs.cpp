@@ -514,10 +514,10 @@ void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_
 #endif
 
 #ifdef ENABLE_OPENCV
-void svs::image_callback(const cv::Mat& msg)
+void svs::image_callback(const cv::Mat& new_img)
 {
     if (!enabled) return;
-    vsm->update_percept_buffer(msg);
+    vsm->update_percept_buffer(new_img);
 }
 #endif
 
