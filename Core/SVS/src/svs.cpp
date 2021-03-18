@@ -176,22 +176,18 @@ void sgwme::delete_tag(const string& tag_name)
 
 svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
     : svsp(svsp), parent(NULL), state(state), si(si), level(0),
-      scene_num(-1), scene_num_wme(NULL), scn(scn), img(NULL),
-      scene_link(NULL)
+      scene_num(-1), scene_num_wme(NULL), scn(scn), scene_link(NULL)
 {
     assert(state->is_top_state());
     state->get_id_name(name);
-    imagination = imagination_opencv();
     init();
 }
 
 svs_state::svs_state(Symbol* state, svs_state* parent)
     : parent(parent), state(state), svsp(parent->svsp), si(parent->si),
       level(parent->level + 1), scene_num(-1),
-      scene_num_wme(NULL), scn(NULL), img(NULL),
-      scene_link(NULL)
+      scene_num_wme(NULL), scn(NULL), scene_link(NULL)
 {
-    imagination = imagination_opencv();
     assert(state->get_parent_state() == parent->state);
     init();
 }
@@ -210,7 +206,6 @@ svs_state::~svs_state()
         svsp->get_drawer()->delete_scene(scn->get_name());
         delete scn; // results in root being deleted also
     }
-    imagination = imagination_opencv();
 }
 
 void svs_state::init()
@@ -221,8 +216,6 @@ void svs_state::init()
     svs_link = si->get_wme_val(si->make_svs_wme(state));
     cmd_link = si->get_wme_val(si->make_id_wme(svs_link, cs.cmd));
     scene_link = si->get_wme_val(si->make_id_wme(svs_link, cs.scene));
-    img_link = si->get_wme_val(si->make_id_wme(svs_link, cs.image));
-    imagine_link = si->get_wme_val(si->make_id_wme(svs_link, cs.imagination));
 
     if (!scn)
     {
@@ -237,28 +230,8 @@ void svs_state::init()
             scn->set_draw(true);
         }
     }
-    if (!img) {
-#ifdef ENABLE_ROS
-        img_pcl = new pcl_image();
-        if (parent) {
-            img_pcl->copy_from(parent->img_pcl);
-        }
-#endif
-#ifdef ENABLE_OPENCV
-        img_opencv = new opencv_image();
-        if (parent) {
-            img_opencv->copy_from(parent->img_opencv);
-        }
-#endif
-        img = new basic_image();
-        if (parent) {
-            img->copy_from(parent->img);
-        }
-    }
-
     scn->refresh_draw();
     root = new sgwme(si, scene_link, (sgwme*) NULL, scn->get_root());
-    imwme = new image_descriptor(si, img_link, img);
 }
 
 void svs_state::update_scene_num()
@@ -541,13 +514,10 @@ void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_
 #endif
 
 #ifdef ENABLE_OPENCV
-void svs::image_callback(const cv::Mat& new_img)
+void svs::image_callback(const cv::Mat& msg)
 {
     if (!enabled) return;
-    if (!state_stack.front()->get_image_opencv()) { return; }
-
-    // Updates only the top state image for now.
-    state_stack.front()->get_image_opencv()->update_image(new_img);
+    vsm->update_percept_buffer(msg);
 }
 #endif
 
