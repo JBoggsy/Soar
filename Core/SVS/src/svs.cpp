@@ -386,6 +386,7 @@ svs::svs(agent* a)
 #ifdef ENABLE_OPENCV
     vi = new vision_interface(this);
     v_mem_opencv = new visual_long_term_memory<opencv_image, exact_visual_archetype>(this);
+    vsm = new visual_sensory_memory(this);
 #endif
 }
 
