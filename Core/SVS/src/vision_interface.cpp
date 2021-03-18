@@ -64,50 +64,50 @@ void vision_interface::proxy_use_sub(const std::vector<std::string>& args, std::
 ////////////////////
 
 void vision_interface::setfile(std::string filepath) {
-    _target_filepath = filepath;
+    // _target_filepath = filepath;
 }
 
 void vision_interface::load() {
-    cv::Mat new_image = cv::imread(_target_filepath.c_str());
-    _svs_ptr->image_callback(new_image);
+    // cv::Mat new_image = cv::imread(_target_filepath.c_str());
+    // _svs_ptr->image_callback(new_image);
 }
 
 void vision_interface::save(std::string filepath) {
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    cv::Mat image = *percept->get_image();
-    cv::imwrite(filepath, image);
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // cv::Mat image = *percept->get_image();
+    // cv::imwrite(filepath, image);
 }
 
 void vision_interface::remember(std::string ID) {
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    _svs_ptr->get_v_mem_opencv()->store_percept(percept, ID);
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // _svs_ptr->get_v_mem_opencv()->store_percept(percept, ID);
 }
 
 void vision_interface::recall(std::string ID) {
-    opencv_image* percept = new opencv_image();
-    _svs_ptr->get_v_mem_opencv()->recall(ID, percept);
-    _svs_ptr->image_callback(*percept->get_image());
+    // opencv_image* percept = new opencv_image();
+    // _svs_ptr->get_v_mem_opencv()->recall(ID, percept);
+    // _svs_ptr->image_callback(*percept->get_image());
 }
 
 void vision_interface::match(vmem_match* output) {
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    _svs_ptr->get_v_mem_opencv()->match(percept, output);
-    printf("Match found: %s, %f\n", output->entity_id.c_str(), output->confidence);
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // _svs_ptr->get_v_mem_opencv()->match(percept, output);
+    // printf("Match found: %s, %f\n", output->entity_id.c_str(), output->confidence);
 }
 
 void vision_interface::rotate(int amount) {
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    switch (amount) {
-        case 90:
-            rotate_90(*percept);
-            break;
-        case 180:
-            rotate_180(*percept);
-            break;
-        case 270:
-            rotate_270(*percept);
-            break;
-    }
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // switch (amount) {
+    //     case 90:
+    //         rotate_90(*percept);
+    //         break;
+    //     case 180:
+    //         rotate_180(*percept);
+    //         break;
+    //     case 270:
+    //         rotate_270(*percept);
+    //         break;
+    // }
 }
 
 ///////////////////
@@ -115,120 +115,120 @@ void vision_interface::rotate(int amount) {
 /////////////////
 
 void vision_interface::cli_setfile(const std::vector<std::string>& args, std::ostream& os) {
-    if (args.empty()) {
-        os << "No filepath specified." << std::endl;
-        return;
-    }
+    // if (args.empty()) {
+    //     os << "No filepath specified." << std::endl;
+    //     return;
+    // }
 
-    // Ensure the specified file exists
-    std::string new_target_filepath(args[0]);
-    if (!_file_exists(new_target_filepath)) {
-        os << "Specified path " << new_target_filepath <<" does not exist." << std::endl;
-        return;
-    }
+    // // Ensure the specified file exists
+    // std::string new_target_filepath(args[0]);
+    // if (!_file_exists(new_target_filepath)) {
+    //     os << "Specified path " << new_target_filepath <<" does not exist." << std::endl;
+    //     return;
+    // }
 
-    _target_filepath = new_target_filepath;
-    return;
+    // _target_filepath = new_target_filepath;
+    // return;
 }
 
 void vision_interface::cli_load(const std::vector<std::string>& args, std::ostream& os) {
-    cv::Mat new_image = cv::imread(_target_filepath.c_str());
-    printf("Loaded image: %d\n", (int)new_image.empty());
-    _svs_ptr->image_callback(new_image);
-    os << "Wrote image in " << _target_filepath << " to visual input." << std::endl;
-    return;
+    // cv::Mat new_image = cv::imread(_target_filepath.c_str());
+    // printf("Loaded image: %d\n", (int)new_image.empty());
+    // _svs_ptr->image_callback(new_image);
+    // os << "Wrote image in " << _target_filepath << " to visual input." << std::endl;
+    // return;
 }
 
 void vision_interface::cli_save(const std::vector<std::string>& args, std::ostream& os) {
-    if (args.empty()) {
-        os << "Specify a file path to write to." << std::endl;
-        return;
-    }
-    std::string filepath = args[0]; 
+    // if (args.empty()) {
+    //     os << "Specify a file path to write to." << std::endl;
+    //     return;
+    // }
+    // std::string filepath = args[0]; 
 
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    cv::Mat image = *percept->get_image();
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // cv::Mat image = *percept->get_image();
 
-    cv::imwrite(filepath, image);
-    os << "Wrote image to file " << filepath << std::endl;
+    // cv::imwrite(filepath, image);
+    // os << "Wrote image to file " << filepath << std::endl;
 }
 
 void vision_interface::cli_remember(const std::vector<std::string>& args, std::ostream& os) {
-    if (args.empty()) {
-        os << "This command needs an ID parameter." << std::endl;
-        return;
-    }
-    std::string name = args[0];
+    // if (args.empty()) {
+    //     os << "This command needs an ID parameter." << std::endl;
+    //     return;
+    // }
+    // std::string name = args[0];
 
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    _svs_ptr->get_v_mem_opencv()->store_percept(percept, name);
-    os << "Remembered current percept as " << name << std::endl;
-    return;
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // _svs_ptr->get_v_mem_opencv()->store_percept(percept, name);
+    // os << "Remembered current percept as " << name << std::endl;
+    // return;
 }
 
 void vision_interface::cli_recall(const std::vector<std::string>& args, std::ostream& os) {
-    if (args.empty()) {
-        os << "This command needs an ID parameter." << std::endl;
-        return;
-    }
-    std::string name = args[0];
-    opencv_image* percept = new opencv_image();
-    _svs_ptr->get_v_mem_opencv()->recall(name, percept);
-    _svs_ptr->image_callback(*percept->get_image());
-    os << "Recalled percept " << name << std::endl;
-    return;
+    // if (args.empty()) {
+    //     os << "This command needs an ID parameter." << std::endl;
+    //     return;
+    // }
+    // std::string name = args[0];
+    // opencv_image* percept = new opencv_image();
+    // _svs_ptr->get_v_mem_opencv()->recall(name, percept);
+    // _svs_ptr->image_callback(*percept->get_image());
+    // os << "Recalled percept " << name << std::endl;
+    // return;
 }
 
 void vision_interface::cli_match(const std::vector<std::string>& args, std::ostream& os) {
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    vmem_match match;
-    _svs_ptr->get_v_mem_opencv()->match(percept, &match);
-    std::string match_id = match.entity_id;
-    float match_confidence = match.confidence;
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // vmem_match match;
+    // _svs_ptr->get_v_mem_opencv()->match(percept, &match);
+    // std::string match_id = match.entity_id;
+    // float match_confidence = match.confidence;
 
-    os << "Matched the current percept to " << match_id << " with " << match_confidence << " conf." << std::endl;    
-    return;
+    // os << "Matched the current percept to " << match_id << " with " << match_confidence << " conf." << std::endl;    
+    // return;
 }
 
 void vision_interface::cli_rotate(const std::vector<std::string>& args, std::ostream& os) {
-    opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
-    int rotation_amount = std::stoi(args[0]);
-    switch (rotation_amount) {
-        case 90:
-            rotate_90(*percept);
-            break;
-        case 180:
-            rotate_180(*percept);
-            break;
-        case 270:
-            rotate_270(*percept);
-            break;
-    }
+    // opencv_image* percept = _svs_ptr->get_root_state()->get_image_opencv();
+    // int rotation_amount = std::stoi(args[0]);
+    // switch (rotation_amount) {
+    //     case 90:
+    //         rotate_90(*percept);
+    //         break;
+    //     case 180:
+    //         rotate_180(*percept);
+    //         break;
+    //     case 270:
+    //         rotate_270(*percept);
+    //         break;
+    // }
 
-    os << "Rotated the current percept by " << args[0] << std::endl;    
-    return;
+    // os << "Rotated the current percept by " << args[0] << std::endl;    
+    // return;
 }
 
 void vision_interface::cli_export_imagination(const std::vector<std::string>& args, std::ostream& os) {
-    if (args.empty()) {
-        os << "Specify a file path to write to." << std::endl;
-        return;
-    }
-    std::string filepath = args[0]; 
+    // if (args.empty()) {
+    //     os << "Specify a file path to write to." << std::endl;
+    //     return;
+    // }
+    // std::string filepath = args[0]; 
 
-    opencv_image imagined_percept = opencv_image();
-    _svs_ptr->get_root_state()->get_imagination()->get_image(imagined_percept);
-    cv::Mat* image = imagined_percept.get_image();
+    // opencv_image imagined_percept = opencv_image();
+    // _svs_ptr->get_root_state()->get_imagination()->get_image(imagined_percept);
+    // cv::Mat* image = imagined_percept.get_image();
 
-    cv::imwrite(filepath, *image);
-    os << "Wrote image to file " << filepath << std::endl;
+    // cv::imwrite(filepath, *image);
+    // os << "Wrote image to file " << filepath << std::endl;
 }
 
 bool vision_interface::_file_exists(std::string filepath) {
-    FILE* exist_check = fopen(filepath.c_str(), "r");
-    if (exist_check == NULL) {
-        return false;
-    }
-    fclose(exist_check);
-    return true;
+    // FILE* exist_check = fopen(filepath.c_str(), "r");
+    // if (exist_check == NULL) {
+    //     return false;
+    // }
+    // fclose(exist_check);
+    // return true;
 }
