@@ -48,7 +48,7 @@ typedef struct vmem_match {
  * @sa visual_archetype
  */
 template <typename img_T, template<typename T> class atype_T>
-class visual_memory {
+class visual_long_term_memory {
 private:
     /**
      * @brief Provides a mapping between string entity IDs and the index of the
@@ -83,7 +83,7 @@ public:
      * instance.
      * 
      */
-    visual_memory(svs* svs_parent);
+    visual_long_term_memory(svs* svs_parent);
 
     /**
      * @brief 

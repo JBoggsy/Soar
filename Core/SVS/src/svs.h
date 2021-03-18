@@ -13,6 +13,7 @@
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "vision_interface.h"
+#include "visual_sensory_memory.h"
 #endif
 #ifdef ENABLE_ROS
 #include <boost/thread.hpp>
@@ -37,7 +38,7 @@ template<typename img_t>
 class exact_visual_archetype;
 
 template <typename img_T, template<typename T> class atype_T>
-class visual_memory;
+class visual_long_term_memory;
 
 class svs;
 
@@ -164,29 +165,6 @@ class svs_state : public cliproxy
         {
             return scn;
         }
-
-#ifdef ENABLE_ROS
-        pcl_image*         get_image_pcl() const
-        {
-            return img_pcl;
-        }
-#endif
-
-#ifdef ENABLE_OPENCV
-        opencv_image* get_image_opencv() const
-        {
-            return img_opencv;
-        }
-        imagination_opencv* get_imagination()
-        {
-            return &imagination;
-        }
-#endif
-
-        basic_image*       get_image_basic() const
-        {
-            return img;
-        }
         Symbol*        get_state()
         {
             return state;
@@ -215,23 +193,12 @@ class svs_state : public cliproxy
         svs_state*      parent;
         scene*          scn;
         sgwme*          root;
-        image_descriptor* imwme;
         soar_interface* si;
-#ifdef ENABLE_ROS
-        pcl_image*      img_pcl;
-#endif
-#ifdef ENABLE_OPENCV
-        opencv_image*   img_opencv;
-        imagination_opencv imagination;
-#endif
-        basic_image*    img;
 
         Symbol* state;
         Symbol* svs_link;
         Symbol* scene_link;
-        Symbol* img_link;
         Symbol* cmd_link;
-        Symbol* imagine_link;
         
         int scene_num;
         wme* scene_num_wme;
@@ -267,20 +234,14 @@ class svs : public svs_interface, public cliproxy
         svs_state* get_root_state() { return state_stack.at(0); }
         svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
 
-        typedef visual_memory<basic_image, exact_visual_archetype> exact_basic_mem;
-        exact_basic_mem* get_v_mem_basic() { return v_mem_basic; }
-
 #ifdef ENABLE_OPENCV
-        typedef visual_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
-
         void image_callback(const cv::Mat& new_img);
+        typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
         exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
 #endif
 #ifdef ENABLE_ROS
-        typedef visual_memory<pcl_image, exact_visual_archetype> exact_pcl_mem;
-
         void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
-        exact_pcl_mem* get_v_mem_pcl() {  return v_mem_pcl; }
+        ros_interface* get_ros_interface() { return ri; }
 #endif
 
         soar_interface* get_soar_interface()
@@ -336,18 +297,14 @@ class svs : public svs_interface, public cliproxy
 #ifdef ENABLE_ROS
         ros_interface*            ri;
         boost::mutex              input_mtx;
-       
-        exact_pcl_mem*            v_mem_pcl;
 #endif
 
 #ifdef ENABLE_OPENCV
         vision_interface*         vi;
-
         exact_opencv_mem*         v_mem_opencv;
+        visual_sensory_memory*    vsm;
+
 #endif
-
-        exact_basic_mem*          v_mem_basic;
-
         soar_interface*           si;
         std::vector<svs_state*>   state_stack;
         std::vector<std::string>  env_inputs;

@@ -195,6 +195,10 @@ float opencv_image::compare(opencv_image* other) {
     return mssim.val[0] + mssim.val[1] + mssim.val[2] + mssim.val[3];
 }
 
+void opencv_image::draw_image(std::string filename) {
+    cv::imwrite(filename, *_img);
+}
+
 #endif
 
 

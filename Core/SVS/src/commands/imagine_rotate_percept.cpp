@@ -4,7 +4,7 @@
 #include "svs.h"
 #include "symbol.h"
 #include "image.h"
-#include "visual_memory.h"
+#include "visual_long_term_memory.h"
 
 
 ///////////////////
@@ -18,7 +18,7 @@ private:
     Symbol* root;
     soar_interface* si;
     imagination_opencv* imagination;
-    visual_memory<opencv_image, exact_visual_archetype>* v_mem;
+    visual_long_term_memory<opencv_image, exact_visual_archetype>* v_mem;
 
 public:
     imagine_rotate_percept_command(svs_state* state, Symbol* root);
@@ -38,7 +38,7 @@ public:
 imagine_rotate_percept_command::imagine_rotate_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
     si = state->get_svs()->get_soar_interface();
-    imagination = state->get_imagination();
+    // imagination = state->get_imagination();
     v_mem = state->get_svs()->get_v_mem_opencv();
 }
 

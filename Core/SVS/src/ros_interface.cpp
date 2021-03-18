@@ -7,13 +7,16 @@
 #include <sstream>
 #include <math.h>
 
+#include <cv_bridge/cv_bridge.h>
+
 #include "svs.h"
 
 // Thresholds for determining when to update the scene graph
 const double ros_interface::POS_THRESH = 0.001; // 1 mm
 const double ros_interface::ROT_THRESH = 0.017; // approx 1 deg
 
-const std::string ros_interface::IMAGE_NAME = "image";
+const std::string ros_interface::RGB_IMAGE_NAME = "rgb_image";
+const std::string ros_interface::POINT_CLOUD_NAME = "point_cloud";
 const std::string ros_interface::SG_NAME = "scene_graph";
 const std::string ros_interface::JOINTS_NAME = "arm_pose";
 
@@ -24,17 +27,23 @@ ros_interface::ros_interface(svs* sp)
 
     // Set up the maps needed to track which inputs are enabled/disabled
     // and change this via command line
-    update_inputs[IMAGE_NAME] = false;
+    update_inputs[RGB_IMAGE_NAME] = false;
+    update_inputs[POINT_CLOUD_NAME] = false;
     update_inputs[SG_NAME] = false;
     update_inputs[JOINTS_NAME] = false;
 
-    enable_fxns[IMAGE_NAME] = std::bind(&ros_interface::subscribe_image, this);
+    enable_fxns[RGB_IMAGE_NAME] = std::bind(&ros_interface::subscribe_rgb, this);
+    enable_fxns[POINT_CLOUD_NAME] = std::bind(&ros_interface::subscribe_pc, this);
     enable_fxns[SG_NAME] = std::bind(&ros_interface::subscribe_sg, this);
     enable_fxns[JOINTS_NAME] = std::bind(&ros_interface::subscribe_joints, this);
 
-    disable_fxns[IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_image, this);
+    disable_fxns[RGB_IMAGE_NAME] = std::bind(&ros_interface::unsubscribe_rgb, this);
+    disable_fxns[POINT_CLOUD_NAME] = std::bind(&ros_interface::unsubscribe_pc, this);
     disable_fxns[SG_NAME] = std::bind(&ros_interface::unsubscribe_sg, this);
     disable_fxns[JOINTS_NAME] = std::bind(&ros_interface::unsubscribe_joints, this);
+
+    // Create the map of ROS Image publishers so SVS components can publish images
+    rgb_pubs = std::map<std::string, ros::Publisher>();
 }
 
 ros_interface::~ros_interface() {
@@ -85,18 +94,55 @@ bool ros_interface::t_diff(Eigen::Quaterniond& q1, Eigen::Quaterniond& q2) {
     return false;
 }
 
+// Create an image publisher with a unique string ID for an SVS component
+void ros_interface::create_rgb_publisher(std::string pub_ID) {
+    std::string topic_name = "svs_topics/"+pub_ID;
+    rgb_pubs[pub_ID] = n.advertise<sensor_msgs::Image>(topic_name, 5);
+    ROS_INFO("Publishing new svs_topic %s", pub_ID.c_str());
+}
+
+void ros_interface::publish_rgb_image(std::string pub_ID, cv::Mat image) {
+    sensor_msgs::Image* msg_image = new sensor_msgs::Image();
+    msg_image->data = std::vector<uchar>(image.datastart, image.dataend);
+    msg_image->encoding = "bgr8";
+    msg_image->header = std_msgs::Header();
+    msg_image->height = image.rows;
+    msg_image->width = image.cols;
+    msg_image->is_bigendian = 0;
+    msg_image->step = image.cols*image.elemSize();
+
+    sensor_msgs::Image::ConstPtr msg(msg_image);
+    rgb_pubs[pub_ID].publish(msg);
+}
+
+// Subscribes to an opencv image publisher
+void ros_interface::subscribe_rgb() {
+    rgb_sub = n.subscribe("/wow_mom_image_topic", 5, &ros_interface::rgb_callback, this);
+    image_source = "opencv";
+    update_inputs[RGB_IMAGE_NAME] = true;
+}
+
+// Unsubscribes to an opencv image publisher
+void ros_interface::unsubscribe_rgb() {
+    rgb_sub.shutdown();
+    update_inputs[RGB_IMAGE_NAME] = false;
+    image_source = "none";
+    sensor_msgs::Image::ConstPtr empty(new sensor_msgs::Image);
+    rgb_callback(empty);
+}
+
 // Subscribes to the Fetch's point cloud topic
-void ros_interface::subscribe_image() {
+void ros_interface::subscribe_pc() {
     pc_sub = n.subscribe("head_camera/depth_registered/points", 5, &ros_interface::pc_callback, this);
     image_source = "fetch";
-    update_inputs[IMAGE_NAME] = true;
+    update_inputs[POINT_CLOUD_NAME] = true;
 }
 
 // Unsubscribes from the point cloud topic and updates Soar with
 // an empty image
-void ros_interface::unsubscribe_image() {
+void ros_interface::unsubscribe_pc() {
     pc_sub.shutdown();
-    update_inputs[IMAGE_NAME] = false;
+    update_inputs[POINT_CLOUD_NAME] = false;
     image_source = "none";
     pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr empty(new pcl::PointCloud<pcl::PointXYZRGB>);
     pc_callback(empty);
@@ -128,6 +174,12 @@ void ros_interface::unsubscribe_joints() {
     update_inputs[JOINTS_NAME] = false;
     //gazebo_msgs::ModelStates::ConstPtr empty(new gazebo_msgs::ModelStates);
     //objects_callback(empty);
+}
+
+// Updates the OpenCV-based 2D RGB percept buffer in the visual sensory memory
+void ros_interface::rgb_callback(const sensor_msgs::ImageConstPtr& msg) {
+    cv_bridge::CvImagePtr msg_image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    svs_ptr->image_callback(msg_image_ptr->image);
 }
 
 // Adds relevant commands to the input list in the main SVS class
@@ -241,26 +293,28 @@ void ros_interface::joints_callback(const sensor_msgs::JointState::ConstPtr& msg
 void ros_interface::pc_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg) {
     svs_ptr->image_callback(msg);
 
-    if (!msg->isOrganized()) { return; }  // Can't convert unorganized cloud to cv::Mat
+    // TODO: fix pc_callback to convert point clouds into flat 2d images
 
-    // Convert to OpenCV Mat and update OpenCV image as well
-    int img_rows = msg->height;
-    int img_cols = msg->width;
+    // if (!msg->isOrganized()) { return; }  // Can't convert unorganized cloud to cv::Mat
 
-    cv::Mat depth_map = cv::Mat(img_rows, img_cols, CV_32FC1);
-    cv::Mat flat_image = cv::Mat(img_rows, img_cols, CV_8UC3);
+    // // Convert to OpenCV Mat and update OpenCV image as well
+    // int img_rows = msg->height;
+    // int img_cols = msg->width;
+
+    // cv::Mat depth_map = cv::Mat(img_rows, img_cols, CV_32FC1);
+    // cv::Mat flat_image = cv::Mat(img_rows, img_cols, CV_8UC3);
     
-    for(int r=0; r < img_rows; r++) {
-        for(int c=0; c < img_cols; c++) {
-            pcl::PointXYZRGB point = msg->at(r, c);
-            cv::Vec3b point_color = cv::Vec3b(point.b, point.g, point.r);
+    // for(int r=0; r < img_rows; r++) {
+    //     for(int c=0; c < img_cols; c++) {
+    //         pcl::PointXYZRGB point = msg->at(r, c);
+    //         cv::Vec3b point_color = cv::Vec3b(point.b, point.g, point.r);
 
-            depth_map.at<float>(r, c) = point.z;
-            flat_image.at<cv::Vec3b>(r, c) = point_color;
-        }
-    }
+    //         depth_map.at<float>(r, c) = point.z;
+    //         flat_image.at<cv::Vec3b>(r, c) = point_color;
+    //     }
+    // }
 
-    svs_ptr->image_callback(flat_image);
+    // svs_ptr->image_callback(flat_image);
 }
 
 void ros_interface::proxy_get_children(std::map<std::string, cliproxy*>& c) {
