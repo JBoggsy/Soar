@@ -165,29 +165,6 @@ class svs_state : public cliproxy
         {
             return scn;
         }
-
-#ifdef ENABLE_ROS
-        pcl_image*         get_image_pcl() const
-        {
-            return img_pcl;
-        }
-#endif
-
-#ifdef ENABLE_OPENCV
-        opencv_image* get_image_opencv() const
-        {
-            return img_opencv;
-        }
-        imagination_opencv* get_imagination()
-        {
-            return &imagination;
-        }
-#endif
-
-        basic_image*       get_image_basic() const
-        {
-            return img;
-        }
         Symbol*        get_state()
         {
             return state;
@@ -216,23 +193,12 @@ class svs_state : public cliproxy
         svs_state*      parent;
         scene*          scn;
         sgwme*          root;
-        image_descriptor* imwme;
         soar_interface* si;
-#ifdef ENABLE_ROS
-        pcl_image*      img_pcl;
-#endif
-#ifdef ENABLE_OPENCV
-        opencv_image*   img_opencv;
-        imagination_opencv imagination;
-#endif
-        basic_image*    img;
 
         Symbol* state;
         Symbol* svs_link;
         Symbol* scene_link;
-        Symbol* img_link;
         Symbol* cmd_link;
-        Symbol* imagine_link;
         
         int scene_num;
         wme* scene_num_wme;
