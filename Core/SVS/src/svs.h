@@ -235,12 +235,13 @@ class svs : public svs_interface, public cliproxy
         svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
 
 #ifdef ENABLE_OPENCV
-        typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
         void image_callback(const cv::Mat& new_img);
+        typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
         exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
 #endif
 #ifdef ENABLE_ROS
         void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
+        ros_interface* get_ros_interface() { return ri; }
 #endif
 
         soar_interface* get_soar_interface()
