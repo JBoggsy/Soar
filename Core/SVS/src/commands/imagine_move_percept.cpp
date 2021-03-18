@@ -38,7 +38,7 @@ public:
 imagine_move_percept_command::imagine_move_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
     si = state->get_svs()->get_soar_interface();
-    imagination = state->get_imagination();
+    // imagination = state->get_imagination();
     v_mem = state->get_svs()->get_v_mem_opencv();
 }
 
