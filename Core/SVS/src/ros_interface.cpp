@@ -7,6 +7,8 @@
 #include <sstream>
 #include <math.h>
 
+#include <cv_bridge/cv_bridge.h>
+
 #include "svs.h"
 
 // Thresholds for determining when to update the scene graph
@@ -96,6 +98,7 @@ bool ros_interface::t_diff(Eigen::Quaterniond& q1, Eigen::Quaterniond& q2) {
 void ros_interface::create_rgb_publisher(std::string pub_ID) {
     std::string topic_name = "svs_topics/"+pub_ID;
     rgb_pubs[pub_ID] = n.advertise<sensor_msgs::Image>(topic_name, 5);
+    ROS_INFO("Publishing new svs_topic %s", pub_ID.c_str());
 }
 
 void ros_interface::publish_rgb_image(std::string pub_ID, cv::Mat image) {
@@ -174,9 +177,9 @@ void ros_interface::unsubscribe_joints() {
 }
 
 // Updates the OpenCV-based 2D RGB percept buffer in the visual sensory memory
-void ros_interface::rgb_callback(const sensor_msgs::Image::ConstPtr& msg) {
-    cv::Mat msg_image(msg->height, msg->width, CV_8U, (uchar*)msg->data.data());
-    svs_ptr->image_callback(msg_image);
+void ros_interface::rgb_callback(const sensor_msgs::ImageConstPtr& msg) {
+    cv_bridge::CvImagePtr msg_image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    svs_ptr->image_callback(msg_image_ptr->image);
 }
 
 // Adds relevant commands to the input list in the main SVS class

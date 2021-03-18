@@ -46,6 +46,9 @@ public:
     void start_ros();
     void stop_ros();
 
+    void create_rgb_publisher(std::string pub_ID);
+    void publish_rgb_image(std::string pub_ID, cv::Mat image);
+
     std::string get_image_source() { return image_source; }
 
 private:
@@ -59,9 +62,6 @@ private:
     static const std::string SG_NAME;
     static const std::string JOINTS_NAME;
 
-    void create_rgb_publisher(std::string pub_ID);
-    void publish_rgb_image(std::string pub_ID, cv::Mat image);
-    
     void subscribe_rgb();
     void unsubscribe_rgb();
     void subscribe_pc();
