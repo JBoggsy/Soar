@@ -31,7 +31,7 @@ class common_syms
         common_syms(soar_interface* si);
         ~common_syms();
 
-        Symbol* svs, *cmd, *scene, *image, *child, *result, *id, *status, *imagination;
+        Symbol* svs, *cmd, *scene, *vsm, *child, *result, *id, *status, *vwm, *vltm;
 
     private:
         soar_interface* si;
@@ -76,7 +76,7 @@ class soar_interface
         
         tc_number    new_tc_num();
         
-        uint64_t          get_timetag(wme* w);
+        uint64_t     get_timetag(wme* w);
         common_syms& get_common_syms()
         {
             return cs;
