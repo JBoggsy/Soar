@@ -31,7 +31,6 @@ private:
 
     std::map<int, visual_wme> vwmes;
 
-    
     void _add_vwme(visual_wme new_vwme);
 
 

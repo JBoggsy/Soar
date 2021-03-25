@@ -1,0 +1,5 @@
+#include "soar_interface.h"
+#include "svs.h"
+#include "image.h"
+#include "visual_working_memory.h"
+#include "visual_wme.h"
