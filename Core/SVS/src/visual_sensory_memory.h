@@ -4,13 +4,23 @@
 //////////////
 // PREAMBLE //
 //////////////
-// Standard Lib includes
+
+// standard lib includes
+////////////////////////
 #include <string>
+
 // SVS includes
+///////////////
 #include "image.h"
+
 // forward definitions
+//////////////////////
 class svs;
 
+
+/////////////////////////////////
+// visual_sensory_memory CLASS //
+/////////////////////////////////
 class visual_sensory_memory
 {
 private:
