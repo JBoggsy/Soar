@@ -5,6 +5,7 @@
 // PREAMBLE //
 //////////////
 #include <map>
+#include <string>
 
 // SVS includes
 ///////////////
@@ -29,13 +30,12 @@ private:
     soar_interface* si;
     Symbol* vwm_link;
 
-    std::map<int, visual_wme> vwmes;
+    std::map<std::string, visual_wme> vwmes;
 
     void _add_vwme(visual_wme new_vwme);
 
-
 public:
-    visual_working_memory(svs* svsp, soar_interface* _si);
+    visual_working_memory(svs* svsp, soar_interface* _si, Symbol* link);
     ~visual_working_memory();
 
     void add_vwme(visual_wme new_vwme);
@@ -43,7 +43,7 @@ public:
     void add_varch(visual_archetype* new_varch);
 
     void remove_vwme(visual_wme target);
-    void remove_vwme(int target);
+    void remove_vwme(std::string target_id);
 
     void move_vwme(int target, float new_x, float new_y);
     void translate_vwme(int target, float d_x, float d_y);

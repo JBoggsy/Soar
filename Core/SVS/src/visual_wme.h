@@ -14,7 +14,7 @@ public:
     visual_wme(std::string _id, visual_wme* _parent);
     ~visual_wme();
 
-
+    std::string get_id() { return id; }
 };
 
 
