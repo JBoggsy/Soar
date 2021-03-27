@@ -20,6 +20,16 @@ class opencv_image;
 class visual_archetype;
 
 
+//////////////////////////
+// vwme_metadata STRUCT //
+//////////////////////////
+typedef struct vwme_metadata {
+    int x, y;
+    double rotation;
+    bool h_mirror, v_mirror;
+} vwme_metadata;
+
+
 /////////////////////////////////
 // visual_working_memory CLASS //
 /////////////////////////////////
@@ -31,6 +41,7 @@ private:
     Symbol* vwm_link;
 
     std::map<std::string, visual_wme> vwmes;
+    std::map<std::string, vwme_metadata> metadata;
 
     void _add_vwme(visual_wme new_vwme);
 

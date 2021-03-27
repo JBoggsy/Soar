@@ -2,6 +2,7 @@
 #define VISUAL_WME_H
 
 #include <vector>
+#include "image.h"
 
 class visual_wme
 {
@@ -46,8 +47,13 @@ public:
 class image_vwme: public primitive_vwme
 {
 private:
+    opencv_image image;
 public:
     image_vwme(std::string _id, visual_wme* _parent);
     ~image_vwme();
-}
+
+    cv::Mat* get_image() { return image.get_image(); }
+    void set_image(cv::Mat* new_image) { image.set_image(new_image); }
+
+};
 #endif

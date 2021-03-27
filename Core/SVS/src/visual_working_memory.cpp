@@ -8,8 +8,6 @@ visual_working_memory::visual_working_memory(svs* svsp, soar_interface* soar_int
     svs_ptr = svsp;
     si = soar_int;
     vwm_link = link;
-
-    
 }
 
 void visual_working_memory::_add_vwme(visual_wme new_vwme) {
@@ -33,3 +31,5 @@ void visual_working_memory::remove_vwme(visual_wme target) {
 }
 
 void visual_working_memory::remove_vwme(std::string target) {
+    vwmes.erase(target);
+}
