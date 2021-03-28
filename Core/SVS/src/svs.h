@@ -10,8 +10,8 @@
 #include "svs_interface.h"
 #include "cliproxy.h"
 #ifdef ENABLE_OPENCV
-#include "visual_working_memory.h"
 #include <opencv2/opencv.hpp>
+#include "visual_working_memory.h"
 #include "vision_interface.h"
 #include "visual_sensory_memory.h"
 #endif
@@ -195,6 +195,8 @@ class svs_state : public cliproxy
         scene*          scn;
         sgwme*          root;
         soar_interface* si;
+
+        visual_working_memory* vwm;
 
         Symbol* state;
         Symbol* svs_link;
