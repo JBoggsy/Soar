@@ -225,12 +225,15 @@ void svs_state::init()
         if (parent)
         {
             scn = parent->scn->clone(name);
+            vwm = parent->vwm->clone(vwm_link);
         }
         else
         {
             // top state
             scn = new scene(name, svsp);
             scn->set_draw(true);
+
+            vwm = new visual_working_memory(svsp, si, vsm_link);
         }
     }
     scn->refresh_draw();
