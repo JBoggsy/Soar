@@ -34,18 +34,12 @@ command_table_entry* delete_node_command_entry();
 command_table_entry* set_tag_command_entry();
 command_table_entry* delete_tag_command_entry();
 
-// VISION COMMANDS
+// VISUAL SENSORY MEMORY COMMANDS
 //////////////////
 
 command_table_entry* set_file_command_entry();
 command_table_entry* save_percept_command_entry();
 command_table_entry* load_percept_command_entry();
-
-command_table_entry* remember_percept_command_entry();
-command_table_entry* recall_percept_command_entry();
-command_table_entry* match_percept_command_entry();
-
-command_table_entry* rotate_percept_command_entry();
 
 // IMAGINATION COMMANDS
 ///////////////////////
@@ -73,15 +67,15 @@ command_table::command_table()
     add(set_tag_command_entry());
     add(delete_tag_command_entry());
 
-    // Vision
+    // Visual Sensory Memory
 
     add(set_file_command_entry());
     add(save_percept_command_entry());
     add(load_percept_command_entry());
-    add(remember_percept_command_entry());
-    add(recall_percept_command_entry());
-    add(match_percept_command_entry());
-    add(rotate_percept_command_entry());
+    // add(remember_percept_command_entry());
+    // add(recall_percept_command_entry());
+    // add(match_percept_command_entry());
+    // add(rotate_percept_command_entry());
 
     // Imagination
 

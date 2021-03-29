@@ -390,7 +390,6 @@ svs::svs(agent* a)
 #endif
 
 #ifdef ENABLE_OPENCV
-    vi = new vision_interface(this);
     v_mem_opencv = new visual_long_term_memory<opencv_image, exact_visual_archetype>(this);
     vsm = new visual_sensory_memory(this, si);
 #endif
@@ -571,14 +570,14 @@ void svs::proxy_get_children(map<string, cliproxy*>& c)
     c["ros"] = ri;
 #endif
 #ifdef ENABLE_OPENCV
-    c["vision"] = vi;
+    c["vsm"] = vsm;
 
     for (size_t j = 0, jend = state_stack.size(); j < jend; ++j)
     {
         c[state_stack[j]->get_name()] = state_stack[j];
     }
-}
 #endif
+}
 
 bool svs::do_cli_command(const vector<string>& args, string& output)
 {

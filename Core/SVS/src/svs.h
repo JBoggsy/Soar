@@ -12,7 +12,6 @@
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "visual_working_memory.h"
-#include "vision_interface.h"
 #include "visual_sensory_memory.h"
 #endif
 #ifdef ENABLE_ROS
@@ -174,6 +173,9 @@ class svs_state : public cliproxy
         {
             return svsp;
         }
+        visual_working_memory* get_vwm() {
+            return vwm;
+        }
         
         /*
          Should only be called by svs::state_deletion_callback to save top-state scene
@@ -244,6 +246,7 @@ class svs : public svs_interface, public cliproxy
         void image_callback(const cv::Mat& new_img);
         typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
         exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
+        visual_sensory_memory* get_vsm() { return vsm; }
 #endif
 #ifdef ENABLE_ROS
         void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
@@ -253,10 +256,6 @@ class svs : public svs_interface, public cliproxy
         soar_interface* get_soar_interface()
         {
             return si;
-        }
-
-        vision_interface* get_vision_interface() {
-            return vi;
         }
 
         drawer* get_drawer() const
@@ -306,7 +305,6 @@ class svs : public svs_interface, public cliproxy
 #endif
 
 #ifdef ENABLE_OPENCV
-        vision_interface*         vi;
         exact_opencv_mem*         v_mem_opencv;
         visual_sensory_memory*    vsm;
 

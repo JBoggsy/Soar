@@ -8,7 +8,6 @@
 #include "command_table.h"
 #include "svs.h"
 #include "symbol.h"
-#include "vision_interface.h"
 
 
 //////////////////
@@ -21,7 +20,7 @@ private:
     svs_state*          state;
     Symbol*             root;
     soar_interface*     si;
-    vision_interface*   vi;
+    visual_sensory_memory*   vsm;
 
 public:
     set_file_command(svs_state* state, Symbol* root);
@@ -40,7 +39,7 @@ set_file_command::set_file_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) 
 {
     si = state->get_svs()->get_soar_interface();
-    vi = state->get_svs()->get_vision_interface();
+    vsm = state->get_svs()->get_vsm();
 }
 
 set_file_command::~set_file_command() {}
@@ -56,7 +55,7 @@ bool set_file_command::update_sub() {
         return false;
     }
 
-    vi->setfile(filepath);
+    vsm->setfile(filepath);
     set_status("success");
     return true;
 }

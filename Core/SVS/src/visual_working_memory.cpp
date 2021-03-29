@@ -35,8 +35,10 @@ void visual_working_memory::_add_vwme(image_vwme new_vwme) {
 void visual_working_memory::add_vwme(image_vwme new_vwme) {
     _add_vwme(new_vwme);
 }
-void visual_working_memory::add_image(opencv_image* new_image) {
-    // TODO: Implement
+void visual_working_memory::add_image(opencv_image* new_image, std::string id) {
+    image_vwme* new_vwme = new image_vwme(id, NULL);
+    new_vwme->set_image(new_image->get_image());
+    _add_vwme(*new_vwme);
 }
 // void visual_working_memory::add_varch(visual_archetype* new_varch) {
 //     // TODO: Implement

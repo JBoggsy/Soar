@@ -12,16 +12,16 @@
 /////////////////
 #ifdef ENABLE_OPENCV
 
-class imagine_add_percept_command : public command {
+class recall_command : public command {
 private:
     svs_state* state;
     Symbol* root;
     soar_interface* si;
-    // imagination_opencv* imagination;
+    visual_working_memory* vwm;
     visual_long_term_memory<opencv_image, exact_visual_archetype>* v_mem;
 
 public:
-    imagine_add_percept_command(svs_state* state, Symbol* root);
+    recall_command(svs_state* state, Symbol* root);
     
     int command_type() { return SVS_WRITE_COMMAND; }
     std::string description();
@@ -34,18 +34,18 @@ public:
 ////////////////
 #ifdef ENABLE_OPENCV
 
-imagine_add_percept_command::imagine_add_percept_command(svs_state* state, Symbol* root)
+recall_command::recall_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
     si = state->get_svs()->get_soar_interface();
-    // imagination = state->get_imagination();
+    vwm = state->get_vwm();
     v_mem = state->get_svs()->get_v_mem_opencv();
 }
 
-std::string imagine_add_percept_command::description() {
-    return std::string("Add a new imagined percept to the imagined scene.");
+std::string recall_command::description() {
+    return std::string("Recall a percept from visual ltm to visual working memory.");
 }
 
-bool imagine_add_percept_command::update_sub() {
+bool recall_command::update_sub() {
     std::string id;
     long int x;
     long int y;
@@ -63,8 +63,9 @@ bool imagine_add_percept_command::update_sub() {
     }
 
     opencv_image percept_copy = opencv_image();
-    state->get_svs()->get_v_mem_opencv()->recall(id, &percept_copy);
-    // imagination->add_percept(percept_copy, x, y);
+    v_mem->recall(id, &percept_copy);
+    vwm->add_image(&percept_copy, id);
+    vwm->move_vwme(id, x, y);
 
     set_status("success");
     return true;
@@ -76,15 +77,15 @@ bool imagine_add_percept_command::update_sub() {
 // COMMAND TABLE FUNCTIONS //
 ////////////////////////////
 
-command* _make_imagine_add_percept_command_(svs_state* state, Symbol* root) {
-    return new imagine_add_percept_command(state, root);
+command* _make_recall_command_(svs_state* state, Symbol* root) {
+    return new recall_command(state, root);
 }
 
-command_table_entry* imagine_add_percept_command_entry() {
+command_table_entry* recall_command_entry() {
     command_table_entry* e = new command_table_entry();
-    e->name = "imagine_add_percept";
-    e->description = "Add a new imagined percept to the imagined scene.";
-    e->create = &_make_imagine_add_percept_command_;
+    e->name = "recall_command";
+    e->description = "Recall a percept from visual ltm to visual working memory.";
+    e->create = &_make_recall_command_;
     e->parameters["id"] = "The ID of the archetype to imagine.";
     e->parameters["x"] = "The x coordinate to place the imagined percept.";
     e->parameters["y"] = "The y coordinate to place the imagined percept.";
