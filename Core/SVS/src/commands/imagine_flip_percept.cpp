@@ -17,7 +17,7 @@ private:
     svs_state* state;
     Symbol* root;
     soar_interface* si;
-    imagination_opencv* imagination;
+    // imagination_opencv* imagination;
     visual_long_term_memory<opencv_image, exact_visual_archetype>* v_mem;
 
 public:
@@ -65,8 +65,8 @@ bool imagine_flip_percept_command::update_sub() {
     x = (axes.find("x") != std::string::npos);  // `x` is true if "x" is in `axes`
     y = (axes.find("y") != std::string::npos);  // same for `y`
 
-    if (x) { imagination->flip_percept_horiz(id); }
-    if (y) { imagination->flip_percept_vert(id); }
+    // if (x) { imagination->flip_percept_horiz(id); }
+    // if (y) { imagination->flip_percept_vert(id); }
 
     set_status("success");
     return true;

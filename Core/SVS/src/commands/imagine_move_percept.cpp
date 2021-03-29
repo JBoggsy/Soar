@@ -17,7 +17,7 @@ private:
     svs_state* state;
     Symbol* root;
     soar_interface* si;
-    imagination_opencv* imagination;
+    // imagination_opencv* imagination;
     visual_long_term_memory<opencv_image, exact_visual_archetype>* v_mem;
 
 public:
@@ -66,7 +66,7 @@ bool imagine_move_percept_command::update_sub() {
         return false;
     }
 
-    imagination->move_percept(id, new_x, new_y);
+    // imagination->move_percept(id, new_x, new_y);
     set_status("success");
     return true;
     
