@@ -11,18 +11,24 @@
 // forward definitions
 class svs;
 
+
 class visual_sensory_memory
 {
 private:
     const static std::string ROS_TOPIC_NAME;
     const static int PERCEPT_BUFFER_SIZE = 1;
 
-    svs* _svs_ptr;
+    svs* svs_ptr;
+    soar_interface* si;
     opencv_image* percept_buffer [PERCEPT_BUFFER_SIZE];
-
+    Symbol* vsm_link;
+    wme* updated_link;
+    int update_counter;
 public:
-    visual_sensory_memory(svs* svs_ptr);
+    visual_sensory_memory(svs* svs_ptr, soar_interface* _si);
     ~visual_sensory_memory();
+
+    void add_wm_link(Symbol* vsm_link);
 
     void update_percept_buffer(const cv::Mat& new_percept);
     void draw_percept_buffer();

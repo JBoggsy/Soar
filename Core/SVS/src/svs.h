@@ -116,6 +116,7 @@ typedef command_set::iterator command_set_it;
  */
 class svs_state : public cliproxy
 {
+    friend class svs;
     public:
         /**
          * @brief Construct a new svs state object as the root of the svs state
@@ -199,6 +200,9 @@ class svs_state : public cliproxy
         Symbol* svs_link;
         Symbol* scene_link;
         Symbol* cmd_link;
+        Symbol* vsm_link;
+        Symbol* vwm_link;
+        Symbol* vltm_link;
         
         int scene_num;
         wme* scene_num_wme;
