@@ -73,7 +73,7 @@ public:
     visual_working_memory* clone(Symbol* link);
 
     void add_vwme(image_vwme new_vwme);
-    void add_image(opencv_image* new_image);
+    void add_image(opencv_image* new_image, std::string id);
     // void add_varch(visual_archetype* new_varch);
 
     void remove_vwme(image_vwme target);

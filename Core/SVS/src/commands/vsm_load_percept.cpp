@@ -8,7 +8,6 @@
 #include "command_table.h"
 #include "svs.h"
 #include "symbol.h"
-#include "vision_interface.h"
 
 
 //////////////////
@@ -21,7 +20,7 @@ private:
     svs_state*          state;
     Symbol*             root;
     soar_interface*     si;
-    vision_interface*   vi;
+    visual_sensory_memory* vsm;
 
 public:
     load_percept_command(svs_state* state, Symbol* root);
@@ -40,7 +39,7 @@ load_percept_command::load_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) 
 {
     si = state->get_svs()->get_soar_interface();
-    vi = state->get_svs()->get_vision_interface();
+    vsm = state->get_svs()->get_vsm();
 }
 
 load_percept_command::~load_percept_command() {}
@@ -50,7 +49,7 @@ std::string load_percept_command::description() {
 }
 
 bool load_percept_command::update_sub() {
-    vi->load();
+    vsm->load();
     set_status("success");
     return true;
 }

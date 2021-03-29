@@ -8,7 +8,6 @@
 #include "command_table.h"
 #include "svs.h"
 #include "symbol.h"
-#include "vision_interface.h"
 
 
 //////////////////
@@ -20,7 +19,7 @@ private:
     svs_state*          state;
     Symbol*             root;
     soar_interface*     si;
-    vision_interface*   vi;
+    visual_sensory_memory*   vsm;
 
 public:
     save_percept_command(svs_state* state, Symbol* root);
@@ -39,7 +38,7 @@ save_percept_command::save_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) 
 {
     si = state->get_svs()->get_soar_interface();
-    vi = state->get_svs()->get_vision_interface();
+    vsm = state->get_svs()->get_vsm();
 }
 
 save_percept_command::~save_percept_command() {}
@@ -55,7 +54,7 @@ bool save_percept_command::update_sub() {
         return false;
     }
 
-    vi->save(filepath);
+    vsm->save(filepath);
     set_status("success");
     return true;
 }
