@@ -17,7 +17,7 @@ private:
     svs_state* state;
     Symbol* root;
     soar_interface* si;
-    imagination_opencv* imagination;
+    // imagination_opencv* imagination;
     visual_long_term_memory<opencv_image, exact_visual_archetype>* v_mem;
 
 public:
@@ -60,7 +60,7 @@ bool imagine_rotate_percept_command::update_sub() {
         return false;
     }
 
-    imagination->rotate_percept_deg(id, amount);
+    // imagination->rotate_percept_deg(id, amount);
     set_status("success");
     return true;
 }

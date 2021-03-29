@@ -17,7 +17,7 @@ private:
     svs_state* state;
     Symbol* root;
     soar_interface* si;
-    imagination_opencv* imagination;
+    // imagination_opencv* imagination;
     visual_long_term_memory<opencv_image, exact_visual_archetype>* v_mem;
 
 public:
@@ -54,7 +54,7 @@ bool imagine_remove_percept_command::update_sub() {
         return false;
     }
 
-    imagination->remove_percept(id);
+    // imagination->remove_percept(id);
     set_status("success");
     return true;
 }

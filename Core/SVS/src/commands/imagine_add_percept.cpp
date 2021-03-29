@@ -17,7 +17,7 @@ private:
     svs_state* state;
     Symbol* root;
     soar_interface* si;
-    imagination_opencv* imagination;
+    // imagination_opencv* imagination;
     visual_long_term_memory<opencv_image, exact_visual_archetype>* v_mem;
 
 public:
@@ -64,7 +64,7 @@ bool imagine_add_percept_command::update_sub() {
 
     opencv_image percept_copy = opencv_image();
     state->get_svs()->get_v_mem_opencv()->recall(id, &percept_copy);
-    imagination->add_percept(percept_copy, x, y);
+    // imagination->add_percept(percept_copy, x, y);
 
     set_status("success");
     return true;
