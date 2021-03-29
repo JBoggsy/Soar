@@ -216,18 +216,24 @@ void svs_state::init()
     svs_link = si->get_wme_val(si->make_svs_wme(state));
     cmd_link = si->get_wme_val(si->make_id_wme(svs_link, cs.cmd));
     scene_link = si->get_wme_val(si->make_id_wme(svs_link, cs.scene));
+    vsm_link = si->get_wme_val(si->make_id_wme(svs_link, cs.vsm));
+    vwm_link = si->get_wme_val(si->make_id_wme(svs_link, cs.vwm));
+    vltm_link = si->get_wme_val(si->make_id_wme(svs_link, cs.vltm));
 
     if (!scn)
     {
         if (parent)
         {
             scn = parent->scn->clone(name);
+            vwm = parent->vwm->clone(vwm_link);
         }
         else
         {
             // top state
             scn = new scene(name, svsp);
             scn->set_draw(true);
+
+            vwm = new visual_working_memory(svsp, si, vsm_link);
         }
     }
     scn->refresh_draw();
@@ -386,7 +392,7 @@ svs::svs(agent* a)
 #ifdef ENABLE_OPENCV
     vi = new vision_interface(this);
     v_mem_opencv = new visual_long_term_memory<opencv_image, exact_visual_archetype>(this);
-    vsm = new visual_sensory_memory(this);
+    vsm = new visual_sensory_memory(this, si);
 #endif
 }
 
@@ -420,6 +426,7 @@ void svs::state_creation_callback(Symbol* state)
         }
         s = new svs_state(this, state, si, scn_cache);
         scn_cache = NULL;
+        vsm->add_wm_link(s->vsm_link);
     }
     else
     {

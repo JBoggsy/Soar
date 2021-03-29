@@ -10,8 +10,8 @@
 #include "svs_interface.h"
 #include "cliproxy.h"
 #ifdef ENABLE_OPENCV
-#include "visual_working_memory.h"
 #include <opencv2/opencv.hpp>
+#include "visual_working_memory.h"
 #include "vision_interface.h"
 #include "visual_sensory_memory.h"
 #endif
@@ -116,6 +116,7 @@ typedef command_set::iterator command_set_it;
  */
 class svs_state : public cliproxy
 {
+    friend class svs;
     public:
         /**
          * @brief Construct a new svs state object as the root of the svs state
@@ -195,10 +196,15 @@ class svs_state : public cliproxy
         sgwme*          root;
         soar_interface* si;
 
+        visual_working_memory* vwm;
+
         Symbol* state;
         Symbol* svs_link;
         Symbol* scene_link;
         Symbol* cmd_link;
+        Symbol* vsm_link;
+        Symbol* vwm_link;
+        Symbol* vltm_link;
         
         int scene_num;
         wme* scene_num_wme;

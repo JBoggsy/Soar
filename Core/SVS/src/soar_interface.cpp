@@ -21,11 +21,12 @@ common_syms::common_syms(soar_interface* si) : si(si)
     cmd    = si->make_sym("command");
     scene  = si->make_sym("spatial-scene");
     child  = si->make_sym("child");
-    image  = si->make_sym("image");
+    vsm    = si->make_sym("vsm");
+    vltm   = si->make_sym("vltm");
     result = si->make_sym("result");
     id     = si->make_sym("id");
     status = si->make_sym("status");
-    imagination  = si->make_sym("imagination");
+    vwm    = si->make_sym("vwm");
 }
 
 common_syms::~common_syms()
@@ -33,12 +34,13 @@ common_syms::~common_syms()
     si->del_sym(svs);
     si->del_sym(cmd);
     si->del_sym(scene);
-    si->del_sym(image);
+    si->del_sym(vsm);
     si->del_sym(child);
     si->del_sym(result);
     si->del_sym(id);
     si->del_sym(status);
-    si->del_sym(imagination);
+    si->del_sym(vltm);
+    si->del_sym(vwm);
 }
 
 soar_interface::soar_interface(agent* a)
