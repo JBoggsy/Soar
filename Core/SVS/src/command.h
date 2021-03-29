@@ -58,8 +58,8 @@ class command
         Symbol*         root;
         wme*            status_wme;
         std::string     curr_status;
-        size_t             subtree_size;
-        uint64_t           prev_max_time;
+        size_t          subtree_size;
+        uint64_t        prev_max_time;
         bool            first;
 };
 
