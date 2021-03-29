@@ -50,12 +50,12 @@ command_table_entry* rotate_percept_command_entry();
 // IMAGINATION COMMANDS
 ///////////////////////
 
-command_table_entry* imagine_add_percept_command_entry();
-command_table_entry* imagine_remove_percept_command_entry();
-command_table_entry* imagine_move_percept_command_entry();
-command_table_entry* imagine_translate_percept_command_entry();
-command_table_entry* imagine_rotate_percept_command_entry();
-command_table_entry* imagine_flip_percept_command_entry();
+// command_table_entry* imagine_add_percept_command_entry();
+// command_table_entry* imagine_remove_percept_command_entry();
+// command_table_entry* imagine_move_percept_command_entry();
+// command_table_entry* imagine_translate_percept_command_entry();
+// command_table_entry* imagine_rotate_percept_command_entry();
+// command_table_entry* imagine_flip_percept_command_entry();
 
 command_table::command_table()
 {
@@ -85,12 +85,12 @@ command_table::command_table()
 
     // Imagination
 
-    add(imagine_add_percept_command_entry());
-    add(imagine_remove_percept_command_entry());
-    add(imagine_move_percept_command_entry());
-    add(imagine_translate_percept_command_entry());
-    add(imagine_rotate_percept_command_entry());
-    add(imagine_flip_percept_command_entry());
+    // add(imagine_add_percept_command_entry());
+    // add(imagine_remove_percept_command_entry());
+    // add(imagine_move_percept_command_entry());
+    // add(imagine_translate_percept_command_entry());
+    // add(imagine_rotate_percept_command_entry());
+    // add(imagine_flip_percept_command_entry());
 }
 
 command* command_table::make_command(svs_state* state, wme* w)
