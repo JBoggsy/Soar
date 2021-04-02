@@ -46,26 +46,21 @@ std::string recall_command::description() {
 }
 
 bool recall_command::update_sub() {
-    std::string id;
-    long int x;
-    long int y;
+    std::string arch_id;
+    std::string vwme_id;
 
-    if (!si->get_const_attr(root, "id", id)) {
+    if (!si->get_const_attr(root, "arch_id", arch_id)) {
         set_status("No archetype ID specified");
         return false;
     }
-
-    if (!si->get_const_attr(root, "x", x)) {
-        x = 0;
-    }
-    if (!si->get_const_attr(root, "y", y)) {
-        y = 0;
+    if (!si->get_const_attr(root, "vwme_id", vwme_id)) {
+        set_status("No VWME ID specified");
+        return false;
     }
 
     opencv_image percept_copy = opencv_image();
-    v_mem->recall(id, &percept_copy);
-    vwm->add_image(&percept_copy, id);
-    vwm->move_vwme(id, x, y);
+    v_mem->recall(arch_id, &percept_copy);
+    vwm->add_image(&percept_copy, vwme_id);
 
     set_status("success");
     return true;
@@ -83,11 +78,10 @@ command* _make_recall_command_(svs_state* state, Symbol* root) {
 
 command_table_entry* recall_command_entry() {
     command_table_entry* e = new command_table_entry();
-    e->name = "recall_command";
+    e->name = "recall-percept";
     e->description = "Recall a percept from visual ltm to visual working memory.";
     e->create = &_make_recall_command_;
-    e->parameters["id"] = "The ID of the archetype to imagine.";
-    e->parameters["x"] = "The x coordinate to place the imagined percept.";
-    e->parameters["y"] = "The y coordinate to place the imagined percept.";
+    e->parameters["arch-id"] = "The ID of the archetype to imagine.";
+    e->parameters["vwme-id"] = "The unique string ID of the resulting vwme.";
     return e;
 }

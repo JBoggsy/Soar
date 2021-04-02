@@ -41,15 +41,16 @@ command_table_entry* set_file_command_entry();
 command_table_entry* save_percept_command_entry();
 command_table_entry* load_percept_command_entry();
 
-// IMAGINATION COMMANDS
+// VISUAL WORKING MEMORY COMMANDS
 ///////////////////////
 
-// command_table_entry* imagine_add_percept_command_entry();
-// command_table_entry* imagine_remove_percept_command_entry();
-// command_table_entry* imagine_move_percept_command_entry();
-// command_table_entry* imagine_translate_percept_command_entry();
-// command_table_entry* imagine_rotate_percept_command_entry();
-// command_table_entry* imagine_flip_percept_command_entry();
+command_table_entry* flip_percept_command_entry();
+command_table_entry* move_percept_command_entry();
+command_table_entry* recall_command_entry();
+command_table_entry* remember_percept_command_entry();
+command_table_entry* remove_percept_command_entry();
+command_table_entry* translate_percept_command_entry();
+command_table_entry* rotate_percept_command_entry();
 
 command_table::command_table()
 {
@@ -72,19 +73,16 @@ command_table::command_table()
     add(set_file_command_entry());
     add(save_percept_command_entry());
     add(load_percept_command_entry());
-    // add(remember_percept_command_entry());
-    // add(recall_percept_command_entry());
-    // add(match_percept_command_entry());
-    // add(rotate_percept_command_entry());
 
-    // Imagination
+    // Visual Working Memory
 
-    // add(imagine_add_percept_command_entry());
-    // add(imagine_remove_percept_command_entry());
-    // add(imagine_move_percept_command_entry());
-    // add(imagine_translate_percept_command_entry());
-    // add(imagine_rotate_percept_command_entry());
-    // add(imagine_flip_percept_command_entry());
+    add(flip_percept_command_entry());
+    add(move_percept_command_entry());
+    add(recall_command_entry());
+    add(remember_percept_command_entry());
+    add(remove_percept_command_entry());
+    add(rotate_percept_command_entry());
+    add(translate_percept_command_entry());
 }
 
 command* command_table::make_command(svs_state* state, wme* w)
