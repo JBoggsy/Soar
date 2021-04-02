@@ -113,6 +113,12 @@ public:
      * This does NOT shift the image.
      */
     void flip_vwme_vert(std::string vwme_ID);
+
+    /**
+     * @brief Return the percept represented by the current state of VWM.
+     * 
+     */
+    opencv_image* get_percept();
 };
 
 #endif

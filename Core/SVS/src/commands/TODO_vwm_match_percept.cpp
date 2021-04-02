@@ -12,10 +12,10 @@
 
 // class match_percept_command : public command {
 // private:
-//     svs_state*          state;
-//     Symbol*             root;
-//     soar_interface*     si;
-//     vision_interface*   vi;
+//     svs_state*              state;
+//     Symbol*                 root;
+//     soar_interface*         si;
+//     visual_working_memory*  vwm;
 
 // public:
 //     match_percept_command(svs_state* state, Symbol* root);
@@ -34,7 +34,7 @@
 //     : command(state, root), state(state), root(root) 
 // {
 //     si = state->get_svs()->get_soar_interface();
-//     vi = state->get_svs()->get_vision_interface();
+//     vwm = state->get_vwm();
 // }
 
 // match_percept_command::~match_percept_command() {}

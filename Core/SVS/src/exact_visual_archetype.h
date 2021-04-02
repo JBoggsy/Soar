@@ -33,7 +33,6 @@ class exact_visual_archetype : public visual_archetype<img_t> {
         img_t _percept;
         /**
          * @brief An identifier for the entity type/token this instance represents. 
-         * 
          */
         std::string _entity_id;
         

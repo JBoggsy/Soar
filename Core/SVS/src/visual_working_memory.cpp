@@ -153,7 +153,6 @@ void visual_working_memory::_draw_vwme(image_vwme vwme, vwme_metadata mdata) {
     int top_bound = mdata.y - drawn_img.rows/2;
 
     drawn_img.copyTo(canvas(cv::Rect(left_bound+origin.x, top_bound+origin.y, drawn_img.cols, drawn_img.rows)));
-
 }
 
 void visual_working_memory::_draw_canvas() {
@@ -166,4 +165,11 @@ void visual_working_memory::_draw_canvas() {
     }
 
     dirty = false;
+}
+
+opencv_image* visual_working_memory::get_percept() {
+    _draw_canvas();
+    opencv_image* percept_result = new opencv_image();
+    percept_result->set_image(&canvas);
+    return percept_result;
 }

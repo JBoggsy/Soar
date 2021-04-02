@@ -68,7 +68,7 @@ command* _make_set_file_command_(svs_state* state, Symbol* root)
 command_table_entry* set_file_command_entry()
 {
     command_table_entry* e = new command_table_entry();
-    e->name = "set_file";
+    e->name = "set-file";
     e->description = "Sets the file path SVS will load percepts from.";
     e->parameters["filepath"] = "The file path SVS will load percepts from.";
     e->create = &_make_set_file_command_;

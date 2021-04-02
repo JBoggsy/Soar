@@ -67,7 +67,7 @@ command* _make_save_percept_command_(svs_state* state, Symbol* root)
 command_table_entry* save_percept_command_entry()
 {
     command_table_entry* e = new command_table_entry();
-    e->name = "save_percept";
+    e->name = "save-percept";
     e->description = "Save the current visual percept to the given file.";
     e->parameters["filepath"] = "The file path SVS will save the percept to.";
     e->create = &_make_save_percept_command_;
