@@ -130,6 +130,10 @@ void visual_sensory_memory::save(std::string filepath) {
     percept_buffer[0]->draw_image(filepath);
 }
 
+opencv_image* visual_sensory_memory::give_vision() {
+    return percept_buffer[0];
+}
+
 
 bool visual_sensory_memory::_file_exists(std::string filepath) {
     FILE* exist_check = fopen(filepath.c_str(), "r");
