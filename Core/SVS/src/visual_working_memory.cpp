@@ -7,8 +7,11 @@
 ////////////////
 // CREATE VWM //
 ////////////////
+const std::string visual_working_memory::ROS_TOPIC_NAME = "vwm";
+
 visual_working_memory::visual_working_memory(svs* svsp, soar_interface* soar_int, Symbol* link) {
     svs_ptr = svsp;
+    svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
     si = soar_int;
     vwm_link = link;
 }
@@ -31,6 +34,7 @@ visual_working_memory* visual_working_memory::clone(Symbol* link) {
 void visual_working_memory::_add_vwme(image_vwme new_vwme) {
     vwmes.emplace(new_vwme.get_id(), new_vwme);
     metadata.emplace(new_vwme.get_id(), vwme_metadata());
+    _update();
 }
 void visual_working_memory::add_vwme(image_vwme new_vwme) {
     _add_vwme(new_vwme);
@@ -51,10 +55,12 @@ void visual_working_memory::add_image(opencv_image* new_image, std::string id) {
 void visual_working_memory::remove_vwme(image_vwme target) {
     vwmes.erase(target.get_id());
     metadata.erase(target.get_id());
+    _update();
 }
 void visual_working_memory::remove_vwme(std::string target) {
     vwmes.erase(target);
     metadata.erase(target);
+    _update();
 }
 
 
@@ -70,29 +76,35 @@ void visual_working_memory::translate_vwme(std::string vwme_ID, int dX, int dY) 
 
     move_vwme(vwme_ID, new_x, new_y);
     dirty = true;
+    _update();
 }
 void visual_working_memory::move_vwme(std::string vwme_ID, int new_x, int new_y) {
     metadata[vwme_ID].x = new_x;
     metadata[vwme_ID].y = new_y;
 
     dirty = true;
+    _update();
 }
 void visual_working_memory::rotate_vwme_rad(std::string vwme_ID, double rads) {
     float degs = rads * 180.0/M_PI;
     rotate_vwme_deg(vwme_ID, degs);
     dirty = true;
+    _update();
 }
 void visual_working_memory::rotate_vwme_deg(std::string vwme_ID, double degs) {
     metadata[vwme_ID].rotation = degs;
     dirty = true;
+    _update();
 }
 void visual_working_memory::flip_vwme_horiz(std::string vwme_ID) {
     metadata[vwme_ID].h_mirror = !metadata[vwme_ID].h_mirror;
     dirty = true;
+    _update();
 }
 void visual_working_memory::flip_vwme_vert(std::string vwme_ID) {
     metadata[vwme_ID].v_mirror = !metadata[vwme_ID].v_mirror;
     dirty = true;
+    _update();
 }
 
 
@@ -167,8 +179,12 @@ void visual_working_memory::_draw_canvas() {
     dirty = false;
 }
 
-opencv_image* visual_working_memory::get_percept() {
+void visual_working_memory::_update() {
     _draw_canvas();
+    svs_ptr->get_ros_interface()->publish_rgb_image(ROS_TOPIC_NAME, canvas);
+}
+
+opencv_image* visual_working_memory::get_percept() {
     opencv_image* percept_result = new opencv_image();
     percept_result->set_image(&canvas);
     return percept_result;

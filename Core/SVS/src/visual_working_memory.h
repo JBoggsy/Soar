@@ -50,6 +50,8 @@ typedef struct vwme_metadata {
 class visual_working_memory
 {
 private:
+    const static std::string ROS_TOPIC_NAME;
+    
     svs* svs_ptr;
     soar_interface* si;
     Symbol* vwm_link;
@@ -58,6 +60,7 @@ private:
     std::map<std::string, vwme_metadata> metadata;
 
     void _add_vwme(image_vwme new_vwme);
+    void _update();
 
     cv::Mat canvas;
     cv::Point2i origin;
