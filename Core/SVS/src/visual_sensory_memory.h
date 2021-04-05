@@ -118,6 +118,12 @@ public:
      * @param filepath The path to save the current visual input to.
      */
     void save(std::string filepath);
+
+    /**
+     * @brief Returns the visual percept as an opencv image.
+     * 
+     */
+    opencv_image* give_vision();
 };
 
 #endif
