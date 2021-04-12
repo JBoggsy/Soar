@@ -46,6 +46,7 @@ command_table_entry* load_percept_command_entry();
 
 command_table_entry* flip_percept_command_entry();
 command_table_entry* get_vision_command_entry();
+command_table_entry* match_percept_command_entry();
 command_table_entry* move_percept_command_entry();
 command_table_entry* recall_command_entry();
 command_table_entry* remember_percept_command_entry();
@@ -76,9 +77,9 @@ command_table::command_table()
     add(load_percept_command_entry());
 
     // Visual Working Memory
-
     add(flip_percept_command_entry());
     add(get_vision_command_entry());
+    add(match_percept_command_entry());
     add(move_percept_command_entry());
     add(recall_command_entry());
     add(remember_percept_command_entry());
