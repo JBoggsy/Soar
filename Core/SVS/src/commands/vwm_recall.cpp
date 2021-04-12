@@ -49,11 +49,11 @@ bool recall_command::update_sub() {
     std::string arch_id;
     std::string vwme_id;
 
-    if (!si->get_const_attr(root, "arch_id", arch_id)) {
+    if (!si->get_const_attr(root, "arch-id", arch_id)) {
         set_status("No archetype ID specified");
         return false;
     }
-    if (!si->get_const_attr(root, "vwme_id", vwme_id)) {
+    if (!si->get_const_attr(root, "vwme-id", vwme_id)) {
         set_status("No VWME ID specified");
         return false;
     }

@@ -117,6 +117,8 @@ public:
      */
     void flip_vwme_vert(std::string vwme_ID);
 
+    void identify();
+
     /**
      * @brief Return the percept represented by the current state of VWM.
      * 
