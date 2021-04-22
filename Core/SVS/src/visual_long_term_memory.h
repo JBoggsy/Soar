@@ -106,7 +106,7 @@ public:
     void store_percept(img_T* percept, std::string entity_id);
 
     /**
-     * @brief Given a point cloud, return a likely entity type/token.
+     * @brief Given a percept, return a likely entity type/token.
      * 
      * @details
      * Search through all of the entity - percept knowledge pairs in visual
@@ -120,6 +120,24 @@ public:
      * @param output A `vmem_match` object to write the best match into.
      */
     void match(img_T* percept, vmem_match* output);
+
+        /**
+     * @brief Given a percept and comparison function, return a likely entity type/token.
+     * 
+     * @details
+     * Search through all of the entity - percept knowledge pairs in visual
+     * memory and return the entity identifier most likely to correctly identify
+     * what the percept is. This method just iterates through each 
+     * visual_archetype stored in _archetypes and calls the given compare method on
+     * the given percept. The archetype with the highest resulting value is used
+     * as the match.
+     * 
+     * @param percept The percept to be identified.
+     * @param cmp_func A function which, given two percepts, compares them and 
+     *      returns their similarity as a double where higher is better
+     * @param output A `vmem_match` object to write the best match into.
+     */
+    void match(img_T* percept, double (*cmp_func)(img_T*, img_T*), vmem_match* output);
 
     /**
      * @brief Given the string identifier of a VisualArchetype instance presumed
