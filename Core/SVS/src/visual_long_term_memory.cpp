@@ -76,7 +76,7 @@ void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv
     }
 
     output->entity_id = best_match_name;
-    output->confidence = best_similarity/3;  // div 3 because similarity metric is 0-3
+    output->confidence = best_similarity;
 }
 
 // Explicit definition of visual_memory::match and ::search methods

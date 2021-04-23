@@ -15,6 +15,12 @@ double visual_matching::opencv::ssim_compare(opencv_image* a, opencv_image* b) {
     cv::Mat I1, I2;
     a->get_image()->convertTo(I1, d);            // cannot calculate on one byte large values
     b->get_image()->convertTo(I2, d);
+    
+    // Ensure I1 and I2 are the same size by padding with 0s
+    int max_height = cv::max(I1.size[0], I2.size[0]);
+    int max_width = cv::max(I1.size[1], I2.size[1]);
+    cv::copyMakeBorder(I1, I1, (max_height-I1.rows)/2, (max_height-I1.rows)/2, (max_width-I1.cols)/2, (max_width-I1.cols)/2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+    cv::copyMakeBorder(I2, I2, (max_height-I2.rows)/2, (max_height-I2.rows)/2, (max_width-I2.cols)/2, (max_width-I2.cols)/2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
 
     cv::Mat I2_2   = I2.mul(I2);        // I2^2
     cv::Mat I1_2   = I1.mul(I1);        // I1^2
@@ -70,6 +76,18 @@ double visual_matching::opencv::psnr_compare(opencv_image* a, opencv_image* b) {
     cv::Mat I1, I2;
     I1 = *(a->get_image());
     I2 = *(b->get_image());
+
+
+    // Ensure I1 and I2 are the same size by padding with 0s
+    int max_height = cv::max(I1.size[0], I2.size[0]);
+    int max_width = cv::max(I1.size[1], I2.size[1]);
+    cv::copyMakeBorder(I1, I1, (max_height-I1.rows)/2, (max_height-I1.rows)/2, (max_width-I1.cols)/2, (max_width-I1.cols)/2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+    cv::copyMakeBorder(I2, I2, (max_height-I2.rows)/2, (max_height-I2.rows)/2, (max_width-I2.cols)/2, (max_width-I2.cols)/2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+
+    // Blur for generality
+    cv::blur(I1, I1, cv::Size(3, 3));
+    cv::blur(I2, I2, cv::Size(3, 3));
+
     cv::absdiff(I1, I2, s1);       // |I1 - I2|
     s1.convertTo(s1, CV_32F);  // cannot make a square on 8 bits
     s1 = s1.mul(s1);           // |I1 - I2|^2
@@ -97,13 +115,22 @@ double visual_matching::opencv::psnr_compare(opencv_image* a, opencv_image* b) {
 double visual_matching::opencv::simple_template_compare(opencv_image* a, opencv_image* b) {
     cv::Mat base = *(a->get_image());
     cv::Mat tmpl = *(b->get_image());
+    cv::Mat base_gray, tmpl_gray;
     cv::Mat result_mat;
-    cv::Scalar result_scalar;
     double result;
 
-    cv::matchTemplate(base, tmpl, result_mat, cv::TM_SQDIFF);
-    result_scalar = cv::sum(result_mat);
-    result = result_scalar.val[0] + result_scalar.val[1] + result_scalar.val[2];
+
+    // Ensure base and tmpl are the same size by padding with 0s
+    int max_height = cv::max(base.size[0], tmpl.size[0]);
+    int max_width = cv::max(base.size[1], tmpl.size[1]);
+    cv::copyMakeBorder(base, base, (max_height-base.rows)/2, (max_height-base.rows)/2, (max_width-base.cols)/2, (max_width-base.cols)/2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+    cv::copyMakeBorder(tmpl, tmpl, (max_height-tmpl.rows)/2, (max_height-tmpl.rows)/2, (max_width-tmpl.cols)/2, (max_width-tmpl.cols)/2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+
+    cv::cvtColor(base, base_gray, cv::COLOR_BGRA2GRAY);
+    cv::cvtColor(tmpl, tmpl_gray, cv::COLOR_BGRA2GRAY);
+    cv::matchTemplate(base_gray, tmpl_gray, result_mat, cv::TM_CCOEFF_NORMED);
+    // printf("Templating result size: %d x %d\n", result_mat.cols, result_mat.rows);
+    cv::minMaxLoc(result_mat, NULL, &result, NULL, NULL);
 
     return result;
 }
