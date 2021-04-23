@@ -49,7 +49,7 @@ std::string match_percept_command::description() {
 bool match_percept_command::update_sub() {
     vmem_match percept_match;
     opencv_image* vwm_percept = vwm->get_percept();
-    vltm->match(vwm_percept, visual_matching::opencv::psnr_compare, &percept_match);
+    vltm->match(vwm_percept, visual_matching::opencv::simple_template_compare, &percept_match);
 
     wme* match_id_wme = si->make_wme(root, "id", percept_match.entity_id);
     wme* match_conf_wme = si->make_wme(root, "confidence", percept_match.confidence);

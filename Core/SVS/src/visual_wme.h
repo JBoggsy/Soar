@@ -61,7 +61,6 @@ public:
     }
 
     cv::Mat* get_image() { return image.get_image(); }
-    void set_image(cv::Mat* new_image) { image.set_image(new_image); }
-
+    void set_image(cv::Mat* new_image);
 };
 #endif

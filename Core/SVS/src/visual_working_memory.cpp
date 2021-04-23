@@ -143,7 +143,7 @@ void visual_working_memory::_generate_canvas() {
     canvas_width = MAX(canvas_width, 2);
     canvas_height = MAX(canvas_height, 2);
 
-    canvas = cv::Mat::zeros(canvas_height, canvas_width, CV_8UC3);
+    canvas = cv::Mat::zeros(canvas_height, canvas_width, CV_8UC4);
     origin = cv::Point2i(-left_bound, -top_bound);
 }
 
@@ -175,7 +175,6 @@ void visual_working_memory::_draw_canvas() {
     for (; vwme != vwmes.end(); vwme++) {
         _draw_vwme(vwme->second, metadata[vwme->first]);
     }
-
     dirty = false;
 }
 

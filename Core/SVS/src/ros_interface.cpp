@@ -104,7 +104,7 @@ void ros_interface::create_rgb_publisher(std::string pub_ID) {
 void ros_interface::publish_rgb_image(std::string pub_ID, cv::Mat image) {
     sensor_msgs::Image* msg_image = new sensor_msgs::Image();
     msg_image->data = std::vector<uchar>(image.datastart, image.dataend);
-    msg_image->encoding = "bgr8";
+    msg_image->encoding = "bgra8";
     msg_image->header = std_msgs::Header();
     msg_image->height = image.rows;
     msg_image->width = image.cols;
@@ -178,7 +178,7 @@ void ros_interface::unsubscribe_joints() {
 
 // Updates the OpenCV-based 2D RGB percept buffer in the visual sensory memory
 void ros_interface::rgb_callback(const sensor_msgs::ImageConstPtr& msg) {
-    cv_bridge::CvImagePtr msg_image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    cv_bridge::CvImagePtr msg_image_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGRA8);
     svs_ptr->image_callback(msg_image_ptr->image);
 }
 

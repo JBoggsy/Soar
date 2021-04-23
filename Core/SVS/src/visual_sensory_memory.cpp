@@ -122,7 +122,7 @@ void visual_sensory_memory::setfile(std::string filepath) {
 }
 
 void visual_sensory_memory::load() {
-    cv::Mat new_image = cv::imread(_target_filepath.c_str());
+    cv::Mat new_image = cv::imread(_target_filepath.c_str(), cv::IMREAD_UNCHANGED);
     svs_ptr->image_callback(new_image);
 }
 
