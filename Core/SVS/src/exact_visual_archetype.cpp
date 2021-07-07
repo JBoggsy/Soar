@@ -31,5 +31,9 @@ void exact_visual_archetype<img_t>::reconstruct(img_t* output) {
 
 // Explicit instantiations of EVAs
 template class exact_visual_archetype<basic_image>;
+#ifdef ENABLE_OPENCV
 template class exact_visual_archetype<opencv_image>;
+#endif
+#ifdef ENABLE_ROS
 template class exact_visual_archetype<pcl_image>;
+#endif

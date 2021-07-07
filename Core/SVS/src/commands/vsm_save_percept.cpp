@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include <sstream>
 #include <stdio.h>
@@ -73,3 +75,4 @@ command_table_entry* save_percept_command_entry()
     e->create = &_make_save_percept_command_;
     return e;
 }
+#endif

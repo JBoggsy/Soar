@@ -6,16 +6,21 @@
 #include "symbol.h"
 #include "soar_interface.h"
 
+#ifdef ENABLE_ROS
 const std::string visual_sensory_memory::ROS_TOPIC_NAME = "vsm";
+#endif
 
 visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
 {
     svs_ptr = _svs_ptr;
-    svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
     si = _si;
     vsm_link = NULL;
     updated_link = NULL;
     update_counter = 0;
+    
+    #ifdef ENABLE_ROS
+    svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
+    #endif
 }
 
 visual_sensory_memory::~visual_sensory_memory()
@@ -43,7 +48,10 @@ void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
 
 void visual_sensory_memory::draw_percept_buffer() {
     percept_buffer[0]->draw_image("percept_buffer.png");
+
+    #ifdef ENABLE_ROS
     svs_ptr->get_ros_interface()->publish_rgb_image(ROS_TOPIC_NAME, *percept_buffer[0]->get_image());
+    #endif
 }
 
 //////////////////////

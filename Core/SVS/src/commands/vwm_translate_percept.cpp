@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include "command.h"
 #include "command_table.h"
@@ -10,7 +12,6 @@
 ///////////////////
 // DECLARATIONS //
 /////////////////
-#ifdef ENABLE_OPENCV
 
 class translate_percept_command : public command {
 private:
@@ -27,12 +28,9 @@ public:
     bool update_sub();
 };
 
-#endif
-
 //////////////////
 // DEFINITIONS //
 ////////////////
-#ifdef ENABLE_OPENCV
 
 translate_percept_command::translate_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
@@ -69,9 +67,6 @@ bool translate_percept_command::update_sub() {
     return true; 
 }
 
-#endif
-
-
 //////////////////////////////
 // COMMAND TABLE FUNCTIONS //
 ////////////////////////////
@@ -90,3 +85,4 @@ command_table_entry* translate_percept_command_entry() {
     e->parameters["y"] = "The distance to translate the percept along the y axis.";
     return e;
 }
+#endif

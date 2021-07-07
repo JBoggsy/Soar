@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include "command.h"
 #include "command_table.h"
@@ -91,3 +93,4 @@ command_table_entry* flip_percept_command_entry() {
     e->parameters["axes"] = "The axes to flip on. Should be one of \"x\", \"y\", \"xy\", or \"yx\".";
     return e;
 }
+#endif

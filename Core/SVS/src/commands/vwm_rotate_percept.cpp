@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include "command.h"
 #include "command_table.h"
@@ -10,7 +12,6 @@
 ///////////////////
 // DECLARATIONS //
 /////////////////
-#ifdef ENABLE_OPENCV
 
 class rotate_percept_command : public command {
 private:
@@ -27,12 +28,9 @@ public:
     bool update_sub();
 };
 
-#endif
-
 //////////////////
 // DEFINITIONS //
 ////////////////
-#ifdef ENABLE_OPENCV
 
 rotate_percept_command::rotate_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
@@ -63,8 +61,6 @@ bool rotate_percept_command::update_sub() {
     return true;
 }
 
-#endif
-
 
 //////////////////////////////
 // COMMAND TABLE FUNCTIONS //
@@ -83,3 +79,4 @@ command_table_entry* rotate_percept_command_entry() {
     e->parameters["amount"] = "The number of degrees to rotate the percept, with positive being clockwise.";
     return e;
 }
+#endif

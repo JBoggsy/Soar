@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include "command.h"
 #include "command_table.h"
@@ -10,7 +12,6 @@
 ///////////////////
 // DECLARATIONS //
 /////////////////
-#ifdef ENABLE_OPENCV
 
 class recall_command : public command {
 private:
@@ -27,12 +28,10 @@ public:
     std::string description();
     bool update_sub();
 };
-#endif
 
 //////////////////
 // DEFINITIONS //
 ////////////////
-#ifdef ENABLE_OPENCV
 
 recall_command::recall_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
@@ -65,7 +64,6 @@ bool recall_command::update_sub() {
     set_status("success");
     return true;
 }
-#endif
 
 
 //////////////////////////////
@@ -85,3 +83,4 @@ command_table_entry* recall_command_entry() {
     e->parameters["vwme-id"] = "The unique string ID of the resulting vwme.";
     return e;
 }
+#endif

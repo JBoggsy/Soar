@@ -4,16 +4,22 @@
 #include "visual_working_memory.h"
 #include "visual_wme.h"
 
+#ifdef ENABLE_ROS
+const std::string visual_working_memory::ROS_TOPIC_NAME = "vwm";
+#endif
+
 ////////////////
 // CREATE VWM //
 ////////////////
-const std::string visual_working_memory::ROS_TOPIC_NAME = "vwm";
 
 visual_working_memory::visual_working_memory(svs* svsp, soar_interface* soar_int, Symbol* link) {
     svs_ptr = svsp;
-    svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
     si = soar_int;
     vwm_link = link;
+
+    #ifdef ENABLE_ROS
+    svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
+    #endif
 }
 visual_working_memory* visual_working_memory::clone(Symbol* link) {
     visual_working_memory* new_vwm = new visual_working_memory(svs_ptr, si, link);
@@ -180,7 +186,9 @@ void visual_working_memory::_draw_canvas() {
 
 void visual_working_memory::_update() {
     _draw_canvas();
+    #ifdef ENABLE_ROS
     svs_ptr->get_ros_interface()->publish_rgb_image(ROS_TOPIC_NAME, canvas);
+    #endif
 }
 
 opencv_image* visual_working_memory::get_percept() {

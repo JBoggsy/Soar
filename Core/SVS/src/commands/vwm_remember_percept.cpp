@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include "svs.h"
 #include "symbol.h"
 #include "visual_long_term_memory.h"
@@ -72,3 +74,4 @@ command_table_entry* remember_percept_command_entry()
     e->create = &_make_remember_percept_command_;
     return e;
 }
+#endif
