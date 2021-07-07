@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include <sstream>
 #include <stdio.h>
@@ -74,3 +76,4 @@ command_table_entry* set_file_command_entry()
     e->create = &_make_set_file_command_;
     return e;
 }
+#endif

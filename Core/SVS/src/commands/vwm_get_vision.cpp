@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include "command.h"
 #include "command_table.h"
@@ -8,7 +10,6 @@
 ///////////////////
 // DECLARATIONS //
 /////////////////
-#ifdef ENABLE_OPENCV
 
 class get_vision_command : public command {
 private:

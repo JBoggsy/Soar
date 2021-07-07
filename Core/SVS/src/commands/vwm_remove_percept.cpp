@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include "command.h"
 #include "command_table.h"
@@ -10,7 +12,6 @@
 ///////////////////
 // DECLARATIONS //
 /////////////////
-#ifdef ENABLE_OPENCV
 
 class remove_percept_command : public command {
 private:
@@ -27,12 +28,9 @@ public:
     bool update_sub();
 };
 
-#endif
-
 //////////////////
 // DEFINITIONS //
 ////////////////
-#ifdef ENABLE_OPENCV
 
 remove_percept_command::remove_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
@@ -56,7 +54,6 @@ bool remove_percept_command::update_sub() {
     set_status("success");
     return true;
 }
-#endif
 
 
 //////////////////////////////
@@ -75,3 +72,4 @@ command_table_entry* remove_percept_command_entry() {
     e->parameters["id"] = "The unique string ID of the vwme to remove.";
     return e;
 }
+#endif

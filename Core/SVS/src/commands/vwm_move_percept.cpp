@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include <string>
 #include "command.h"
 #include "command_table.h"
@@ -10,7 +12,6 @@
 ///////////////////
 // DECLARATIONS //
 /////////////////
-#ifdef ENABLE_OPENCV
 
 class move_percept_command : public command {
 private:
@@ -28,12 +29,9 @@ public:
     bool update_sub();
 };
 
-#endif
-
 //////////////////
 // DEFINITIONS //
 ////////////////
-#ifdef ENABLE_OPENCV
 
 move_percept_command::move_percept_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
@@ -71,7 +69,6 @@ bool move_percept_command::update_sub() {
     return true;
     
 }
-#endif
 
 //////////////////////////////
 // COMMAND TABLE FUNCTIONS //
@@ -91,3 +88,4 @@ command_table_entry* move_percept_command_entry() {
     e->parameters["y"] = "The y coordinate of the destination.";
     return e;
 }
+#endif

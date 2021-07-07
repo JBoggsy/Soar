@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENCV
+
 #include "svs.h"
 #include "symbol.h"
 #include "vision_interface.h"
@@ -70,3 +72,4 @@ command_table_entry* match_percept_command_entry()
     e->create = &_make_match_percept_command_;
     return e;
 }
+#endif
