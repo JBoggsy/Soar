@@ -76,8 +76,8 @@ Import('env', 'compiler', 'lsb_build')
 svs_env = env.Clone()
 svs_env['LIBS'] = []
 
-srcdirs = ['src', 'src/filters', 'src/commands', 'src/models']
-incdirs = [env.Dir(d).srcnode() for d in 'src src/models eigen ccd'.split()]
+srcdirs = ['src', 'src/filters', 'src/commands', 'src/models', 'base64']
+incdirs = [env.Dir(d).srcnode() for d in 'src src/models eigen ccd base64'.split()]
 scu_src = ['SVS.cxx']
 
 if compiler == 'g++':

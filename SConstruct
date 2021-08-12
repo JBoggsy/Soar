@@ -220,10 +220,12 @@ if compiler == 'g++':
         cflags.append('-DNO_SVS')
     if GetOption('useopencv'):
         cflags.append('-DENABLE_OPENCV')
-        libs += ['opencv_core', 'opencv_imgproc', 'opencv_highgui', 'opencv_imgcodecs', 'cv_bridge']
+        libs += ['opencv_core', 'opencv_imgproc', 'opencv_highgui', 'opencv_imgcodecs']
     if GetOption('useros'):
         cflags.append('-DENABLE_ROS')
         libs += ['roscpp', 'libpcl_common']
+    if GetOption('useopencv') and GetOption('useros'):
+        libs += ['cv_bridge']
     if GetOption('defflags'):
         cflags.append('-Wreturn-type')
         if GetOption('dbg'):
@@ -266,6 +268,8 @@ elif compiler == 'msvc':
     if GetOption('useros'):
         cflags.extend(' /D ENABLE_ROS'.split())
         libs += ['roscpp', 'libpcl_common']
+    if GetOption('useopencv') and GetOption('useros'):
+        libs += ['cv_bridge']
     if GetOption('defflags'):
         if GetOption('dbg'):
             cflags.extend(' /MDd /Z7 /DEBUG'.split())

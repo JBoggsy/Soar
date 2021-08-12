@@ -22,6 +22,9 @@
  * `svs vision.save <FILEPATH>` - Saves the current state of the agent's vision
  *      to the specified path.
  * 
+ * `svs vision.inject <IMGDATA>` - Injects an image into the agent's visual 
+ *      sensory memory. The IMGDATA field should be a base64-encoded image.
+ * 
  * `svs vision.remember <ID>` - Adds the current visual input to visual memory.
  * 
  * `svs vision.recall <ID>` - Retrieves the specified archetype from visual 
@@ -176,6 +179,15 @@ private:
      * @param os The output stream to write to.
      */
     void cli_save(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Injects an image into the agent's visual sensory memory. The 
+     * `imgdata` field should be a base64-encoded image.
+     * 
+     * @param args The args sent to the command. Must be a base64-encoded image.
+     * @param os The output stream to write to.
+     */
+    void cli_inject(const std::vector<std::string>& args, std::ostream& os);
 
     /**
      * @brief Adds the current visual input to visual memory.
