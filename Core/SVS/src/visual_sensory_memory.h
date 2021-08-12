@@ -94,6 +94,15 @@ public:
      */
     void cli_save(const std::vector<std::string>& args, std::ostream& os);
 
+    /**
+     * @brief Injects an image into the agent's visual sensory memory. The 
+     * `imgdata` field should be a base64-encoded image.
+     * 
+     * @param args The args sent to the command. Must be a base64-encoded image.
+     * @param os The output stream to write to.
+     */
+    void cli_inject(const std::vector<std::string>& args, std::ostream& os);
+
     ////////////////////////
     // WME-BASED COMMANDS //
     ////////////////////////

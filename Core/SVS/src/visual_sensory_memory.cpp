@@ -5,6 +5,9 @@
 #include "image.h"
 #include "symbol.h"
 #include "soar_interface.h"
+// Base64 library for image transfer
+#include "base64.h"
+
 
 #ifdef ENABLE_ROS
 const std::string visual_sensory_memory::ROS_TOPIC_NAME = "vsm";
@@ -65,6 +68,9 @@ void visual_sensory_memory::proxy_get_children(std::map<std::string, cliproxy*>&
     
     c["save"] = new memfunc_proxy<visual_sensory_memory>(this, &visual_sensory_memory::cli_save);
     c["save"]->add_arg("FILEPATH", "The path of the file to save the image to.");
+
+    c["inject"] =  new memfunc_proxy<visual_sensory_memory>(this, &visual_sensory_memory::cli_inject);
+    c["inject"]->add_arg("IMGDATA", "Base64-encoded image data to inject.");
 }
 
 void visual_sensory_memory::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
@@ -75,6 +81,7 @@ void visual_sensory_memory::proxy_use_sub(const std::vector<std::string>& args, 
     os << "svs vsm.setfile <FILEPATH> - Sets the image upload target to the given filepath."<< std::endl;
     os << "svs vsm.load - Loads the current image upload target into the agent's vision."<< std::endl;
     os << "svs vsm.save <FILEPATH> - Saves the current state of the agent's vision to the specified path."<< std::endl;
+    os << "svs vsm.inject <IMGDATA> - Injects the image defined by IMGDATA into VSM. Data should be base64."<< std::endl;
     os << "======================================" << std::endl;
 }
 
@@ -119,6 +126,22 @@ void visual_sensory_memory::cli_save(const std::vector<std::string>& args, std::
 
     cv::imwrite(filepath, image);
     os << "Wrote image to file " << filepath << std::endl;
+}
+
+void visual_sensory_memory::cli_inject(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "Image data required." << std::endl;
+        return;
+    }
+
+    std::string img_data = args[0];
+    std::string decoded_data = base64_decode(img_data);
+    std::vector<uchar> data(decoded_data.begin(), decoded_data.end());
+    cv::Mat img = cv::imdecode(cv::Mat(data), -1);
+
+    svs_ptr->image_callback(img);
+    os << "Injected image into visual input." << std::endl;
+    return;
 }
 
 ////////////////////////
