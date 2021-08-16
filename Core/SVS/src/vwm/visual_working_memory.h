@@ -14,6 +14,7 @@
 
 // SVS includes
 ///////////////
+#include "cliproxy.h"
 #include "visual_wme.h"
 
 // forward declarations
@@ -47,12 +48,45 @@ typedef struct vwme_metadata {
 /////////////////////////////////
 // visual_working_memory CLASS //
 /////////////////////////////////
-class visual_working_memory
+/**
+ * @details 
+ * CLI USAGE:
+ * 
+ * `svs vision` - Prints the last file uploaded to the agent, then this help
+ *      text.
+ * 
+ * `svs vision.setfile <FILEPATH>` - Sets the image upload target to the given
+ *      filepath.
+ * 
+ * `svs vision.load` - Loaads the current image upload target into the agent's 
+ *      vision.
+ * 
+ * `svs vision.save <FILEPATH>` - Saves the current state of the agent's vision
+ *      to the specified path.
+ * 
+ * `svs vision.inject <IMGDATA>` - Injects an image into the agent's visual 
+ *      sensory memory. The IMGDATA field should be a base64-encoded image.
+ * 
+ * `svs vision.remember <ID>` - Adds the current visual input to visual memory.
+ * 
+ * `svs vision.recall <ID>` - Retrieves the specified archetype from visual 
+ *      memory and sets the visual input to the result.
+ * 
+ * `svs vision.rotate <ANGLE>` - Rotates the current percept by 90, 180, or 270
+ *      degrees clockwise.
+ * 
+ * `svs vision.match` - Match the current percept to the best-fitting percept
+ *      stored in visual memory and return the ID of that match. 
+ * 
+ * `svs vision.export_imagination <FILEPATH` - Like `vision.save`, but for the
+ *      imagination buffer.
+ */
+class visual_working_memory : public cliproxy
 {
 private:
     const static std::string ROS_TOPIC_NAME;
     
-    svs* svs_ptr;
+    svs* _svs_ptr;
     soar_interface* si;
     Symbol* vwm_link;
 
@@ -69,9 +103,27 @@ private:
     void _draw_vwme(image_vwme vwme, vwme_metadata mdata);
     void _draw_canvas();
 
+    /**
+     * @brief Saves the entire VWM to a file specified in the command.
+     * 
+     * @param args The args sent to the command. Should include a file path.
+     * @param os The output stream to write to.
+     */
+    void cli_save(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Retrieves the specified archetype from visual memory and creates
+     * a new VWME with the result.
+     * 
+     * @param args The args sent to the command. Must include an archetype ID to
+     * retrieve.
+     * @param os The output stream to write to.
+     */
+    void cli_recall(const std::vector<std::string>& args, std::ostream& os);
+
 public:
     visual_working_memory(svs* svsp, soar_interface* _si, Symbol* link);
-    ~visual_working_memory();
+    ~visual_working_memory() {}
 
     visual_working_memory* clone(Symbol* link);
 
@@ -117,13 +169,30 @@ public:
      */
     void flip_vwme_vert(std::string vwme_ID);
 
-    void identify();
-
     /**
      * @brief Return the percept represented by the current state of VWM.
-     * 
      */
     opencv_image* get_percept();
+
+    /**
+     * @brief Provide a map of the sub-commands for this command to the CLI 
+     * parser.
+     * 
+     * @details The `svs vision` command family is outlined at the top of this
+     * file.
+     * 
+     * @param c A mapping of string identifiers to `cliproxy` instance.
+     */
+    void proxy_get_children(std::map<std::string, cliproxy*>& c);
+
+    /**
+     * @brief Provides the "base" functionality for the `svs vision` command.
+     * In particular, it writes the current target image file and a help message.
+     * 
+     * @param args The args sent to the command. These are discarded.
+     * @param os The output stream to write to.
+     */
+    void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
 };
 
 #endif

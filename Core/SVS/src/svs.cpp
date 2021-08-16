@@ -365,6 +365,7 @@ void svs_state::clear_scene()
 void svs_state::proxy_get_children(map<string, cliproxy*>& c)
 {
     c["scene"]        = scn;
+    c["vwm"]          = vwm;
 }
 
 void svs_state::disown_scene()
