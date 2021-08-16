@@ -2,7 +2,6 @@
 
 #include "svs.h"
 #include "symbol.h"
-#include "vision_interface.h"
 #include "visual_long_term_memory.h"
 #include "visual_matching.h"
 #include "command.h"
