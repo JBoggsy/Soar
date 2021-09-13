@@ -13,8 +13,7 @@
 const std::string visual_sensory_memory::ROS_TOPIC_NAME = "vsm";
 #endif
 
-visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
-{
+visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si) {
     svs_ptr = _svs_ptr;
     si = _si;
     vsm_link = NULL;
@@ -26,8 +25,7 @@ visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
     #endif
 }
 
-visual_sensory_memory::~visual_sensory_memory()
-{
+visual_sensory_memory::~visual_sensory_memory() {
 }
 
 void visual_sensory_memory::add_wm_link(Symbol* _vsm_link) {

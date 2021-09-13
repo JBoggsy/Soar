@@ -13,6 +13,7 @@
 ///////////////
 #include "image.h"
 #include "cliproxy.h"
+#include "visual_operation_graph.h"
 
 // forward definitions
 //////////////////////
@@ -34,6 +35,7 @@ private:
     Symbol* vsm_link;
     wme* updated_link;
     int update_counter;
+    visual_operation_graph vop_graph;
     
     std::string _target_filepath;
     bool _file_exists(std::string filepath);
