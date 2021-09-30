@@ -1,10 +1,11 @@
+// SVS INCLUDES
+#include "visual_operation.h"
+#include "visual_sensory_memory.h"
 #include "visual_operation_graph.h"
 
 
 visual_operation_graph::visual_operation_graph(visual_sensory_memory* _vsm) {
     vsm = _vsm;
-    root_node->id = 0;
-    root_node->v_op = visual_ops::load_from_file;
 
     // Create root node
     std::unordered_map<std::string, int> root_node_parents;
@@ -14,8 +15,8 @@ visual_operation_graph::visual_operation_graph(visual_sensory_memory* _vsm) {
     insert(root_node_parents, root_node_params, visual_ops::get_from_vsm);
 
     node_images = *new int_image_map;
-    num_operations++;
-    next_op_id++;
+
+    // TEMPORARY
 
     // NODE 4
 }
@@ -24,6 +25,15 @@ visual_operation_graph::~visual_operation_graph() {
     remove(0);
 }
 
+//////////////////////
+// CLIPROXY METHODS //
+//////////////////////
+void visual_operation_graph::proxy_get_children(std::map<std::string, cliproxy*>& c) {
+}
+
+void visual_operation_graph::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
+    os << "========== VSM INTERFACE ==========" << std::endl;
+    os << "======================================" << std::endl;
 }
 
 int visual_operation_graph::insert(std::unordered_map<std::string, int> parents, data_dict* params, void (*operation)(data_dict data_in)) {
