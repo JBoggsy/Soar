@@ -97,7 +97,7 @@ public:
     void copy_from(opencv_image* other);
 
     cv::Mat* get_image() { return _img; }
-    void set_image(cv::Mat* image) { if (_img == NULL) {_img = new cv::Mat();} image->copyTo(*_img); }
+    void set_image(cv::Mat* image);
     int get_width() {return _img->cols; }
     int get_height() { return _img->rows; }
     bool is_empty();
