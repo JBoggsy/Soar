@@ -19,6 +19,7 @@ visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
     vsm_link = NULL;
     updated_link = NULL;
     update_counter = 0;
+    vop_graph = new visual_operation_graph(this);
 
     // Fill the percept buffer with NULLs 
     for (int i=0; i<PERCEPT_BUFFER_SIZE; i++) {
@@ -60,8 +61,8 @@ void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
         }
         updated_link = si->make_wme(vsm_link, "updated", update_counter);
     }
-
-    draw_percept_buffer();
+    vop_graph->evaluate();
+    // draw_percept_buffer();
 }
 
 void visual_sensory_memory::draw_percept_buffer() {

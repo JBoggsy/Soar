@@ -35,7 +35,7 @@ private:
     Symbol* vsm_link;
     wme* updated_link;
     int update_counter;
-    visual_operation_graph vop_graph;
+    visual_operation_graph* vop_graph;
     
     std::string _target_filepath;
     bool _file_exists(std::string filepath);
@@ -90,6 +90,7 @@ public:
      * @param os The output stream to write to.
      */
     void cli_setfile(const std::vector<std::string>& args, std::ostream& os);
+
     /**
      * @brief Loads the target image file into the agent's visual input.
      * 
@@ -97,6 +98,7 @@ public:
      * @param os The output stream to write to.
      */
     void cli_load(const std::vector<std::string>& args, std::ostream& os);
+
     /**
      * @brief Saves the agent's visual input to a file specified in the command.
      * 
