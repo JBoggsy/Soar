@@ -49,7 +49,7 @@ bool get_vision_command::update_sub() {
         return false;
     }
 
-    opencv_image* vision = vsm->give_vision();
+    opencv_image* vision = vsm->get_vision();
     vwm->add_image(vision, id);
     set_status("success");
     return true;
