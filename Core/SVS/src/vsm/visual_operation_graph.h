@@ -9,19 +9,20 @@
 #include "visual_operation_data_structs.h"
 #include "visual_operation.h"
 #include "image.h"
+class visual_sensory_memory;
 
 
 typedef struct visual_operation_node {
     int id;
-    std::unordered_set<visual_operation_node*> children;
-    std::unordered_map<std::string, visual_operation_node*> parents;
+    std::unordered_set<int> children;
+    std::unordered_map<std::string, int> parents;
     data_dict parameters;
     void (*v_op)(data_dict args);
 } visual_operation_node;
 
-typedef std::unordered_set<visual_operation_node*>              node_ptr_set;
-typedef std::unordered_map<std::string, visual_operation_node*> str_node_ptr_map;
-typedef std::unordered_map<int, visual_operation_node>          int_node_map;
+// DEPRECATED typedef std::unordered_set<visual_operation_node*>              node_ptr_set;
+// DEPRECATED typedef std::unordered_map<std::string, visual_operation_node*> str_node_ptr_map;
+typedef std::unordered_map<int, visual_operation_node*>          id_node_map;
 
 /**
  * @brief Class which maintains a feed-forward graph structure of visual operations
@@ -56,7 +57,7 @@ typedef std::unordered_map<int, visual_operation_node>          int_node_map;
  */
 class visual_operation_graph {
     public:
-        visual_operation_graph();
+        visual_operation_graph(visual_sensory_memory* _vsm);
         ~visual_operation_graph();
 
         int get_num_operations() { return num_operations; }
@@ -96,11 +97,12 @@ class visual_operation_graph {
         void evaluate();
 
     private:
+        visual_sensory_memory* vsm;
         int num_operations = 0;
         int next_op_id = 0;
         visual_operation_node* root_node;
-        int_node_map nodes;
-        node_ptr_set leaf_nodes;
+        id_node_map nodes;
+        std::unordered_set<int> leaf_nodes;
 
         // Node images are created using `new` by the node when it is evaluated
         // the first time, and are all `delete`d at the end of evaluation.

@@ -1,30 +1,29 @@
 #include "visual_operation_graph.h"
 
 
-visual_operation_graph::visual_operation_graph() {
-    root_node = new visual_operation_node;
+visual_operation_graph::visual_operation_graph(visual_sensory_memory* _vsm) {
+    vsm = _vsm;
     root_node->id = 0;
     root_node->v_op = visual_ops::load_from_file;
 
-    data_dict root_node_params;
-    root_node_params[std::string("filepath")] = new std::string("/home/boggsj/Coding/personal/sandboxing/visual_operation_graph/cat.png");
-    root_node->parameters = root_node_params;
+    // Create root node
+    std::unordered_map<std::string, int> root_node_parents;
+    data_dict* root_node_params = new data_dict;
+    (*root_node_params)[ARG_VSM] = vsm;
+    (*root_node_params)[ARG_BUFFERINDEX] = new int(0);
+    insert(root_node_parents, root_node_params, visual_ops::get_from_vsm);
 
-    nodes[0] = *root_node;
+    node_images = *new int_image_map;
     num_operations++;
     next_op_id++;
 
-    node_images = *new int_image_map;
+    // NODE 4
 }
 
 visual_operation_graph::~visual_operation_graph() {
-    node_ptr_set::iterator root_child_itr;
-    for (root_child_itr = root_node->children.begin();
-         root_child_itr != root_node->children.end();
-         root_child_itr++) {
-            remove(((visual_operation_node*)*root_child_itr)->id);
-        }
-    delete root_node;
+    remove(0);
+}
+
 }
 
 int visual_operation_graph::insert(std::unordered_map<std::string, int> parents, data_dict* params, void (*operation)(data_dict data_in)) {
@@ -45,21 +44,21 @@ int visual_operation_graph::insert(std::unordered_map<std::string, int> parents,
     new_node->id = next_op_id;
     new_node->v_op = operation;
     new_node->parameters = *params;
-    leaf_nodes.insert(new_node);  // A newly created node is always a leaf node    
 
-    // Add connect new node to its parents
+    leaf_nodes.insert(new_node->id);  // A newly created node is always a leaf node    
+
+    // Connect new child to parents and remove parents from leaf node set
     for (parents_itr=parents.begin(); parents_itr!=parents.end(); parents_itr++) {
         parent_arg = parents_itr->first;
         parent_id = parents_itr->second;
-        parent_node = &nodes[parent_id];
-        
-        parent_node->children.insert(new_node);
+        parent_node = nodes[parent_id];
 
-        new_node->parents[parent_arg] = parent_node;
-        leaf_nodes.erase(parent_node);  // Any parent is no longer a leaf node
+        parent_node->children.insert(new_node->id);
+        new_node->parents[parent_arg] = parent_id;
+        int parent_erased = leaf_nodes.erase(parent_id);  // Any parent is no longer a leaf node
     }
     
-    nodes[new_node->id] = *new_node;
+    nodes[new_node->id] = new_node;
     num_operations++;
     next_op_id++;
     return new_node->id;
@@ -68,27 +67,27 @@ int visual_operation_graph::insert(std::unordered_map<std::string, int> parents,
 int visual_operation_graph::remove(int target_id) {
     visual_operation_node* child;
     visual_operation_node* parent;
-    visual_operation_node target_node;
+    visual_operation_node* target_node;
 
     if (nodes.find(target_id) == nodes.end()) {
         return num_operations;
     }
     target_node = nodes[target_id];
 
-    // Remove all children
-    node_ptr_set::iterator children_itr;
-    for (children_itr=target_node.children.begin(); children_itr != target_node.children.end(); children_itr++) {
-        child = *children_itr;
+    // Remove all children of the target node
+    std::unordered_set<int>::iterator children_itr;
+    for (children_itr=target_node->children.begin(); children_itr != target_node->children.end(); children_itr++) {
+        child = nodes[*children_itr];
         remove(child->id);
     }
 
     // Remove target node from all of its parents, and check them for leaf status
-    str_node_ptr_map::iterator parents_itr;
-    for (parents_itr = target_node.parents.begin(); parents_itr != target_node.parents.end(); parents_itr++) {
-            parent = parents_itr->second;
-            parent->children.erase(&target_node);
+    std::unordered_map<std::string, int>::iterator parents_itr;
+    for (parents_itr = target_node->parents.begin(); parents_itr != target_node->parents.end(); parents_itr++) {
+            parent = nodes[parents_itr->second];
+            parent->children.erase(target_id);
             if (parent->children.size() == 0) {
-                leaf_nodes.insert(parent);
+                leaf_nodes.insert(parent->id);
             }
         }
     
@@ -100,11 +99,11 @@ int visual_operation_graph::remove(int target_id) {
 void visual_operation_graph::evaluate() {
     visual_operation_node* leaf;
 
-    node_ptr_set::iterator leaf_itr;
+    std::unordered_set<int>::iterator leaf_itr;
     for (leaf_itr=leaf_nodes.begin(); 
         leaf_itr!=leaf_nodes.end(); 
         leaf_itr++) {
-            leaf = *leaf_itr;
+            leaf = nodes[*leaf_itr];
             evaluate_node(leaf);
     }
 
@@ -115,6 +114,7 @@ void visual_operation_graph::evaluate() {
         node_images_itr++) {
             delete node_images_itr->second;
     }
+    node_images.clear();
 }
 
 void visual_operation_graph::evaluate_node(visual_operation_node* node) {
@@ -123,18 +123,18 @@ void visual_operation_graph::evaluate_node(visual_operation_node* node) {
     opencv_image* parent_image_copy;
 
     // Get image arguments from the parents, if there are any
-    std::unordered_map<std::string, visual_operation_node*>::iterator parents_itr;
+    std::unordered_map<std::string, int>::iterator parents_itr;
     for (parents_itr = node->parents.begin();
         parents_itr != node->parents.end();
         parents_itr++) {
             parent_arg = parents_itr->first;
-            parent = parents_itr->second;
+            parent = nodes[parents_itr->second];
             // If there's no image for the parent, we need to evaluate it first
             if (node_images.find(parent->id) == node_images.end()) {
                 evaluate_node(parent);
             }
             parent_image_copy = new opencv_image;
-            parent_image_copy->copy_from(node_images.at(parent->id));
+            parent_image_copy->copy_from(node_images[parent->id]);
             node->parameters[parent_arg] = parent_image_copy;
     }
 
