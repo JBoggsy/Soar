@@ -15,10 +15,6 @@ visual_operation_graph::visual_operation_graph(visual_sensory_memory* _vsm) {
     insert(root_node_parents, root_node_params, visual_ops::get_from_vsm);
 
     node_images = *new int_image_map;
-
-    // TEMPORARY
-
-    // NODE 4
 }
 
 visual_operation_graph::~visual_operation_graph() {

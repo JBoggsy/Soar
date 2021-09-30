@@ -50,6 +50,17 @@ typedef std::unordered_map<std::string, void*> data_dict;
 namespace visual_ops
 {
     /**
+     * @brief Pull an image from visual sensory memory. The root node always has
+     *        this operation.
+     * @param args
+     *        `int buffer_index`: The index of the VSM buffer which should be
+     *         retrieved
+     *        `visual_sensory_memory* vsm`: Pointer to vsm
+     *        `opencv_image* target` New `opencv_image` to copy the VSM image into
+     */ 
+    void get_from_vsm(data_dict args);
+    
+    /**
      * @brief Load an image from a file
      * @param args
      *        `std::string filepath`: The absolute path to the target file
@@ -64,6 +75,14 @@ namespace visual_ops
      *        `opencv_image* target` Object to save into the specified file
      */ 
     void save_to_file(data_dict args);
+
+    /**
+     * @brief Display the target image, opening a new window if needed.
+     * @param args
+     *        `std::string windowName`: The name to give the display window
+     *        `opencv_image* target`: The image to display
+     */
+    void display_image(data_dict args);
 
     /**
      * @brief Returns the input image without changes, used to add a no-op node.
@@ -121,6 +140,16 @@ namespace visual_ops
      *        `opencv_image* template`: The template image to search for.
      */
     void match_template(data_dict args);
+
+    /**
+     * @brief Crop the target image to the specified rectangle.
+     * @param args
+     *        `int x`: x-coord of the top-left corner of the rectangle
+     *        `int y`: y-coord of the top-left corner of the rectangle
+     *        `int width`: width of the rectangle
+     *        `int height`: height of the rectangle
+     */
+    void crop_to_ROI(data_dict args);
 
     /**
      * @brief Finds the global minimum and maximum in an array. 
