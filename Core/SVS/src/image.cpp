@@ -116,10 +116,19 @@ float basic_image::compare(basic_image* other) {
 #ifdef ENABLE_OPENCV
 opencv_image::opencv_image() { source = "none"; }
 
+void opencv_image::set_image(cv::Mat* image) { 
+    if (_img == NULL) {
+        _img = new cv::Mat();
+        } 
+    image->copyTo(*_img);
+    _img->convertTo(*_img, CV_32FC3);
+}
+
 void opencv_image::update_image(const cv::Mat& new_img) {
     bool prev_empty = is_empty();
     _img = new cv::Mat;
     *_img = new_img.clone();
+    _img->convertTo(*_img, CV_32FC3);
     if (is_empty() != prev_empty) notify_listeners();
 }
 
