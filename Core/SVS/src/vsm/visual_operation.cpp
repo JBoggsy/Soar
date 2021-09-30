@@ -5,23 +5,6 @@
 #include "image.h"
 
 
-// Define argument names as strings
-#define ARG_TARGET      std::string("target")
-#define ARG_FILEPATH    std::string("filepath")
-#define ARG_KSIZE       std::string("ksize")
-#define ARG_ANCHOR      std::string("anchor")
-#define ARG_BORDERTYPE  std::string("borderType")
-#define ARG_SIGMAX      std::string("sigmaX")
-#define ARG_SIGMAY      std::string("sigmaY")
-#define ARG_THRESH      std::string("thresh")
-#define ARG_MAXVAL      std::string("maxval")
-#define ARG_TYPE        std::string("type")
-#define ARG_METHOD      std::string("method")
-#define ARG_TEMPLATE    std::string("template")
-#define ARG_MINVAL      std::string("minval")
-#define ARG_MAXLOC      std::string("maxloc")
-#define ARG_MINLOC      std::string("minloc")
-
 namespace visual_ops
 {
     ///////////////////

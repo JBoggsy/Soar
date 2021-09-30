@@ -17,6 +17,30 @@ class opencv_image;
  */
 typedef std::unordered_map<std::string, void*> data_dict;
 
+// Define argument names as strings
+#define ARG_TARGET      std::string("target")
+#define ARG_FILEPATH    std::string("filepath")
+#define ARG_KSIZE       std::string("ksize")
+#define ARG_ANCHOR      std::string("anchor")
+#define ARG_BORDERTYPE  std::string("borderType")
+#define ARG_SIGMAX      std::string("sigmaX")
+#define ARG_SIGMAY      std::string("sigmaY")
+#define ARG_THRESH      std::string("thresh")
+#define ARG_MAXVAL      std::string("maxval")
+#define ARG_TYPE        std::string("type")
+#define ARG_METHOD      std::string("method")
+#define ARG_TEMPLATE    std::string("template")
+#define ARG_MINVAL      std::string("minval")
+#define ARG_MAXLOC      std::string("maxloc")
+#define ARG_MINLOC      std::string("minloc")
+#define ARG_BUFFERINDEX std::string("bufferIndex")
+#define ARG_VSM         std::string("vsm")
+#define ARG_X           std::string("x")
+#define ARG_Y           std::string("y")
+#define ARG_WIDTH       std::string("width")
+#define ARG_HEIGHT      std::string("height")
+#define ARG_WINDOWNAME  std::string("windowName")
+
 /**
  * All visual operations are performed IN-PLACE. That is, the target image is
  * altered by the operation. When passing in `data_dict` based arguments, 
