@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 // SVS includes
+#include "cliproxy.h"
 #include "visual_operation_data_structs.h"
 #include "visual_operation.h"
 #include "image.h"
@@ -55,7 +56,8 @@ typedef std::unordered_map<int, visual_operation_node*>          id_node_map;
  * recursively evaluated in order to get the input images for the child. Once
  * all parents are evaluated, the child performs its own operation.
  */
-class visual_operation_graph {
+class visual_operation_graph : public cliproxy {
+    #define VOG_ROOT_NODE_ID 0
     public:
         visual_operation_graph(visual_sensory_memory* _vsm);
         ~visual_operation_graph();
@@ -95,6 +97,28 @@ class visual_operation_graph {
          * its image is destroyed to save memory.
          */
         void evaluate();
+
+        //////////////////////
+        // CLIPROXY METHODS //
+        //////////////////////
+        /**
+         * @brief Provide a map of the sub-commands for this command to the CLI 
+         * parser.
+         * 
+         * @details The `svs vision` command family is outlined at the top of this
+         * file.
+         * 
+         * @param c A mapping of string identifiers to `cliproxy` instance.
+         */
+        void proxy_get_children(std::map<std::string, cliproxy*>& c);
+        /**
+         * @brief Provides the "base" functionality for the `svs vsm` command.
+         * In particular, it writes the current target image file and a help message.
+         * 
+         * @param args The args sent to the command. These are discarded.
+         * @param os The output stream to write to.
+         */
+        void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
 
     private:
         visual_sensory_memory* vsm;
