@@ -275,6 +275,7 @@ void svs_state::update_cmd_results(int command_type)
 
 void svs_state::process_cmds()
 {
+    // Retrieve all the child WMEs of the command link and put them into a vector 
     wme_vector all;
     wme_vector::iterator all_it;
     si->get_child_wmes(cmd_link, all);

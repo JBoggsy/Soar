@@ -77,10 +77,7 @@ class soar_interface
         tc_number    new_tc_num();
         
         uint64_t     get_timetag(wme* w);
-        common_syms& get_common_syms()
-        {
-            return cs;
-        }
+        common_syms& get_common_syms() { return cs; }
         
         void         print(const std::string& msg);
         
