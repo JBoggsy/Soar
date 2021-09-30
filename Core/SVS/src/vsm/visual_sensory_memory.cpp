@@ -19,6 +19,11 @@ visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
     vsm_link = NULL;
     updated_link = NULL;
     update_counter = 0;
+
+    // Fill the percept buffer with NULLs 
+    for (int i=0; i<PERCEPT_BUFFER_SIZE; i++) {
+        percept_buffer[i] = NULL;
+    }
     
     #ifdef ENABLE_ROS
     svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
@@ -33,6 +38,18 @@ void visual_sensory_memory::add_wm_link(Symbol* _vsm_link) {
 }
 
 void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
+    // Eject the last element in the percept buffer
+    if (percept_buffer[PERCEPT_BUFFER_SIZE-1] != NULL) {
+        delete percept_buffer[PERCEPT_BUFFER_SIZE-1];
+        percept_buffer[PERCEPT_BUFFER_SIZE-1] = NULL;
+    }
+
+    // Move the remaining elements up
+    for (int i=PERCEPT_BUFFER_SIZE-2; i>=0; i--) {
+        percept_buffer[i+1] = percept_buffer[i];
+    } 
+
+    // Create the latest element
     percept_buffer[0] = new opencv_image();
     percept_buffer[0]->update_image(new_image);
     update_counter++;
@@ -53,6 +70,19 @@ void visual_sensory_memory::draw_percept_buffer() {
     #ifdef ENABLE_ROS
     svs_ptr->get_ros_interface()->publish_rgb_image(ROS_TOPIC_NAME, *percept_buffer[0]->get_image());
     #endif
+}
+
+
+opencv_image* visual_sensory_memory::get_vision() {
+    return percept_buffer[0];
+}
+
+
+opencv_image* visual_sensory_memory::get_vision(int index) {
+    if (index >= PERCEPT_BUFFER_SIZE) {
+        return NULL;
+    }
+    return percept_buffer[index];
 }
 
 //////////////////////
@@ -158,11 +188,6 @@ void visual_sensory_memory::load() {
 void visual_sensory_memory::save(std::string filepath) {
     percept_buffer[0]->draw_image(filepath);
 }
-
-opencv_image* visual_sensory_memory::give_vision() {
-    return percept_buffer[0];
-}
-
 
 bool visual_sensory_memory::_file_exists(std::string filepath) {
     FILE* exist_check = fopen(filepath.c_str(), "r");

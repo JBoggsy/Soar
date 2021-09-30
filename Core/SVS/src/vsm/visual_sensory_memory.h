@@ -27,7 +27,7 @@ class visual_sensory_memory: public cliproxy
 {
 private:
     const static std::string ROS_TOPIC_NAME;
-    const static int PERCEPT_BUFFER_SIZE = 1;
+    const static int PERCEPT_BUFFER_SIZE = 4;
 
     svs* svs_ptr;
     soar_interface* si;
@@ -47,6 +47,15 @@ public:
 
     void update_percept_buffer(const cv::Mat& new_percept);
     void draw_percept_buffer();
+
+    /**
+     * @brief Returns the visual percept as an opencv image. When called with
+     * an argument, it retrieves the percept at the given index in the percept
+     * buffer.
+     * 
+     */
+    opencv_image* get_vision();
+    opencv_image* get_vision(int index);
 
     //////////////////////
     // CLIPROXY METHODS //
@@ -129,12 +138,6 @@ public:
      * @param filepath The path to save the current visual input to.
      */
     void save(std::string filepath);
-
-    /**
-     * @brief Returns the visual percept as an opencv image.
-     * 
-     */
-    opencv_image* give_vision();
 };
 
 #endif
