@@ -16,8 +16,6 @@ const std::string visual_sensory_memory::ROS_TOPIC_NAME = "vsm";
 visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si) {
     svs_ptr = _svs_ptr;
     si = _si;
-    vsm_link = NULL;
-    updated_link = NULL;
     update_counter = 0;
     vop_graph = new visual_operation_graph(this);
 
@@ -35,10 +33,12 @@ visual_sensory_memory::~visual_sensory_memory() {
 }
 
 void visual_sensory_memory::add_wm_link(Symbol* _vsm_link) {
-    vsm_link = _vsm_link;
+    vsm_links.push_back(_vsm_link);
+    si->make_wme(_vsm_link, std::string("updated"), si->make_sym(update_counter));
 }
 
 void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
+    printf("Updating percept buffer... ");
     // Eject the last element in the percept buffer
     if (percept_buffer[PERCEPT_BUFFER_SIZE-1] != NULL) {
         delete percept_buffer[PERCEPT_BUFFER_SIZE-1];
@@ -55,14 +55,30 @@ void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
     percept_buffer[0]->update_image(new_image);
     update_counter++;
 
-    if (vsm_link != NULL) {
-        if (updated_link != NULL) {
-            si->remove_wme(updated_link);
-        }
-        updated_link = si->make_wme(vsm_link, "updated", update_counter);
+    std::vector<Symbol*>::iterator vsm_wme_itr;
+    for (vsm_wme_itr=vsm_links.begin(); vsm_wme_itr!=vsm_links.end(); vsm_wme_itr++) {
+        update_wm_link(*vsm_wme_itr);
     }
     vop_graph->evaluate();
     // draw_percept_buffer();
+}
+
+void visual_sensory_memory::update_wm_link(Symbol* vsm_wme) {
+    printf("updating WM link... ");
+    wme_vector vsm_wme_children;
+    si->get_child_wmes(vsm_wme, vsm_wme_children);
+
+    wme_vector::iterator child_itr;
+    for (child_itr=vsm_wme_children.begin(); child_itr!=vsm_wme_children.end(); child_itr++) {
+        char* child_attr = (*child_itr)->attr->to_string();
+        printf("checking child %s... ", child_attr);
+        if (strcmp(child_attr,"updated") == 0) {
+            si->remove_wme(*child_itr);
+            si->make_wme(vsm_wme, std::string("updated"), si->make_sym(update_counter));
+            printf("updated %d\n", update_counter);
+        }
+    }
+
 }
 
 void visual_sensory_memory::draw_percept_buffer() {

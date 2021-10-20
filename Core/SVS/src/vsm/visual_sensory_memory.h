@@ -8,6 +8,7 @@
 // standard lib includes
 ////////////////////////
 #include <string>
+#include <vector>
 
 // SVS includes
 ///////////////
@@ -32,18 +33,19 @@ private:
     svs* svs_ptr;
     soar_interface* si;
     opencv_image* percept_buffer [PERCEPT_BUFFER_SIZE];
-    Symbol* vsm_link;
+    std::vector<Symbol*> vsm_links;
     wme* updated_link;
     int update_counter;
     visual_operation_graph* vop_graph;
     
     std::string _target_filepath;
+    void update_wm_link(Symbol* vsm_wme);
     bool _file_exists(std::string filepath);
 public:
     visual_sensory_memory(svs* svs_ptr, soar_interface* _si);
     ~visual_sensory_memory();
 
-    void add_wm_link(Symbol* vsm_link);
+    void add_wm_link(Symbol* vsm_links);
 
     void update_percept_buffer(const cv::Mat& new_percept);
     void draw_percept_buffer();
