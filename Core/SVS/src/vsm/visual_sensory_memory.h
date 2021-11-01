@@ -32,15 +32,17 @@ private:
 
     svs* svs_ptr;
     soar_interface* si;
-    opencv_image* percept_buffer [PERCEPT_BUFFER_SIZE];
     std::vector<Symbol*> vsm_links;
-    wme* updated_link;
+    wme* vops_link;
+    
+    opencv_image* percept_buffer [PERCEPT_BUFFER_SIZE];
     int update_counter;
     visual_operation_graph* vop_graph;
     
     std::string _target_filepath;
-    void update_wm_link(Symbol* vsm_wme);
     bool _file_exists(std::string filepath);
+
+    void _update_wm_link(Symbol* vsm_wme);
 public:
     visual_sensory_memory(svs* svs_ptr, soar_interface* _si);
     ~visual_sensory_memory();
