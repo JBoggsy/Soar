@@ -122,6 +122,7 @@ class visual_operation_graph : public cliproxy {
 
     private:
         visual_sensory_memory* vsm;
+        soar_interface* si;
         int num_operations = 0;
         int next_op_id = 0;
         visual_operation_node* root_node;

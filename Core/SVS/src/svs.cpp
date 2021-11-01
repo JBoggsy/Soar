@@ -233,7 +233,7 @@ void svs_state::init()
             scn = new scene(name, svsp);
             scn->set_draw(true);
 
-            vwm = new visual_working_memory(svsp, si, vsm_link);
+            vwm = new visual_working_memory(svsp, si, vwm_link);
         }
     }
     scn->refresh_draw();
@@ -471,6 +471,9 @@ void svs::proc_input(svs_state* s)
     env_inputs.clear();
 }
 
+/**
+ * This method is called by run_soar.cpp:833 at the beginning of every output phase.
+ */
 void svs::output_callback()
 {
     if (!enabled)

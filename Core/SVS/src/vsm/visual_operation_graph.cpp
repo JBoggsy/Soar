@@ -6,14 +6,6 @@
 
 visual_operation_graph::visual_operation_graph(visual_sensory_memory* _vsm) {
     vsm = _vsm;
-
-    // Create root node
-    std::unordered_map<std::string, int> root_node_parents;
-    data_dict* root_node_params = new data_dict;
-    (*root_node_params)[ARG_VSM] = vsm;
-    (*root_node_params)[ARG_BUFFERINDEX] = new int(0);
-    insert(root_node_parents, root_node_params, visual_ops::get_from_vsm);
-
     node_images = *new int_image_map;
 }
 

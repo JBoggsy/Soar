@@ -59,6 +59,18 @@ bool command::changed()
     return false;
 }
 
+/**
+ * Scans though the substructure of the command and returns to indicators:
+ * size and max_time. The size is simply the number of symbols beneath,
+ * but not including, the command symbol itself. The max_time is the value of
+ * the highest-valued timetag on any of the WMEs in the substructre. For both
+ * indicators, "result" and "status" WMEs are excluded since they are spawned
+ * by SVS and not the agent's production rules.
+ * 
+ * The size and max_time indicators can be used to detect changes in the
+ * substructure. However, this function does not actually DO any parsing, nor
+ * does it indicate which sub-WMEs changed,
+ */
 void command::parse_substructure(size_t& size, uint64_t& max_time)
 {
     tc_number tc;

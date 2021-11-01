@@ -17,6 +17,7 @@ visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
     svs_ptr = _svs_ptr;
     si = _si;
     update_counter = 0;
+
     vop_graph = new visual_operation_graph(this);
 
     // Fill the percept buffer with NULLs 
@@ -35,6 +36,9 @@ visual_sensory_memory::~visual_sensory_memory() {
 void visual_sensory_memory::add_wm_link(Symbol* _vsm_link) {
     vsm_links.push_back(_vsm_link);
     si->make_wme(_vsm_link, std::string("updated"), si->make_sym(update_counter));
+    if (vsm_links.size() == 1) {
+        vops_link = si->make_id_wme(_vsm_link, "vops");
+    }
 }
 
 void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
@@ -57,29 +61,32 @@ void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
 
     std::vector<Symbol*>::iterator vsm_wme_itr;
     for (vsm_wme_itr=vsm_links.begin(); vsm_wme_itr!=vsm_links.end(); vsm_wme_itr++) {
-        update_wm_link(*vsm_wme_itr);
+        _update_wm_link(*vsm_wme_itr);
     }
     vop_graph->evaluate();
     // draw_percept_buffer();
 }
 
-void visual_sensory_memory::update_wm_link(Symbol* vsm_wme) {
+void visual_sensory_memory::_update_wm_link(Symbol* vsm_wme) {
     printf("updating WM link... ");
     wme_vector vsm_wme_children;
     si->get_child_wmes(vsm_wme, vsm_wme_children);
 
     wme_vector::iterator child_itr;
     for (child_itr=vsm_wme_children.begin(); child_itr!=vsm_wme_children.end(); child_itr++) {
-        char* child_attr = (*child_itr)->attr->to_string();
+        wme* child_wme = *child_itr;
+        char* child_attr = child_wme->attr->to_string();
         printf("checking child %s... ", child_attr);
-        if (strcmp(child_attr,"updated") == 0) {
-            si->remove_wme(*child_itr);
+
+        if (strcmp(child_attr, "updated") == 0) {
+            si->remove_wme(child_wme);
             si->make_wme(vsm_wme, std::string("updated"), si->make_sym(update_counter));
             printf("updated %d\n", update_counter);
+            continue;
         }
     }
-
 }
+
 
 void visual_sensory_memory::draw_percept_buffer() {
     percept_buffer[0]->draw_image("percept_buffer.png");
