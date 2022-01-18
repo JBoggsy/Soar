@@ -57,7 +57,6 @@ typedef std::unordered_map<int, visual_operation_node*>          id_node_map;
  * all parents are evaluated, the child performs its own operation.
  */
 class visual_operation_graph : public cliproxy {
-    #define VOG_ROOT_NODE_ID 0
     public:
         visual_operation_graph(visual_sensory_memory* _vsm);
         ~visual_operation_graph();
@@ -66,10 +65,11 @@ class visual_operation_graph : public cliproxy {
 
         /**
          * @brief Insert a new operation into the graph as a child of the nodes
-         * with the specified ids. The root node always exists and has id=0. 
+         * with the specified ids. 
          * @param `parents`: A map from argument names to node ids indicating the
          *        correspondence between the image-type arguments of the visual
-         *        operation and the parents of the node
+         *        operation and the parents of the node. If this is empty, the node
+         *        will be a new source node.
          * @param `params`: A newly allocated `data_dict` containing the 
          *        parameters for the visual operation
          * 

@@ -313,7 +313,6 @@ void svs_state::process_cmds()
             live_it++;
         }
         else if (curr_it->id == live_it->id)
-            // Find all commands removed from the svs command wme
         {
             curr_it++;
             live_it++;
@@ -330,7 +329,7 @@ void svs_state::process_cmds()
         }
     }
     
-    // Delete the command
+    // Delete the old commands
     vector<command_set_it>::iterator old_it;
     for (old_it = old_commands.begin(); old_it != old_commands.end(); old_it++)
     {
@@ -486,12 +485,9 @@ void svs::output_callback()
     for (i = state_stack.begin(); i != state_stack.end(); ++i)
     {
         (**i).process_cmds();
-    }
-    //for (i = state_stack.begin(); i != state_stack.end(); ++i)
-    //{
-    //    (**i).update_cmd_results(true);
-    //}
-    
+    } 
+
+    vsm->output_callback();
 }
 
 void svs::input_callback()

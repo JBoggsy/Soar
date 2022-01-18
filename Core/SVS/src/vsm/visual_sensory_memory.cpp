@@ -33,6 +33,18 @@ visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
 visual_sensory_memory::~visual_sensory_memory() {
 }
 
+/**
+ * @brief Called at the beginning of every output phase. Updates the VSM links
+ * so they reflect the VOG structure.
+ * 
+ */
+void visual_sensory_memory::output_callback() {
+    // std::vector<Symbol *>::iterator vsm_link_itr;
+    // for (vsm_link_itr=vsm_links.begin(); vsm_link_itr!=vsm_links.end(); vsm_link_itr++) {
+
+    // }
+}
+
 void visual_sensory_memory::add_wm_link(Symbol* _vsm_link) {
     vsm_links.push_back(_vsm_link);
     si->make_wme(_vsm_link, std::string("updated"), si->make_sym(update_counter));
