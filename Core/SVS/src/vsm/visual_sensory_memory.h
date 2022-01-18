@@ -46,6 +46,10 @@ private:
 public:
     visual_sensory_memory(svs* svs_ptr, soar_interface* _si);
     ~visual_sensory_memory();
+    
+    visual_operation_graph* get_vop_graph() { return vop_graph; }
+
+    void output_callback();
 
     void add_wm_link(Symbol* vsm_links);
 

@@ -46,7 +46,7 @@ class extract_command : public command, public filter_input::listener
             return string("extract");
         }
         
-        bool update_sub()
+        bool update_sub()  //# region [ grey ]
         {
             if (!once && !first && !svs::get_filter_dirty_bit())
             {
@@ -89,7 +89,7 @@ class extract_command : public command, public filter_input::listener
                 first = false;
             }
             return true;
-        }
+        }  //# endregion
         
         int command_type()
         {

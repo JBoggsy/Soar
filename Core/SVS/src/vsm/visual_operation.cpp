@@ -15,9 +15,9 @@ namespace visual_ops
     ///////////////////
 
     void get_from_vsm(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        int buffer_index = *(int*)args[ARG_BUFFERINDEX];
-        visual_sensory_memory* vsm = (visual_sensory_memory*)args[ARG_VSM];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int buffer_index = *(int*)args[VOP_ARG_BUFFERINDEX];
+        visual_sensory_memory* vsm = (visual_sensory_memory*)args[VOP_ARG_VSM];
 
         image->copy_from(vsm->get_vision(buffer_index));
         cv::Size image_shape = image->get_image()->size();
@@ -25,16 +25,16 @@ namespace visual_ops
     }
 
     void load_from_file(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        std::string* filepath = (std::string*)args[ARG_FILEPATH];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        std::string* filepath = (std::string*)args[VOP_ARG_FILEPATH];
         
         image->update_image(cv::imread(*filepath, cv::IMREAD_UNCHANGED));
         cv::Size image_shape = image->get_image()->size();
     }
 
     void save_to_file(data_dict args) {
-        cv::Mat image = *(((opencv_image*)args[ARG_TARGET])->get_image());
-        std::string filepath = *(std::string*)args[ARG_FILEPATH];
+        cv::Mat image = *(((opencv_image*)args[VOP_ARG_TARGET])->get_image());
+        std::string filepath = *(std::string*)args[VOP_ARG_FILEPATH];
  
         cv::Size image_shape = image.size();
 
@@ -50,8 +50,8 @@ namespace visual_ops
     }
 
     void display_image(data_dict args) {
-        cv::Mat image = *(((opencv_image*)args[ARG_TARGET])->get_image());
-        std::string window_name = *(std::string*)args[ARG_WINDOWNAME];
+        cv::Mat image = *(((opencv_image*)args[VOP_ARG_TARGET])->get_image());
+        std::string window_name = *(std::string*)args[VOP_ARG_WINDOWNAME];
 
         cv::imshow(window_name, image);
         cv::waitKey(1);
@@ -63,7 +63,7 @@ namespace visual_ops
     ////////////////////////////
 
     void identity(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
 
         cv::Mat result;
         result = *(image->get_image());
@@ -71,19 +71,27 @@ namespace visual_ops
     }
 
     void blur(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        cv::Size ksize = *(cv::Size*)args[ARG_KSIZE];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int size_x = *(int*)args[VOP_ARG_SIZEX];
+        int size_y = *(int*)args[VOP_ARG_SIZEX];
+        cv::Size ksize(size_x, size_y);
         
         cv::Point anchor;
-        if (args[ARG_ANCHOR] != NULL) {
-            anchor = *(cv::Point*)args[ARG_ANCHOR];
+        if (args[VOP_ARG_ANCHORX] != NULL) {
+            anchor.x = -1;
         } else {
-            anchor = cv::Point(-1, -1);
+            anchor.x = *(int*)args[VOP_ARG_ANCHORX];
+        }
+        
+        if (args[VOP_ARG_ANCHORY] != NULL) {
+            anchor.y = -1;
+        } else {
+            anchor.y = *(int*)args[VOP_ARG_ANCHORY];
         }
 
         int borderType;
-        if (args[ARG_BORDERTYPE] != NULL) {
-            borderType = *(int*)args[ARG_BORDERTYPE];
+        if (args[VOP_ARG_BORDERTYPE] != NULL) {
+            borderType = *(int*)args[VOP_ARG_BORDERTYPE];
         } else {
             borderType = cv::BORDER_DEFAULT;
         }
@@ -93,14 +101,19 @@ namespace visual_ops
         image->set_image(&result);
     }
 
-    void GaussianBlur(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        cv::Size ksize = *(cv::Size*)args[ARG_KSIZE];
-        double sigmaX = *(double*)args[ARG_SIGMAX];
-        double sigmaY = *(double*)args[ARG_SIGMAY];
+    void gaussian_blur(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+
+        int size_x = *(int*)args[VOP_ARG_SIZEX];
+        int size_y = *(int*)args[VOP_ARG_SIZEX];
+        cv::Size ksize(size_x, size_y);
+
+        double sigmaX = *(double*)args[VOP_ARG_SIGMAX];
+        double sigmaY = *(double*)args[VOP_ARG_SIGMAY];
+
         int borderType;
-        if (args[ARG_BORDERTYPE] != NULL) {
-            borderType = *(int*)args[ARG_BORDERTYPE];
+        if (args[VOP_ARG_BORDERTYPE] != NULL) {
+            borderType = *(int*)args[VOP_ARG_BORDERTYPE];
         } else {
             borderType = cv::BORDER_DEFAULT;
         }
@@ -111,7 +124,7 @@ namespace visual_ops
     }
 
     void greyscale(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
 
         cv::Mat result;
         cv::cvtColor(*image->get_image(), result, cv::COLOR_BGRA2GRAY);
@@ -119,10 +132,10 @@ namespace visual_ops
     }
 
     void threshold(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        double thresh = *(double*)args[ARG_THRESH];
-        double maxval = *(double*)args[ARG_MAXVAL];
-        int type = *(int*)args[ARG_TYPE];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        double thresh = *(double*)args[VOP_ARG_THRESH];
+        double maxval = *(double*)args[VOP_ARG_MAXVAL];
+        int type = *(int*)args[VOP_ARG_TYPE];
 
         cv::Mat result;
         cv::threshold(*image->get_image(), result, thresh, maxval, type);
@@ -130,11 +143,11 @@ namespace visual_ops
     }
 
     void crop_to_ROI(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        int x = *(int*)args[ARG_X];
-        int y = *(int*)args[ARG_Y];
-        int width = *(int*)args[ARG_WIDTH];
-        int height = *(int*)args[ARG_HEIGHT];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int x = *(int*)args[VOP_ARG_X];
+        int y = *(int*)args[VOP_ARG_Y];
+        int width = *(int*)args[VOP_ARG_WIDTH];
+        int height = *(int*)args[VOP_ARG_HEIGHT];
 
         cv::Mat result;
         cv::Rect ROI(x, y, width, height);
@@ -148,9 +161,9 @@ namespace visual_ops
     //////////////////////
 
     void match_template(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        opencv_image* templ = (opencv_image*)args[ARG_TEMPLATE];
-        int method = *(int*)args[ARG_METHOD];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* templ = (opencv_image*)args[VOP_ARG_TEMPLATE];
+        int method = *(int*)args[VOP_ARG_METHOD];
 
         int result_cols = image->get_width() - templ->get_width() + 1;
         int result_rows = image->get_height() - templ->get_height() + 1;
@@ -163,11 +176,16 @@ namespace visual_ops
     }
 
     void min_max_loc(data_dict args) {
-        opencv_image* image = (opencv_image*)args[ARG_TARGET];
-        double* minval = (double*)args[ARG_MINVAL];
-        double* maxval = (double*)args[ARG_MAXVAL];
-        cv::Point* minloc = (cv::Point*)args[ARG_MINLOC];
-        cv::Point* maxloc = (cv::Point*)args[ARG_MAXLOC];
-        cv::minMaxLoc(*image->get_image(), minval, maxval, minloc, maxloc);
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+
+        cv::Point minloc;
+        cv::Point maxloc;
+
+        cv::minMaxLoc(*image->get_image(), (double*)args[VOP_ARG_MINVAL], (double*)args[VOP_ARG_MAXVAL], &minloc, &maxloc);
+        *((int*)args[VOP_ARG_MINLOCX]) = minloc.x;
+        *((int*)args[VOP_ARG_MINLOCY]) = minloc.y;
+        *((int*)args[VOP_ARG_MAXLOCX]) = maxloc.x;
+        *((int*)args[VOP_ARG_MAXLOCY]) = maxloc.y;
+
     }
 } // namespace visual_ops
