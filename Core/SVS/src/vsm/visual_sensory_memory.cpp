@@ -18,7 +18,7 @@ visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si)
     si = _si;
     update_counter = 0;
 
-    vop_graph = new visual_operation_graph(this);
+    visual_buffer_ = new visual_buffer(si_, vsm_link);
 
     // Fill the percept buffer with NULLs 
     for (int i=0; i<PERCEPT_BUFFER_SIZE; i++) {
