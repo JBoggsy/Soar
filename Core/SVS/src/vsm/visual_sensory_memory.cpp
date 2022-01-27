@@ -13,10 +13,10 @@
 const std::string visual_sensory_memory::ROS_TOPIC_NAME = "vsm";
 #endif
 
-visual_sensory_memory::visual_sensory_memory(svs* _svs_ptr, soar_interface* _si) {
-    svs_ptr = _svs_ptr;
-    si = _si;
-    update_counter = 0;
+visual_sensory_memory::visual_sensory_memory(svs* svs_ptr, soar_interface* si, Symbol* vsm_link) {
+    svs_ptr_ = svs_ptr;
+    si_ = si;
+    vsm_link_ = vsm_link;
 
     visual_buffer_ = new visual_buffer(si_, vsm_link);
 
@@ -42,83 +42,23 @@ void visual_sensory_memory::output_callback() {
     // std::vector<Symbol *>::iterator vsm_link_itr;
     // for (vsm_link_itr=vsm_links.begin(); vsm_link_itr!=vsm_links.end(); vsm_link_itr++) {
 
-    // }
-}
-
-void visual_sensory_memory::add_wm_link(Symbol* _vsm_link) {
-    vsm_links.push_back(_vsm_link);
-    si->make_wme(_vsm_link, std::string("updated"), si->make_sym(update_counter));
-    if (vsm_links.size() == 1) {
-        vops_link = si->make_id_wme(_vsm_link, "vops");
-    }
-}
-
-void visual_sensory_memory::update_percept_buffer(const cv::Mat& new_image) {
-    printf("Updating percept buffer... ");
-    // Eject the last element in the percept buffer
-    if (percept_buffer[PERCEPT_BUFFER_SIZE-1] != NULL) {
-        delete percept_buffer[PERCEPT_BUFFER_SIZE-1];
-        percept_buffer[PERCEPT_BUFFER_SIZE-1] = NULL;
-    }
-
-    // Move the remaining elements up
-    for (int i=PERCEPT_BUFFER_SIZE-2; i>=0; i--) {
-        percept_buffer[i+1] = percept_buffer[i];
-    } 
-
-    // Create the latest element
-    percept_buffer[0] = new opencv_image();
-    percept_buffer[0]->update_image(new_image);
-    update_counter++;
-
-    std::vector<Symbol*>::iterator vsm_wme_itr;
-    for (vsm_wme_itr=vsm_links.begin(); vsm_wme_itr!=vsm_links.end(); vsm_wme_itr++) {
-        _update_wm_link(*vsm_wme_itr);
-    }
-    vop_graph->evaluate();
-    // draw_percept_buffer();
-}
-
-void visual_sensory_memory::_update_wm_link(Symbol* vsm_wme) {
-    printf("updating WM link... ");
-    wme_vector vsm_wme_children;
-    si->get_child_wmes(vsm_wme, vsm_wme_children);
-
-    wme_vector::iterator child_itr;
-    for (child_itr=vsm_wme_children.begin(); child_itr!=vsm_wme_children.end(); child_itr++) {
-        wme* child_wme = *child_itr;
-        char* child_attr = child_wme->attr->to_string();
-        printf("checking child %s... ", child_attr);
-
-        if (strcmp(child_attr, "updated") == 0) {
-            si->remove_wme(child_wme);
-            si->make_wme(vsm_wme, std::string("updated"), si->make_sym(update_counter));
-            printf("updated %d\n", update_counter);
-            continue;
-        }
-    }
+void visual_sensory_memory::update_visual_buffer(const cv::Mat& new_image) {
+    visual_buffer_->add_new_frame(new_image);
+    vop_graph_->evaluate();
 }
 
 
-void visual_sensory_memory::draw_percept_buffer() {
-    percept_buffer[0]->draw_image("percept_buffer.png");
-
-    #ifdef ENABLE_ROS
-    svs_ptr->get_ros_interface()->publish_rgb_image(ROS_TOPIC_NAME, *percept_buffer[0]->get_image());
-    #endif
-}
-
-
+/**
+ * @brief Returns the visual percept as an opencv image. When called with
+ * an argument, it retrieves the percept at the given index in the percept
+ * buffer.
+ * 
+ */
 opencv_image* visual_sensory_memory::get_vision() {
-    return percept_buffer[0];
+    return visual_buffer_->get_frame(0);
 }
-
-
 opencv_image* visual_sensory_memory::get_vision(int index) {
-    if (index >= PERCEPT_BUFFER_SIZE) {
-        return NULL;
-    }
-    return percept_buffer[index];
+    return visual_buffer_->get_frame(index);
 }
 
 //////////////////////
@@ -185,7 +125,7 @@ void visual_sensory_memory::cli_save(const std::vector<std::string>& args, std::
     }
     std::string filepath = args[0]; 
 
-    opencv_image* percept = percept_buffer[0];
+    opencv_image* percept = visual_buffer_->get_frame(0);
     cv::Mat image = *percept->get_image();
 
     cv::imwrite(filepath, image);
@@ -222,7 +162,7 @@ void visual_sensory_memory::load() {
 }
 
 void visual_sensory_memory::save(std::string filepath) {
-    percept_buffer[0]->draw_image(filepath);
+    visual_buffer_->get_frame(0)->draw_image(filepath);
 }
 
 bool visual_sensory_memory::_file_exists(std::string filepath) {

@@ -4,18 +4,16 @@
 //////////////
 // PREAMBLE //
 //////////////
-
 // standard lib includes
 ////////////////////////
 #include <string>
-#include <vector>
-
 // SVS includes
 ///////////////
+#include "soar_interface.h"
 #include "image.h"
 #include "cliproxy.h"
 #include "visual_operation_graph.h"
-
+#include "visual_buffer.h"
 // forward definitions
 //////////////////////
 class svs;
@@ -27,43 +25,36 @@ class svs;
 class visual_sensory_memory: public cliproxy
 {
 private:
-    const static std::string ROS_TOPIC_NAME;
-    const static int PERCEPT_BUFFER_SIZE = 4;
+    const static std::string ROS_TOPIC_NAME_;
 
-    svs* svs_ptr;
-    soar_interface* si;
-    std::vector<Symbol*> vsm_links;
-    wme* vops_link;
+    svs* svs_ptr_;
+    soar_interface* si_;
+    Symbol* vsm_link_;
     
-    opencv_image* percept_buffer [PERCEPT_BUFFER_SIZE];
-    int update_counter;
-    visual_operation_graph* vop_graph;
+    visual_buffer* visual_buffer_;
+    visual_operation_graph* vop_graph_;
     
-    std::string _target_filepath;
+    std::string target_filepath_;
+
     bool _file_exists(std::string filepath);
-
-    void _update_wm_link(Symbol* vsm_wme);
 public:
-    visual_sensory_memory(svs* svs_ptr, soar_interface* _si);
+    visual_sensory_memory(svs* svs_ptr, soar_interface* si, Symbol* vsm_link);
     ~visual_sensory_memory();
     
-    visual_operation_graph* get_vop_graph() { return vop_graph; }
-
-    void output_callback();
-
-    void add_wm_link(Symbol* vsm_links);
-
-    void update_percept_buffer(const cv::Mat& new_percept);
-    void draw_percept_buffer();
-
-    /**
-     * @brief Returns the visual percept as an opencv image. When called with
-     * an argument, it retrieves the percept at the given index in the percept
-     * buffer.
-     * 
-     */
+    visual_buffer* get_visual_buffer() { return visual_buffer_; }
+    int get_visual_buffer_size() { return visual_buffer_->get_size(); }
     opencv_image* get_vision();
     opencv_image* get_vision(int index);
+    void update_visual_buffer(const cv::Mat& new_percept);
+    void draw_visual_buffer();
+
+    visual_operation_graph* get_vop_graph() { return vop_graph_; }
+    int add_visual_operation(std::string op_name, data_dict op_args);
+    bool edit_visual_operation(int node_id, data_dict new_op_args);
+    int remove_visual_operation(int node_id);
+
+
+
 
     //////////////////////
     // CLIPROXY METHODS //
