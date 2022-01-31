@@ -216,9 +216,7 @@ void svs_state::init()
     svs_link = si->get_wme_val(si->make_svs_wme(state));
     cmd_link = si->get_wme_val(si->make_id_wme(svs_link, cs.cmd));
     scene_link = si->get_wme_val(si->make_id_wme(svs_link, cs.scene));
-    vsm_link = si->get_wme_val(si->make_id_wme(svs_link, cs.vsm));
     vwm_link = si->get_wme_val(si->make_id_wme(svs_link, cs.vwm));
-    vltm_link = si->get_wme_val(si->make_id_wme(svs_link, cs.vltm));
 
     if (!scn)
     {
@@ -232,7 +230,6 @@ void svs_state::init()
             // top state
             scn = new scene(name, svsp);
             scn->set_draw(true);
-
             vwm = new visual_working_memory(svsp, si, vwm_link);
         }
     }
@@ -392,7 +389,6 @@ svs::svs(agent* a)
 
 #ifdef ENABLE_OPENCV
     v_mem_opencv = new visual_long_term_memory<opencv_image, exact_visual_archetype>(this);
-    vsm = new visual_sensory_memory(this, si);
 #endif
 }
 
@@ -418,15 +414,20 @@ void svs::state_creation_callback(Symbol* state)
     string type, msg;
     svs_state* s;
     
+    // The first SVS state gets VSM and VTLM
     if (state_stack.empty())
     {
+        common_syms& cs = si->get_common_syms();
         if (scn_cache)
         {
             scn_cache->verify_listeners();
         }
         s = new svs_state(this, state, si, scn_cache);
         scn_cache = NULL;
-        vsm->add_wm_link(s->vsm_link);
+
+        vltm_link_ = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vltm));
+        vsm_link_ = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vsm));
+        vsm = new visual_sensory_memory(this, si, vsm_link_);
     }
     else
     {
@@ -486,8 +487,6 @@ void svs::output_callback()
     {
         (**i).process_cmds();
     } 
-
-    vsm->output_callback();
 }
 
 void svs::input_callback()
@@ -525,7 +524,7 @@ void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_
 void svs::image_callback(const cv::Mat& new_img)
 {
     if (!enabled) return;
-    vsm->update_percept_buffer(new_img);
+    vsm->update_visual_buffer(new_img);
 }
 #endif
 

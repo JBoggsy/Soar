@@ -3,6 +3,30 @@
 #include "visual_sensory_memory.h"
 #include "visual_operation_graph.h"
 
+///////////////////////////
+// VISUAL OPERATION NODE //
+///////////////////////////
+visual_operation_node::visual_operation_node(std::string op_name, data_dict args) {
+    op_name_            = op_name;
+    parameters_         = args;
+    params_metadata_    = visual_ops::vops_param_table.at(op_name_);
+    operation_          = params_metadata_.vop_function;
+    id_                 = NEXT_NODE_ID_++;
+
+    // Populate parent_ids_ by scanning over params_metadata_ for IMAGE_ARGs
+    for (int param_i=0; param_i<params_metadata_.num_params; param_i++) {
+        visual_ops::ArgType param_type = params_metadata_.param_types[param_i];
+        if ( param_type == visual_ops::IMAGE_ARG) {
+            std::string parent_param_name = params_metadata_.param_names[param_i];
+            parent_ids_[parent_param_name] = (int)parameters_.at(parent_param_name);
+        }
+    }
+}
+
+
+////////////////////////////
+// VISUAL OPERATION GRAPH //
+////////////////////////////
 
 visual_operation_graph::visual_operation_graph(visual_sensory_memory* _vsm) {
     vsm = _vsm;
