@@ -177,6 +177,9 @@ class svs_state : public cliproxy
             return vwm;
         }
         
+        Symbol* get_svs_link() {
+            return svs_link;
+        }
         /*
          Should only be called by svs::state_deletion_callback to save top-state scene
          during init.
@@ -220,105 +223,106 @@ class svs_state : public cliproxy
 // SVS CLASS //
 ///////////////
 
-class svs : public svs_interface, public cliproxy
-{
-    public:
-        svs(agent* a);
-        ~svs();
-        
-        void state_creation_callback(Symbol* goal);
-        void state_deletion_callback(Symbol* goal);
-        void output_callback();
-        void input_callback();
-        void add_input(const std::string& in);
-        std::string svs_query(const std::string& query);
+class svs : public svs_interface, public cliproxy {
+public:
+    svs(agent* a);
+    ~svs();
+    
+    void state_creation_callback(Symbol* goal);
+    void state_deletion_callback(Symbol* goal);
+    void output_callback();
+    void input_callback();
+    void add_input(const std::string& in);
+    std::string svs_query(const std::string& query);
 
-        /**
-         * @brief Gets the root `svs_state` from the `state_stack`.
-         * 
-         * @note The "root" of the state stack is actually the *most recent*
-         * `svs_state` object to be created, the top of the stack.
-         */
-        svs_state* get_root_state() { return state_stack.at(0); }
-        svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
-
-#ifdef ENABLE_OPENCV
-        void image_callback(const cv::Mat& new_img);
-        typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
-        exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
-        visual_sensory_memory* get_vsm() { return vsm; }
-#endif
-#ifdef ENABLE_ROS
-        void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
-        ros_interface* get_ros_interface() { return ri; }
-#endif
-
-        soar_interface* get_soar_interface()
-        {
-            return si;
-        }
-
-        drawer* get_drawer() const
-        {
-            return draw;
-        }
-        
-        bool do_cli_command(const std::vector<std::string>& args, std::string& output);
-        
-        bool is_enabled()
-        {
-            return enabled;
-        }
-        void set_enabled(bool is_enabled)
-        {
-            enabled = is_enabled;
-        }
-        
-        std::string get_output() const
-        {
-            return "";
-        }
-
-        // dirty bit is true only if there has been a new command
-        //   from soar or from SendSVSInput 
-        //   (no need to recheck filters)
-        static void mark_filter_dirty_bit()
-        {
-            svs::filter_dirty_bit = true;
-        }
-
-        static bool get_filter_dirty_bit()
-        {
-            return svs::filter_dirty_bit;
-        }
-        
-    private:
-        void proc_input(svs_state* s);
-        
-        void proxy_get_children(std::map<std::string, cliproxy*>& c);
-        void cli_connect_viewer(const std::vector<std::string>& args, std::ostream& os);
-        void cli_disconnect_viewer(const std::vector<std::string>& args, std::ostream& os);
-
-#ifdef ENABLE_ROS
-        ros_interface*            ri;
-        boost::mutex              input_mtx;
-#endif
+    /**
+     * @brief Gets the root `svs_state` from the `state_stack`.
+     * 
+     * @note The "root" of the state stack is actually the *most recent*
+     * `svs_state` object to be created, the top of the stack.
+     */
+    svs_state* get_root_state() { return state_stack.at(0); }
+    svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
 
 #ifdef ENABLE_OPENCV
-        exact_opencv_mem*         v_mem_opencv;
-        visual_sensory_memory*    vsm;
-
+    void image_callback(const cv::Mat& new_img);
+    typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
+    exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
+    visual_sensory_memory* get_vsm() { return vsm; }
 #endif
-        soar_interface*           si;
-        std::vector<svs_state*>   state_stack;
-        std::vector<std::string>  env_inputs;
-        std::string               env_output;
-        mutable drawer*           draw;
-        scene*                    scn_cache;      // temporarily holds top-state scene during init
-        
-        bool enabled;
+#ifdef ENABLE_ROS
+    void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
+    ros_interface* get_ros_interface() { return ri; }
+#endif
 
-        static bool filter_dirty_bit;
+    soar_interface* get_soar_interface()
+    {
+        return si;
+    }
+
+    drawer* get_drawer() const
+    {
+        return draw;
+    }
+    
+    bool do_cli_command(const std::vector<std::string>& args, std::string& output);
+    
+    bool is_enabled()
+    {
+        return enabled;
+    }
+    void set_enabled(bool is_enabled)
+    {
+        enabled = is_enabled;
+    }
+    
+    std::string get_output() const
+    {
+        return "";
+    }
+
+    // dirty bit is true only if there has been a new command
+    //   from soar or from SendSVSInput 
+    //   (no need to recheck filters)
+    static void mark_filter_dirty_bit()
+    {
+        svs::filter_dirty_bit = true;
+    }
+
+    static bool get_filter_dirty_bit()
+    {
+        return svs::filter_dirty_bit;
+    }
+        
+private:
+    void proc_input(svs_state* s);
+    
+    void proxy_get_children(std::map<std::string, cliproxy*>& c);
+    void cli_connect_viewer(const std::vector<std::string>& args, std::ostream& os);
+    void cli_disconnect_viewer(const std::vector<std::string>& args, std::ostream& os);
+
+#ifdef ENABLE_ROS
+    ros_interface*            ri;
+    boost::mutex              input_mtx;
+#endif
+
+#ifdef ENABLE_OPENCV
+    exact_opencv_mem*         v_mem_opencv;
+    visual_sensory_memory*    vsm;
+#endif
+
+    Symbol*                   vsm_link_;
+    Symbol*                   vltm_link_;
+    soar_interface*           si;
+    std::vector<svs_state*>   state_stack;
+    std::vector<std::string>  env_inputs;
+    std::string               env_output;
+    mutable drawer*           draw;
+    scene*                    scn_cache;      // temporarily holds top-state scene during init
+    
+    bool enabled;
+
+    static bool filter_dirty_bit;
 };
 
 #endif

@@ -10,7 +10,7 @@
 
 
 #ifdef ENABLE_ROS
-const std::string visual_sensory_memory::ROS_TOPIC_NAME = "vsm";
+const std::string visual_sensory_memory::ROS_TOPIC_NAME_ = "vsm";
 #endif
 
 visual_sensory_memory::visual_sensory_memory(svs* svs_ptr, soar_interface* si, Symbol* vsm_link) {
@@ -19,28 +19,16 @@ visual_sensory_memory::visual_sensory_memory(svs* svs_ptr, soar_interface* si, S
     vsm_link_ = vsm_link;
 
     visual_buffer_ = new visual_buffer(si_, vsm_link);
-
-    // Fill the percept buffer with NULLs 
-    for (int i=0; i<PERCEPT_BUFFER_SIZE; i++) {
-        percept_buffer[i] = NULL;
-    }
+    vop_graph_ = new visual_operation_graph(this);
     
     #ifdef ENABLE_ROS
-    svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
+    svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME_);
     #endif
 }
 
 visual_sensory_memory::~visual_sensory_memory() {
 }
 
-/**
- * @brief Called at the beginning of every output phase. Updates the VSM links
- * so they reflect the VOG structure.
- * 
- */
-void visual_sensory_memory::output_callback() {
-    // std::vector<Symbol *>::iterator vsm_link_itr;
-    // for (vsm_link_itr=vsm_links.begin(); vsm_link_itr!=vsm_links.end(); vsm_link_itr++) {
 
 void visual_sensory_memory::update_visual_buffer(const cv::Mat& new_image) {
     visual_buffer_->add_new_frame(new_image);
@@ -79,7 +67,7 @@ void visual_sensory_memory::proxy_get_children(std::map<std::string, cliproxy*>&
 
 void visual_sensory_memory::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
     os << "========== VSM INTERFACE ==========" << std::endl;
-    os << "CURRENT TARGET FILE: " << _target_filepath << std::endl;
+    os << "CURRENT TARGET FILE: " << target_filepath_ << std::endl;
     os << "CLI USAGE:" << std::endl << std::endl;
     os << "svs vsm - Prints the last file uploaded to the agent, then this help text."<< std::endl;
     os << "svs vsm.setfile <FILEPATH> - Sets the image upload target to the given filepath."<< std::endl;
@@ -106,15 +94,15 @@ void visual_sensory_memory::cli_setfile(const std::vector<std::string>& args, st
         return;
     }
 
-    _target_filepath = new_target_filepath;
+    target_filepath_ = new_target_filepath;
     return;
 }
 
 void visual_sensory_memory::cli_load(const std::vector<std::string>& args, std::ostream& os) {
-    cv::Mat new_image = cv::imread(_target_filepath.c_str());
+    cv::Mat new_image = cv::imread(target_filepath_.c_str());
     printf("Loaded image: %d\n", (int)new_image.empty());
-    svs_ptr->image_callback(new_image);
-    os << "Wrote image in " << _target_filepath << " to visual input." << std::endl;
+    svs_ptr_->image_callback(new_image);
+    os << "Wrote image in " << target_filepath_ << " to visual input." << std::endl;
     return;
 }
 
@@ -143,7 +131,7 @@ void visual_sensory_memory::cli_inject(const std::vector<std::string>& args, std
     std::vector<uchar> data(decoded_data.begin(), decoded_data.end());
     cv::Mat img = cv::imdecode(cv::Mat(data), -1);
 
-    svs_ptr->image_callback(img);
+    svs_ptr_->image_callback(img);
     os << "Injected image into visual input." << std::endl;
     return;
 }
@@ -153,12 +141,12 @@ void visual_sensory_memory::cli_inject(const std::vector<std::string>& args, std
 ////////////////////////
 
 void visual_sensory_memory::setfile(std::string filepath) {
-    _target_filepath = filepath;
+    target_filepath_ = filepath;
 }
 
 void visual_sensory_memory::load() {
-    cv::Mat new_image = cv::imread(_target_filepath.c_str(), cv::IMREAD_UNCHANGED);
-    svs_ptr->image_callback(new_image);
+    cv::Mat new_image = cv::imread(target_filepath_.c_str(), cv::IMREAD_UNCHANGED);
+    svs_ptr_->image_callback(new_image);
 }
 
 void visual_sensory_memory::save(std::string filepath) {
