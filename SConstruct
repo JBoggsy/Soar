@@ -211,7 +211,7 @@ else:
 lsb_build = ('lsbc++' in env['CXX'])
 Export('compiler', 'lsb_build')
 
-cflags = ['-Wno-deprecated-declarations']
+cflags = ['-Wno-deprecated-declarations', '-std=c++1z']
 lnflags = []
 libs = ['Soar']
 if compiler == 'g++':
