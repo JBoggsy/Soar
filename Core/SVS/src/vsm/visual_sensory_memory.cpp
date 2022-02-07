@@ -19,7 +19,7 @@ visual_sensory_memory::visual_sensory_memory(svs* svs_ptr, soar_interface* si, S
     vsm_link_ = vsm_link;
 
     visual_buffer_ = new visual_buffer(si_, vsm_link);
-    vop_graph_ = new visual_operation_graph(this);
+    vop_graph_ = new visual_operation_graph(this, si_, vsm_link_);
     
     #ifdef ENABLE_ROS
     svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME_);

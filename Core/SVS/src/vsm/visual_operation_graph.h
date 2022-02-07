@@ -16,27 +16,38 @@ class visual_operation_graph;
 
 class visual_operation_node {
 private:
-    static int NEXT_NODE_ID_;
+    int id_;
+    std::unordered_set<int> child_ids_;
+    std::unordered_map<std::string, int> parent_ids_;
 
-    int                                     id_;
-    std::vector<int>                        child_ids_;
-    std::unordered_map<std::string, int>    parent_ids_;
-
-    std::string                     op_name_;
-    data_dict                       parameters_;
-    void                            (*operation_)(data_dict args);  
-    visual_ops::vop_params_metadata params_metadata_;
+    std::string op_name_;
+    data_dict parameters_;
+    void (*operation_)(data_dict args);  
+    visual_ops::vop_params_metadata op_metadata_;
 
     visual_operation_graph* vog_;
-    Symbol*                 node_link_;
+    opencv_image* node_image_;
+
+    soar_interface* si_;
+    Symbol* node_link_;
+    Symbol* op_name_sym_;
+    Symbol* node_id_sym_;
+    std::unordered_map<std::string, Symbol*> param_syms_;
 public:
-    visual_operation_node(std::string op_name, data_dict args, soar_interface* si, Symbol* node_link);
+    visual_operation_node(std::string op_name, visual_ops::vop_params_metadata op_metadata, data_dict* params, 
+                          visual_operation_graph* vog, soar_interface* si, Symbol* node_link);
     ~visual_operation_node();
     
+    void set_id(int id) { id_ = id; }
     int get_id() { return id_; }
-    std::vector<int>* get_child_ids() { return &child_ids_; }
+    std::unordered_set<int>* get_child_ids() { return &child_ids_; }
     std::unordered_map<std::string, int>* get_parent_ids() { return &parent_ids_; }
+
+    void add_child_id(int id) { child_ids_.insert(id); }
+    void remove_child_id(int id) {child_ids_.erase(id); }
+
     bool evaluate();
+    opencv_image* get_node_image();
 };
 
 
@@ -58,12 +69,11 @@ typedef std::unordered_map<int, visual_operation_node*>          id_node_map;
  * working memory. Operations can receive the contents of visual sensory memory
  * as input instead of other operation nodes.
  * 
- * The `visual_operations_graph` contains an array of `visual_operation_node`
- * structs, which is resized when needed by the `insert()` method. The 
- * `visual_operation_node` structs keep track of their parents and children to
- * allow graph traversal. The `visual_operations_graph` also maintains an array
- *  of `image` objects (e.g., `opencv_iamge` or `pcl_image`) which are given to
- * the `visual_operation_nodes`s. 
+ * The `visual_operations_graph` contains a mapping from integer node IDs to 
+ * `visual_operation_node` objects, The `visual_operation_node`s keep track of 
+ * their parents and children to allow graph traversal. They also hold their
+ * own parameters, a pointer to the correct visual operation method, and the
+ * results of their operation.
  * 
  * When the `visual_operation_graph.evaluate()` method is called, the graph is
  * traversed recursively upwards from the leaf nodes. Each node requires one or
@@ -77,14 +87,16 @@ class visual_operation_graph : public cliproxy {
 private:
     visual_sensory_memory* vsm_;
     soar_interface* si_;
-    int num_operations_ = 0;
-    visual_operation_node* root_node_;
+
+    int num_operations_;
+    int next_node_id_;
     id_node_map nodes_;
     std::unordered_set<int> leaf_nodes_;
+    std::unordered_set<int> evaluated_nodes_;
 
-    // Node images are created using `new` by the node when it is evaluated
-    // the first time, and are all `delete`d at the end of evaluation.
-    int_image_map node_images_;
+    Symbol* vog_link_;
+    Symbol* num_ops_sym_;
+    std::vector<Symbol*> node_links_;
 
     /**
      * @brief Evaluate the specified node on the visual operation graph. If
@@ -93,25 +105,25 @@ private:
      */
     void evaluate_node(visual_operation_node* node);
 public:
-    visual_operation_graph(visual_sensory_memory* vsm);
+    visual_operation_graph(visual_sensory_memory* vsm, soar_interface* si, Symbol* vsm_link);
     ~visual_operation_graph();
 
     int get_num_operations() { return num_operations_; }
 
+    int assign_new_node_id() {return next_node_id_++;}
+
     /**
      * @brief Insert a new operation into the graph as a child of the nodes
      * with the specified ids. 
-     * @param `parents`: A map from argument names to node ids indicating the
-     *        correspondence between the image-type arguments of the visual
-     *        operation and the parents of the node. If this is empty, the node
-     *        will be a new source node.
+     * @param `op_name`: The name of the operation of the new node. This should
+     *        correspond with a valid key in `visual_ops::vops_param_table`.
      * @param `params`: A newly allocated `data_dict` containing the 
      *        parameters for the visual operation
      * 
      * @returns The ID of the new visual operations in the graph. If insertion
      * fails, will return -1.
      */
-    int insert(std::unordered_map<std::string, int> parents, data_dict* params, void (*operation)(data_dict data_in));
+    int insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids);
 
     /**
      * @brief Remove the operation with the specified id. 
@@ -132,6 +144,53 @@ public:
      * its image is destroyed to save memory.
      */
     void evaluate();
+    
+    /**
+     * @brief 
+     * 
+     * @param child_id 
+     * @param parent_id 
+     * @return true The child node id was successfully added to the parent node.
+     * @return false The child node id couldn't be added to the parent node.
+     */
+    bool add_child_to_node(int child_id, int parent_id);
+
+    /**
+     * @brief Designate the node with the specified ID as a leaf node(i.e.,
+     * a node with no other nodes using it as a `target`.) This method does
+     * NOT check that the given node is, in fact, a leaf node.
+     * 
+     * @param node_id The node id of the node to be designated a leaf node.
+     */
+    void add_leaf_node(int node_id) { leaf_nodes_.insert(node_id); }
+
+    /**
+     * @brief Undesignate the node with the specified ID as a leaf node(i.e.,
+     * a node with no other nodes using it as a `target`.) This method does
+     * NOT check that the given node is not, in fact, a leaf node.
+     * 
+     * @param node_id The node id of the node to be undesignated as a leaf node.
+     */
+    void remove_leaf_node(int node_id) { leaf_nodes_.erase(node_id); }
+
+    /**
+     * @brief Marks the node with the given id as evaluated for the current
+     * evaluation run.
+     * 
+     */
+    void mark_node_evaluated(int node_id) { evaluated_nodes_.insert(node_id); }
+
+    /**
+     * @brief Get the node image of the given node.
+     * 
+     * For now, assume a node ALWAYS has precisely 1 node image.
+     * 
+     * @param node_id 
+     * @return opencv_image* The image of the given node, or NULL if such a
+     *         node doesn't exist or cannot be evaluated.
+     */
+    opencv_image* get_node_image(int node_id);
+
 
     //////////////////////
     // CLIPROXY METHODS //

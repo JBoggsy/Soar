@@ -132,7 +132,7 @@ bool add_vop_node_command::update_sub() {
         }
     }
 
-    vsm->get_vop_graph()->insert(node_parents, node_data_dict_pointer, node_params_metadata.vop_function);
+    vsm->get_vop_graph()->insert(op_type, node_data_dict_pointer, node_parents);
 
     return true;
 }

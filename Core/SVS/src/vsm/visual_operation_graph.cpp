@@ -6,84 +6,138 @@
 ///////////////////////////
 // VISUAL OPERATION NODE //
 ///////////////////////////
-visual_operation_node::visual_operation_node(std::string op_name, data_dict args) {
-    op_name_            = op_name;
-    parameters_         = args;
-    params_metadata_    = visual_ops::vops_param_table.at(op_name_);
-    operation_          = params_metadata_.vop_function;
-    id_                 = NEXT_NODE_ID_++;
+visual_operation_node::visual_operation_node(std::string op_name, visual_ops::vop_params_metadata op_metadata, data_dict* params, 
+                                             visual_operation_graph* vog, soar_interface* si, Symbol* node_link) {
+    op_metadata_ = op_metadata;
+    op_name_     = op_name_;
+    parameters_  = *params;
+    operation_   = op_metadata_.vop_function;
+    id_          = vog_->assign_new_node_id();
 
-    // Populate parent_ids_ by scanning over params_metadata_ for IMAGE_ARGs
-    for (int param_i=0; param_i<params_metadata_.num_params; param_i++) {
-        visual_ops::ArgType param_type = params_metadata_.param_types[param_i];
-        if ( param_type == visual_ops::IMAGE_ARG) {
-            std::string parent_param_name = params_metadata_.param_names[param_i];
-            parent_ids_[parent_param_name] = (int)parameters_.at(parent_param_name);
+    vog_ = vog;
+    node_image_ = NULL;
+
+    si_ = si;
+    node_link_ = node_link;
+
+    // Populate the WM link with the op name and node id
+    op_name_sym_ = si_->make_sym(op_name_);
+    si_->make_wme(node_link_, std::string("op-name"), op_name_sym_);
+
+    node_id_sym_ = si_->make_sym(id_);
+    si_->make_wme(node_link_, std::string("node-id"), node_id_sym_);
+
+    // Populate parent_ids_ and the WM link by scanning over op_metadata_
+    std::string param_name;
+    visual_ops::ArgType param_type;
+    int         param_val_int;
+    double      param_val_dbl;
+    std::string param_val_str;
+    for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
+
+        param_name = op_metadata_.param_names[param_i];
+        param_type = op_metadata_.param_types[param_i];
+
+        switch (param_type) {
+            case visual_ops::INT_ARG:
+                param_val_int = *(int*)parameters_[param_name];
+                param_syms_[param_name] = si_->make_sym(param_val_int);
+                break;
+            case visual_ops::DOUBLE_ARG:
+                param_val_dbl = *(double*)parameters_[param_name];
+                param_syms_[param_name] = si_->make_sym(param_val_dbl);
+                break;
+            case visual_ops::STRING_ARG:
+                param_val_str = *(std::string*)parameters_[param_name];
+                param_syms_[param_name] = si_->make_sym(param_val_str);
+                break;
+            case visual_ops::IMAGE_ARG:
+                param_val_int = *(int*)parameters_[param_name];
+                param_syms_[param_name] = si_->make_sym(param_val_int);
+                parent_ids_[param_name] = param_val_int;
+                vog_->add_child_to_node(id_, param_val_int);
+                break;
+            default:
+                param_val_int = *(int*)parameters_[param_name];
+                param_syms_[param_name] = si_->make_sym(param_val_int);
+                break;
         }
+
+        si_->make_wme(node_link_, param_name, param_syms_[param_name]);
     }
 }
 
+visual_operation_node::~visual_operation_node() {
+    si_->del_sym(node_link_);
+}
+
+bool visual_operation_node::evaluate() {
+    std::string parent_param_name;
+    int parent_node_id;
+    std::unordered_map<std::string, int>::iterator parent_itr;
+    for (parent_itr=parent_ids_.begin(); parent_itr!=parent_ids_.end(); parent_itr++) {
+        parent_param_name = parent_itr->first;
+        parent_node_id = parent_itr->second;
+        parameters_[parent_param_name] = vog_->get_node_image(parent_node_id);
+    }
+
+    operation_(parameters_);
+    vog_->mark_node_evaluated(id_);
+    return true;
+}
+
+opencv_image* visual_operation_node::get_node_image() {
+    return (opencv_image*)parameters_["target"];
+}
 
 ////////////////////////////
 // VISUAL OPERATION GRAPH //
 ////////////////////////////
 
-visual_operation_graph::visual_operation_graph(visual_sensory_memory* _vsm) {
-    vsm = _vsm;
-    node_images = *new int_image_map;
+visual_operation_graph::visual_operation_graph(visual_sensory_memory* vsm, soar_interface* si, Symbol* vsm_link) {
+    vsm_ = vsm;
+    si_ = si;
+    
+    num_operations_ = 0;
+    next_node_id_ = 0;
+
+    vog_link_ = si_->get_wme_val(si_->make_id_wme(vsm_link, "vog"));
+    num_ops_sym_ = si_->get_wme_val(si->make_wme(vsm_link, "size", num_operations_));
 }
 
 visual_operation_graph::~visual_operation_graph() {
     remove(0);
 }
 
-//////////////////////
-// CLIPROXY METHODS //
-//////////////////////
-void visual_operation_graph::proxy_get_children(std::map<std::string, cliproxy*>& c) {
-}
-
-void visual_operation_graph::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
-    os << "========== VSM INTERFACE ==========" << std::endl;
-    os << "======================================" << std::endl;
-}
-
-int visual_operation_graph::insert(std::unordered_map<std::string, int> parents, data_dict* params, void (*operation)(data_dict data_in)) {
-    visual_operation_node* new_node;
-    std::string parent_arg;
-    int parent_id;
-    visual_operation_node* parent_node;
+int visual_operation_graph::insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids) {
+    visual_ops::vop_params_metadata op_metadata = visual_ops::vops_param_table[op_name];
 
     // Check if the parents actually exist. If one doesn't, return without inserting
     std::unordered_map<std::string, int>::iterator parents_itr;
-    for (parents_itr=parents.begin(); parents_itr!=parents.end(); parents_itr++) {
-        if (nodes.find(parents_itr->second) == nodes.end()) {
+    for (parents_itr=parent_ids.begin(); parents_itr!=parent_ids.end(); parents_itr++) {
+        if (nodes_.find(parents_itr->second) == nodes_.end()) {
             return -1;
         }
     }
-
-    new_node = new visual_operation_node;
-    new_node->id = next_op_id;
-    new_node->v_op = operation;
-    new_node->parameters = *params;
-
-    leaf_nodes.insert(new_node->id);  // A newly created node is always a leaf node    
-
-    // Connect new child to parents and remove parents from leaf node set
-    for (parents_itr=parents.begin(); parents_itr!=parents.end(); parents_itr++) {
-        parent_arg = parents_itr->first;
-        parent_id = parents_itr->second;
-        parent_node = nodes[parent_id];
-
-        parent_node->children.insert(new_node->id);
-        new_node->parents[parent_arg] = parent_id;
-        int parent_erased = leaf_nodes.erase(parent_id);  // Any parent is no longer a leaf node
-    }
     
-    nodes[new_node->id] = new_node;
-    num_operations++;
-    next_op_id++;
-    return new_node->id;
+    Symbol* new_node_link = si_->get_wme_val(si_->make_id_wme(vog_link_, std::string("node")));
+    visual_operation_node* new_node = new visual_operation_node(op_name, op_metadata, params, this, si_, new_node_link);
+    nodes_[new_node->get_id()] = new_node;
+    num_operations_++;
+    add_leaf_node(new_node->get_id());  // A newly created node is always a leaf node
+
+    return new_node->get_id();
+}
+
+bool visual_operation_graph::add_child_to_node(int child_id, int parent_id) {
+    if (nodes_.find(parent_id) == nodes_.end()) {
+        return false;
+    }
+
+    nodes_[parent_id]->add_child_id(child_id);
+    leaf_nodes_.erase(parent_id);
+
+    return true;
 }
 
 int visual_operation_graph::remove(int target_id) {
@@ -91,83 +145,75 @@ int visual_operation_graph::remove(int target_id) {
     visual_operation_node* parent;
     visual_operation_node* target_node;
 
-    if (nodes.find(target_id) == nodes.end()) {
-        return num_operations;
+    if (nodes_.find(target_id) == nodes_.end()) {
+        return num_operations_;
     }
-    target_node = nodes[target_id];
+    target_node = nodes_[target_id];
 
     // Remove all children of the target node
     std::unordered_set<int>::iterator children_itr;
-    for (children_itr=target_node->children.begin(); children_itr != target_node->children.end(); children_itr++) {
-        child = nodes[*children_itr];
-        remove(child->id);
+    for (children_itr=target_node->get_child_ids()->begin(); children_itr != target_node->get_child_ids()->end(); children_itr++) {
+        child = nodes_[*children_itr];
+        remove(child->get_id());
     }
 
     // Remove target node from all of its parents, and check them for leaf status
     std::unordered_map<std::string, int>::iterator parents_itr;
-    for (parents_itr = target_node->parents.begin(); parents_itr != target_node->parents.end(); parents_itr++) {
-            parent = nodes[parents_itr->second];
-            parent->children.erase(target_id);
-            if (parent->children.size() == 0) {
-                leaf_nodes.insert(parent->id);
+    for (parents_itr = target_node->get_parent_ids()->begin(); parents_itr != target_node->get_parent_ids()->end(); parents_itr++) {
+            parent = nodes_[parents_itr->second];
+            parent->remove_child_id(target_id);
+            if (parent->get_child_ids()->size() == 0) {
+                add_leaf_node(parents_itr->second);
             }
         }
     
     delete &target_node;
-    num_operations--;
-    return num_operations;
+    num_operations_--;
+    return num_operations_;
 }
 
 void visual_operation_graph::evaluate() {
+    evaluated_nodes_.clear();
+
     visual_operation_node* leaf;
-
     std::unordered_set<int>::iterator leaf_itr;
-    for (leaf_itr=leaf_nodes.begin(); 
-        leaf_itr!=leaf_nodes.end(); 
+    for (leaf_itr=leaf_nodes_.begin(); 
+        leaf_itr!=leaf_nodes_.end(); 
         leaf_itr++) {
-            leaf = nodes[*leaf_itr];
-            evaluate_node(leaf);
+            leaf = nodes_[*leaf_itr];
+            leaf->evaluate();
     }
-
-    // Clean up images in memory
-    int_image_map::iterator node_images_itr;
-    for (node_images_itr=node_images.begin(); 
-        node_images_itr!=node_images.end(); 
-        node_images_itr++) {
-            delete node_images_itr->second;
-    }
-    node_images.clear();
 }
 
-void visual_operation_graph::evaluate_node(visual_operation_node* node) {
-    visual_operation_node* parent;
-    std::string parent_arg;
-    opencv_image* parent_image_copy;
+opencv_image* visual_operation_graph::get_node_image(int node_id) {
+    if (nodes_.find(node_id) == nodes_.end()) {
+        return NULL;
+    }
+    visual_operation_node* node = nodes_[node_id];
 
-    // Get image arguments from the parents, if there are any
-    std::unordered_map<std::string, int>::iterator parents_itr;
-    for (parents_itr = node->parents.begin();
-        parents_itr != node->parents.end();
-        parents_itr++) {
-            parent_arg = parents_itr->first;
-            parent = nodes[parents_itr->second];
-            // If there's no image for the parent, we need to evaluate it first
-            if (node_images.find(parent->id) == node_images.end()) {
-                evaluate_node(parent);
-            }
-            parent_image_copy = new opencv_image;
-            parent_image_copy->copy_from(node_images[parent->id]);
-            node->parameters[parent_arg] = parent_image_copy;
+    if (evaluated_nodes_.find(node_id) == evaluated_nodes_.end()) {
+        if (!node->evaluate()) {
+            return NULL;
+        }
     }
 
-    // If there are no parents, this is an image source node and needs a new opencv image
-    if (node->parents.size() == 0) {
-        opencv_image* target_image = new opencv_image;
-        node->parameters["target"] = target_image;
+    opencv_image* ret_image;
+    if (node->get_child_ids()->size() > 1) {
+        ret_image = new opencv_image();
+        ret_image->copy_from(node->get_node_image());
+    } else {
+        ret_image = node->get_node_image();
     }
 
-    // Regardless of parents, add the target image to `node_images`
-    node_images[node->id] = (opencv_image*)node->parameters["target"];
+    return ret_image;
+}
 
-    node->v_op(node->parameters);
+// CLIPROXY METHODS
+//////////////////////
+void visual_operation_graph::proxy_get_children(std::map<std::string, cliproxy*>& c) {
+}
+
+void visual_operation_graph::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
+    os << "========== VSM INTERFACE ==========" << std::endl;
+    os << "======================================" << std::endl;
 }
