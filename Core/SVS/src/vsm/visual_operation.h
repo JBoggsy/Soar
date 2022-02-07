@@ -189,7 +189,7 @@ namespace visual_ops
     ////////////////////////////////////////////////////////////
 
     // Define argument types enum
-    enum ArgType { LONG_ARG, DOUBLE_ARG, STRING_ARG,  // standard types
+    enum ArgType { INT_ARG, DOUBLE_ARG, STRING_ARG,  // standard types
                    IMAGE_ARG,       // an integer which represents the ID of another
                                     // vop node. -1 indicates no parent
                    VSM_ARG,         // pointer to VSM
@@ -223,7 +223,7 @@ namespace visual_ops
         /* vop_function = */        get_from_vsm,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_BUFFERINDEX, VOP_ARG_VSM, VOP_ARG_TARGET},
-        /* param_types = */         {LONG_ARG, VSM_ARG, IMAGE_ARG},
+        /* param_types = */         {INT_ARG, VSM_ARG, IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {OPTIONAL_ARG, REQUIRED_ARG, OPTIONAL_ARG}
     };
@@ -273,7 +273,7 @@ namespace visual_ops
         /* vop_function = */        blur,
         /* num_params = */          6,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_ANCHORX, VOP_ARG_ANCHORY, VOP_ARG_BORDERTYPE, VOP_ARG_TARGET},
-        /* param_types = */         {LONG_ARG, LONG_ARG, LONG_ARG, LONG_ARG, LONG_ARG, IMAGE_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -283,7 +283,7 @@ namespace visual_ops
         /* vop_function = */        gaussian_blur,
         /* num_params = */          6,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SIGMAX, VOP_ARG_SIGMAY, VOP_ARG_BORDERTYPE, VOP_ARG_TARGET},
-        /* param_types = */         {LONG_ARG, LONG_ARG, DOUBLE_ARG, DOUBLE_ARG, LONG_ARG, IMAGE_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, DOUBLE_ARG, INT_ARG, IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -303,7 +303,7 @@ namespace visual_ops
         /* vop_function = */        threshold,
         /* num_params = */          4,
         /* param_names = */         {VOP_ARG_THRESH, VOP_ARG_MAXVAL, VOP_ARG_TYPE, VOP_ARG_TARGET},
-        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, LONG_ARG, IMAGE_ARG},
+        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, INT_ARG, IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -313,7 +313,7 @@ namespace visual_ops
         /* vop_function = */        match_template,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_TARGET, VOP_ARG_TEMPLATE},
-        /* param_types = */         {LONG_ARG, IMAGE_ARG, IMAGE_ARG},
+        /* param_types = */         {INT_ARG, IMAGE_ARG, IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -323,7 +323,7 @@ namespace visual_ops
         /* vop_function = */        crop_to_ROI,
         /* num_params = */          5,
         /* param_names = */         {VOP_ARG_X, VOP_ARG_Y, VOP_ARG_WIDTH, VOP_ARG_HEIGHT, VOP_ARG_TARGET},
-        /* param_types = */         {LONG_ARG, LONG_ARG, LONG_ARG, LONG_ARG, IMAGE_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -333,7 +333,7 @@ namespace visual_ops
         /* vop_function = */        min_max_loc,
         /* num_params = */          7,
         /* param_names = */         {VOP_ARG_MINVAL, VOP_ARG_MAXVAL, VOP_ARG_MINLOCX, VOP_ARG_MINLOCY, VOP_ARG_MAXLOCX, VOP_ARG_MAXLOCY, VOP_ARG_TARGET},
-        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, LONG_ARG, LONG_ARG, LONG_ARG, LONG_ARG, IMAGE_ARG},
+        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, IMAGE_ARG},
         /* param_directions */      {OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };

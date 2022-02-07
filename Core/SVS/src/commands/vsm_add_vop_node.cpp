@@ -71,7 +71,7 @@ bool add_vop_node_command::update_sub() {
 
         bool param_present = false;
         switch (param_type) {
-            case visual_ops::LONG_ARG:
+            case visual_ops::INT_ARG:
                 node_data_dict[param_name] = new long;
                 param_present = si->get_const_attr(root, param_name, *((long*)node_data_dict[param_name]));
                 break;
@@ -116,7 +116,7 @@ bool add_vop_node_command::update_sub() {
                 return false;
             } else if (param_dir != visual_ops::INPUT_ARG) {  // outputs must be allocated for later use
                 switch (param_type) {
-                case visual_ops::LONG_ARG:
+                case visual_ops::INT_ARG:
                     node_data_dict[param_name] = new long;
                     break;
                 case visual_ops::DOUBLE_ARG:
