@@ -72,6 +72,18 @@ visual_operation_node::~visual_operation_node() {
     si_->del_sym(node_link_);
 }
 
+/**
+ * @brief Evaluate the visual operation node
+ * 
+ * @invariant `IMAGE_ARG` type params will be NULL when evaluate is called,
+ *            meaning this method doesn't need to `delete` old `opencv_image`
+ *            instances.
+ * @invariant the creation of new `opencv_image` instances for `IMAGE_ARG` type
+ *            params is handled by the `vog_->get_node_image` call, meaning
+ *            this method doesn't need to `new` any opencv_image instances.
+ * 
+ * @returns true iff evaluation succeeded
+ */
 bool visual_operation_node::evaluate() {
     std::string parent_param_name;
     int parent_node_id;
@@ -79,6 +91,7 @@ bool visual_operation_node::evaluate() {
     for (parent_itr=parent_ids_.begin(); parent_itr!=parent_ids_.end(); parent_itr++) {
         parent_param_name = parent_itr->first;
         parent_node_id = parent_itr->second;
+
         parameters_[parent_param_name] = vog_->get_node_image(parent_node_id);
     }
 
@@ -110,6 +123,17 @@ visual_operation_graph::~visual_operation_graph() {
     remove(0);
 }
 
+/**
+ * @brief Insert a new operation into the graph as a child of the nodes
+ * with the specified ids. 
+ * @param `op_name`: The name of the operation of the new node. This should
+ *        correspond with a valid key in `visual_ops::vops_param_table`.
+ * @param `params`: A newly allocated `data_dict` containing the 
+ *        parameters for the visual operation
+ * 
+ * @returns The ID of the new visual operations in the graph. If insertion
+ * fails, will return -1.
+ */
 int visual_operation_graph::insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids) {
     visual_ops::vop_params_metadata op_metadata = visual_ops::vops_param_table[op_name];
 
@@ -133,6 +157,15 @@ int visual_operation_graph::insert(std::string op_name, data_dict* params, std::
     return new_node->get_id();
 }
 
+/**
+ * @brief Add the given child node to the given parent node, and ensure the parent
+ * node is no longer marked as a leaf node.
+ * 
+ * @param child_id 
+ * @param parent_id 
+ * @return true The child node id was successfully added to the parent node.
+ * @return false The child node id couldn't be added to the parent node.
+ */
 bool visual_operation_graph::add_child_to_node(int child_id, int parent_id) {
     if (nodes_.find(parent_id) == nodes_.end()) {
         return false;
@@ -144,6 +177,13 @@ bool visual_operation_graph::add_child_to_node(int child_id, int parent_id) {
     return true;
 }
 
+/**
+ * @brief Remove the operation with the specified id. 
+ * ALL CHILDREN ARE DESTROYED. The root node cannot be removed.
+ * 
+ * @returns The new number of visual operations in the graph. If removal
+ * fails, the number will be the same as it was prior to the operation.
+ */
 int visual_operation_graph::remove(int target_id) {
     visual_operation_node* child;
     visual_operation_node* parent;
@@ -176,6 +216,37 @@ int visual_operation_graph::remove(int target_id) {
     return num_operations_;
 }
 
+/**
+ * @brief Designate the node with the specified ID as a leaf node(i.e.,
+ * a node with no other nodes using it as a `target`.) This method does
+ * NOT check that the given node is, in fact, a leaf node.
+ * 
+ * @param node_id The node id of the node to be designated a leaf node.
+ */
+void visual_operation_graph::add_leaf_node(int node_id) { 
+    leaf_nodes_.insert(node_id);
+}
+
+/**
+ * @brief Undesignate the node with the specified ID as a leaf node(i.e.,
+ * a node with no other nodes using it as a `target`.) This method does
+ * NOT check that the given node is not, in fact, a leaf node.
+ * 
+ * @param node_id The node id of the node to be undesignated as a leaf node.
+ */
+void visual_operation_graph::remove_leaf_node(int node_id) { 
+    leaf_nodes_.erase(node_id); 
+}
+
+/**
+ * @brief Evaluate every node in the graph once. Nodes are evaluated
+ * recursively upwards, starting with the leaf nodes. In the process of
+ * evaluating a node, its parent nodes are evaluated in order to generate
+ * the image inputs for the node itself. Nodes are evaluated at most
+ * once and the result of that evaluation is cached, to be accessed by
+ * children of the node. Once every child of a node has been evaluated,
+ * its image is destroyed to save memory.
+ */
 void visual_operation_graph::evaluate() {
     evaluated_nodes_.clear();
 
@@ -189,6 +260,15 @@ void visual_operation_graph::evaluate() {
     }
 }
 
+/**
+ * @brief Get the node image of the given node.
+ * 
+ * For now, assume a node ALWAYS has precisely 1 node image.
+ * 
+ * @param node_id 
+ * @return opencv_image* The image of the given node, or NULL if such a
+ *         node doesn't exist or cannot be evaluated.
+ */
 opencv_image* visual_operation_graph::get_node_image(int node_id) {
     if (nodes_.find(node_id) == nodes_.end()) {
         return NULL;
@@ -210,6 +290,14 @@ opencv_image* visual_operation_graph::get_node_image(int node_id) {
     }
 
     return ret_image;
+}
+
+/**
+ * @brief Marks the node with the given id as evaluated for the current
+ * evaluation run.
+ */
+void visual_operation_graph::mark_node_evaluated(int node_id) {
+    evaluated_nodes_.insert(node_id);
 }
 
 // CLIPROXY METHODS
