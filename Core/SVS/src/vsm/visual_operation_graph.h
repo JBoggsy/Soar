@@ -98,97 +98,23 @@ private:
     Symbol* num_ops_sym_;
     std::vector<Symbol*> node_links_;
 
-    /**
-     * @brief Evaluate the specified node on the visual operation graph. If
-     * the node's parents have not been evaluated yet, they will be evaluated
-     * first. 
-     */
-    void evaluate_node(visual_operation_node* node);
 public:
     visual_operation_graph(visual_sensory_memory* vsm, soar_interface* si, Symbol* vsm_link);
     ~visual_operation_graph();
 
     int get_num_operations() { return num_operations_; }
-
     int assign_new_node_id() {return next_node_id_++;}
 
-    /**
-     * @brief Insert a new operation into the graph as a child of the nodes
-     * with the specified ids. 
-     * @param `op_name`: The name of the operation of the new node. This should
-     *        correspond with a valid key in `visual_ops::vops_param_table`.
-     * @param `params`: A newly allocated `data_dict` containing the 
-     *        parameters for the visual operation
-     * 
-     * @returns The ID of the new visual operations in the graph. If insertion
-     * fails, will return -1.
-     */
     int insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids);
-
-    /**
-     * @brief Remove the operation with the specified id. 
-     * ALL CHILDREN ARE DESTROYED. The root node cannot be removed.
-     * 
-     * @returns The new number of visual operations in the graph. If removal
-     * fails, the number will be the same as it was prior to the operation.
-     */
     int remove(int target_id);
-
-    /**
-     * @brief Evaluate every node in the graph once. Nodes are evaluated
-     * recursively upwards, starting with the leaf nodes. In the process of
-     * evaluating a node, its parent nodes are evaluated in order to generate
-     * the image inputs for the node itself. Nodes are evaluated at most
-     * once and the result of that evaluation is cached, to be accessed by
-     * children of the node. Once every child of a node has been evaluated,
-     * its image is destroyed to save memory.
-     */
-    void evaluate();
     
-    /**
-     * @brief 
-     * 
-     * @param child_id 
-     * @param parent_id 
-     * @return true The child node id was successfully added to the parent node.
-     * @return false The child node id couldn't be added to the parent node.
-     */
     bool add_child_to_node(int child_id, int parent_id);
+    void add_leaf_node(int node_id);
+    void remove_leaf_node(int node_id);
 
-    /**
-     * @brief Designate the node with the specified ID as a leaf node(i.e.,
-     * a node with no other nodes using it as a `target`.) This method does
-     * NOT check that the given node is, in fact, a leaf node.
-     * 
-     * @param node_id The node id of the node to be designated a leaf node.
-     */
-    void add_leaf_node(int node_id) { leaf_nodes_.insert(node_id); }
+    void evaluate();
+    void mark_node_evaluated(int node_id);
 
-    /**
-     * @brief Undesignate the node with the specified ID as a leaf node(i.e.,
-     * a node with no other nodes using it as a `target`.) This method does
-     * NOT check that the given node is not, in fact, a leaf node.
-     * 
-     * @param node_id The node id of the node to be undesignated as a leaf node.
-     */
-    void remove_leaf_node(int node_id) { leaf_nodes_.erase(node_id); }
-
-    /**
-     * @brief Marks the node with the given id as evaluated for the current
-     * evaluation run.
-     * 
-     */
-    void mark_node_evaluated(int node_id) { evaluated_nodes_.insert(node_id); }
-
-    /**
-     * @brief Get the node image of the given node.
-     * 
-     * For now, assume a node ALWAYS has precisely 1 node image.
-     * 
-     * @param node_id 
-     * @return opencv_image* The image of the given node, or NULL if such a
-     *         node doesn't exist or cannot be evaluated.
-     */
     opencv_image* get_node_image(int node_id);
 
 
