@@ -6,13 +6,13 @@
 ///////////////////////////
 // VISUAL OPERATION NODE //
 ///////////////////////////
-visual_operation_node::visual_operation_node(std::string op_name, visual_ops::vop_params_metadata op_metadata, data_dict* params, 
+visual_operation_node::visual_operation_node(std::string op_name, data_dict* params, 
                                              visual_operation_graph* vog, soar_interface* si, Symbol* node_link) {
-    op_metadata_ = op_metadata;
-    op_name_     = op_name_;
+    op_name_     = op_name;
+    op_metadata_ = visual_ops::vops_param_table[op_name];
     parameters_  = *params;
     operation_   = op_metadata_.vop_function;
-    id_          = vog_->assign_new_node_id();
+    id_          = vog->assign_new_node_id();
 
     vog_ = vog;
     node_image_ = NULL;
@@ -34,13 +34,15 @@ visual_operation_node::visual_operation_node(std::string op_name, visual_ops::vo
     double      param_val_dbl;
     std::string param_val_str;
     for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
-
         param_name = op_metadata_.param_names[param_i];
         param_type = op_metadata_.param_types[param_i];
+        if (parameters_[param_name] == NULL) {
+            continue;
+        }
 
         switch (param_type) {
             case visual_ops::INT_ARG:
-                param_val_int = *(int*)parameters_[param_name];
+                param_val_int = *(int*)(parameters_[param_name]);
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 break;
             case visual_ops::DOUBLE_ARG:
@@ -62,7 +64,6 @@ visual_operation_node::visual_operation_node(std::string op_name, visual_ops::vo
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 break;
         }
-
         si_->make_wme(node_link_, param_name, param_syms_[param_name]);
     }
 }
@@ -112,16 +113,19 @@ visual_operation_graph::~visual_operation_graph() {
 int visual_operation_graph::insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids) {
     visual_ops::vop_params_metadata op_metadata = visual_ops::vops_param_table[op_name];
 
-    // Check if the parents actually exist. If one doesn't, return without inserting
+    // Check if the parents actually exist; -1 means no parent and is a valid value!
     std::unordered_map<std::string, int>::iterator parents_itr;
     for (parents_itr=parent_ids.begin(); parents_itr!=parent_ids.end(); parents_itr++) {
+        if (parents_itr->second == -1) {
+            continue;
+        }
         if (nodes_.find(parents_itr->second) == nodes_.end()) {
             return -1;
         }
     }
     
     Symbol* new_node_link = si_->get_wme_val(si_->make_id_wme(vog_link_, std::string("node")));
-    visual_operation_node* new_node = new visual_operation_node(op_name, op_metadata, params, this, si_, new_node_link);
+    visual_operation_node* new_node = new visual_operation_node(op_name, params, this, si_, new_node_link);
     nodes_[new_node->get_id()] = new_node;
     num_operations_++;
     add_leaf_node(new_node->get_id());  // A newly created node is always a leaf node
