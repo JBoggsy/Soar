@@ -41,6 +41,11 @@ void visual_buffer_frame::increment_index() {
 
 visual_buffer::visual_buffer(soar_interface* si, Symbol* vsm_link)
     : si_(si) {
+        buffer_ = new visual_buffer_frame*[MAX_SIZE_];
+        for (int i=0; i<MAX_SIZE_; i++) {
+            buffer_[i] = NULL;
+        }
+
         visual_buffer_link_ = si->get_wme_val(si->make_id_wme(vsm_link, "visual-buffer"));
 
         size_sym_ = si_->make_sym(size_); 
@@ -59,6 +64,7 @@ visual_buffer::~visual_buffer() {
     for (int i=0; i<size_; i++) {
         delete buffer_[i];
     }
+    delete buffer_;
 
     si_->remove_wme(size_wme_);
     si_->remove_wme(newest_update_wme_);
@@ -81,6 +87,7 @@ bool visual_buffer::add_new_frame(const cv::Mat& new_image) {
 
     // Move the remaining elements up
     for (int i=MAX_SIZE_-2; i>=0; i--) {
+        if (buffer_[i] == NULL) { continue; }
         buffer_[i+1] = buffer_[i];
         buffer_[i+1]->increment_index();
     } 
