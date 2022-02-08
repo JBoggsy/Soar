@@ -57,7 +57,8 @@ visual_operation_node::visual_operation_node(std::string op_name, data_dict* par
                 param_val_int = *(int*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 parent_ids_[param_name] = param_val_int;
-                vog_->add_child_to_node(id_, param_val_int);
+                // a value of -1 indicates no parent node, so we don't add child
+                if (param_val_int != -1) { vog_->add_child_to_node(id_, param_val_int); }
                 break;
             default:
                 param_val_int = *(int*)parameters_[param_name];
@@ -261,22 +262,25 @@ void visual_operation_graph::evaluate() {
 }
 
 /**
- * @brief Get the node image of the given node.
+ * @brief Get the node image of the given node. If the node has already been evaluated,
+ * then just get its image. Otherwise, evaluate it first and then get the resulting image.
+ * For now, assume a node ALWAYS has precisely one node image and it is stored in 
+ * `parameters_["target"]`.
  * 
- * For now, assume a node ALWAYS has precisely 1 node image.
+ * @param node_id The id of the node whose image is requested. A node_id of -1 indicates
+ *                an "origin" node and will always result in a new, blank image.
  * 
- * @param node_id 
  * @return opencv_image* The image of the given node, or NULL if such a
- *         node doesn't exist or cannot be evaluated.
+ *         node doesn't exist or cannot be evaluated. If the
  */
 opencv_image* visual_operation_graph::get_node_image(int node_id) {
-    if (nodes_.find(node_id) == nodes_.end()) {
-        return NULL;
-    }
-    visual_operation_node* node = nodes_[node_id];
+    if (node_id == -1) { return new opencv_image(); }
+    if (nodes_.find(node_id) == nodes_.end()) { return NULL; }
 
+    visual_operation_node* node = nodes_[node_id];
     if (evaluated_nodes_.find(node_id) == evaluated_nodes_.end()) {
-        if (!node->evaluate()) {
+        bool node_eval_result = node->evaluate();
+        if (!node_eval_result) {
             return NULL;
         }
     }
