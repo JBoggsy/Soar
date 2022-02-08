@@ -103,7 +103,7 @@ bool add_vop_node_command::update_sub() {
                 break;
             default:
                 node_data_dict[param_name] = NULL;
-                param_present = true;
+                param_present = false;
                 break;
         }
 
@@ -116,18 +116,18 @@ bool add_vop_node_command::update_sub() {
                 return false;
             } else if (param_dir != visual_ops::INPUT_ARG) {  // outputs must be allocated for later use
                 switch (param_type) {
-                case visual_ops::INT_ARG:
-                    node_data_dict[param_name] = new long;
-                    break;
-                case visual_ops::DOUBLE_ARG:
-                    node_data_dict[param_name] = new double;
-                    break;
-                case visual_ops::STRING_ARG:
-                    node_data_dict[param_name] = new std::string;
-                    break;
+                    case visual_ops::INT_ARG:
+                        node_data_dict[param_name] = new long;
+                        break;
+                    case visual_ops::DOUBLE_ARG:
+                        node_data_dict[param_name] = new double;
+                        break;
+                    case visual_ops::STRING_ARG:
+                        node_data_dict[param_name] = new std::string;
+                        break;
                 }
-            } else if (param_type != visual_ops::IMAGE_ARG) {  // omitted image arguments should remain omitted
-                    node_data_dict[param_name] = NULL;
+            } else {
+                node_data_dict[param_name] = NULL;
             }
         }
     }
