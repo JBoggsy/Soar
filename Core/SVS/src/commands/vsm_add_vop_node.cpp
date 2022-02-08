@@ -59,7 +59,7 @@ bool add_vop_node_command::update_sub() {
 
     // Collect all of the parameter arguments into the nodes' data_dict and its parent node dict
     data_dict* node_data_dict_pointer = new data_dict;
-    data_dict node_data_dict = *node_data_dict_pointer;
+    #define node_data_dict (*node_data_dict_pointer)
     std::unordered_map<std::string, int> node_parents;
     int num_params = node_params_metadata.num_params;
     for (int param_i=0; param_i < num_params; param_i++) {
@@ -84,10 +84,9 @@ bool add_vop_node_command::update_sub() {
                 param_present = si->get_const_attr(root, param_name, *((std::string*)node_data_dict[param_name]));
                 break;
             case visual_ops::IMAGE_ARG:
-                // NOTE: Image args are always parent nodes and never go in the data_dict
-                long parent_id;
-                param_present = si->get_const_attr(root, param_name, parent_id);
-                node_parents[param_name] = (int)parent_id;
+                node_data_dict[param_name] = new long;
+                param_present = si->get_const_attr(root, param_name, *((long*)node_data_dict[param_name]));
+                node_parents[param_name] = (int)*((long*)node_data_dict[param_name]);
                 break;
             case visual_ops::VSM_ARG:
                 node_data_dict[param_name] = vsm;
@@ -114,6 +113,9 @@ bool add_vop_node_command::update_sub() {
                 sprintf(status_buffer, "missing req'd param %s\n", param_name);
                 set_status(std::string(status_buffer));
                 return false;
+            } else if (param_type == visual_ops::IMAGE_ARG) {
+                node_data_dict[param_name] = new long(-1);
+                node_parents[param_name] = -1;
             } else if (param_dir != visual_ops::INPUT_ARG) {  // outputs must be allocated for later use
                 switch (param_type) {
                     case visual_ops::INT_ARG:
@@ -132,8 +134,13 @@ bool add_vop_node_command::update_sub() {
         }
     }
 
-    vsm->get_vop_graph()->insert(op_type, node_data_dict_pointer, node_parents);
+    int node_insertion_result = vsm->get_vop_graph()->insert(op_type, node_data_dict_pointer, node_parents);
+    if (node_insertion_result == -1) {
+        set_status("no valid parent specified");
+        return false;
+    }
 
+    set_status("success");
     return true;
 }
 
