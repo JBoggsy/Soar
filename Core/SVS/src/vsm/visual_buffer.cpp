@@ -45,6 +45,7 @@ visual_buffer::visual_buffer(soar_interface* si, Symbol* vsm_link)
         for (int i=0; i<MAX_SIZE_; i++) {
             buffer_[i] = NULL;
         }
+        size_ = 0;
 
         visual_buffer_link_ = si->get_wme_val(si->make_id_wme(vsm_link, "visual-buffer"));
 
@@ -79,6 +80,7 @@ bool visual_buffer::add_new_frame(const cv::Mat& new_image) {
         size_sym_ = si_->make_sym(size_); 
         size_wme_ = si_->make_wme(visual_buffer_link_, std::string("size"), size_sym_);
     }
+
     // Eject the last element in the percept buffer
     if (buffer_[MAX_SIZE_-1] != NULL) {
         delete buffer_[MAX_SIZE_-1];
@@ -91,7 +93,7 @@ bool visual_buffer::add_new_frame(const cv::Mat& new_image) {
         buffer_[i+1] = buffer_[i];
         buffer_[i+1]->increment_index();
     } 
-
+    
     // Create the latest element
     Symbol* frame_link = si_->get_wme_val(si_->make_id_wme(frames_link_, std::string("frame")));
     buffer_[0] = new visual_buffer_frame(si_, new_image, frame_link);
@@ -104,7 +106,7 @@ bool visual_buffer::add_new_frame(const cv::Mat& new_image) {
 
     oldest_update_ = buffer_[size_-1]->get_timestamp();
     si_->remove_wme(oldest_update_wme_);
-    oldest_update_sym_ = si_->make_sym(oldest_update_); 
+    oldest_update_sym_ = si_->make_sym(oldest_update_);
     oldest_update_wme_ = si_->make_wme(visual_buffer_link_, std::string("oldest-update"), oldest_update_sym_);
     return true;
 }
