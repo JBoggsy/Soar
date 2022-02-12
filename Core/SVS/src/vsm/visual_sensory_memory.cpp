@@ -99,8 +99,8 @@ void visual_sensory_memory::cli_setfile(const std::vector<std::string>& args, st
 }
 
 void visual_sensory_memory::cli_load(const std::vector<std::string>& args, std::ostream& os) {
-    cv::Mat new_image = cv::imread(target_filepath_.c_str());
-    printf("Loaded image: %d\n", (int)new_image.empty());
+    cv::Mat new_image = cv::imread(target_filepath_, cv::IMREAD_UNCHANGED);
+    printf("Loaded image: %s\n", new_image.empty() ? "FALSE" : "TRUE");
     svs_ptr_->image_callback(new_image);
     os << "Wrote image in " << target_filepath_ << " to visual input." << std::endl;
     return;
