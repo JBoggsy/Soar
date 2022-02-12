@@ -15,9 +15,18 @@ namespace visual_ops
     ///////////////////
 
     void get_from_vsm(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
-        int buffer_index = *(int*)args[VOP_ARG_BUFFERINDEX];
-        visual_sensory_memory* vsm = (visual_sensory_memory*)args[VOP_ARG_VSM];
+        opencv_image* image;
+        image = (opencv_image*)args[VOP_ARG_TARGET];
+
+        int buffer_index;
+        if (args[VOP_ARG_BUFFERINDEX] == NULL) {
+            buffer_index = 0;
+        } else {
+            buffer_index = *(int*)args[VOP_ARG_BUFFERINDEX];
+        }
+
+        visual_sensory_memory* vsm;
+        vsm = (visual_sensory_memory*)args[VOP_ARG_VSM];
 
         image->copy_from(vsm->get_vision(buffer_index));
         cv::Size image_shape = image->get_image()->size();
@@ -35,14 +44,9 @@ namespace visual_ops
     void save_to_file(data_dict args) {
         cv::Mat image = *(((opencv_image*)args[VOP_ARG_TARGET])->get_image());
         std::string filepath = *(std::string*)args[VOP_ARG_FILEPATH];
- 
-        cv::Size image_shape = image.size();
-
-        cv::Mat converted_image;
-        image.convertTo(converted_image, CV_8UC3, 255);
         
         try {
-            cv::imwrite(filepath, converted_image);
+            cv::imwrite(filepath, image);
         } catch (const cv::Exception& ex) {
             printf("Exception converting image to file: %s\n", ex.what());
         }
