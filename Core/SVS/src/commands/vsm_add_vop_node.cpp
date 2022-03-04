@@ -108,9 +108,9 @@ bool add_vop_node_command::update_sub() {
 
         // Decide what to do with an argument whose value is missing
         if (!param_present) {
-            if (param_opt == visual_ops::REQUIRED_ARG) {  // error out if param was required
+            if (param_opt == visual_ops::REQUIRED_ARG && param_dir == visual_ops::INPUT_ARG) {  // error out if param was required
                 char status_buffer[64];
-                sprintf(status_buffer, "missing req'd param %s\n", param_name);
+                sprintf(status_buffer, "missing req'd param %s\n", param_name.c_str());
                 set_status(std::string(status_buffer));
                 return false;
             } else if (param_type == visual_ops::IMAGE_ARG) {

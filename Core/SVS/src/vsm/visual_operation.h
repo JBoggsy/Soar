@@ -333,9 +333,9 @@ namespace visual_ops
         /* vop_function = */        min_max_loc,
         /* num_params = */          7,
         /* param_names = */         {VOP_ARG_MINVAL, VOP_ARG_MAXVAL, VOP_ARG_MINLOCX, VOP_ARG_MINLOCY, VOP_ARG_MAXLOCX, VOP_ARG_MAXLOCY, VOP_ARG_TARGET},
-        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, IMAGE_ARG},
-        /* param_directions */      {OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, INOUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+        /* param_types = */         {DOUBLE_ARG,     DOUBLE_ARG,     INT_ARG,         INT_ARG,         INT_ARG,         INT_ARG,         IMAGE_ARG},
+        /* param_directions */      {OUTPUT_ARG,     OUTPUT_ARG,     OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}
     };
 
     // CREATE LOOKUP TABLE MAPPING OPERATION NAMES TO METADATA
