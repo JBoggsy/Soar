@@ -174,7 +174,14 @@ namespace visual_ops
         cv::Mat result;
         result.create( result_rows, result_cols, CV_32FC1 );
         cv::matchTemplate(*image->get_image(), *templ->get_image(), result, method);
-        normalize( result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat() );
+        normalize( result, result, 0.0, 1.0, cv::NORM_MINMAX, CV_32FC1, cv::Mat() );
+
+        double min, max;
+        cv::Point minloc;
+        cv::Point maxloc;
+
+        cv::minMaxLoc(result, &min, &max, &minloc, &maxloc);
+
 
         image->set_image(&result);
     }
@@ -190,6 +197,9 @@ namespace visual_ops
         *((int*)args[VOP_ARG_MINLOCY]) = minloc.y;
         *((int*)args[VOP_ARG_MAXLOCX]) = maxloc.x;
         *((int*)args[VOP_ARG_MAXLOCY]) = maxloc.y;
+
+        printf("Result min %f at (%d, %d)\n", *((double*)args[VOP_ARG_MINVAL]), minloc.x, minloc.y);
+        printf("Result max %f at (%d, %d)\n", *((double*)args[VOP_ARG_MAXVAL]), maxloc.x, maxloc.y);
 
     }
 } // namespace visual_ops

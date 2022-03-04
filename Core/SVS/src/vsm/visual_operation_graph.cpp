@@ -36,9 +36,7 @@ visual_operation_node::visual_operation_node(std::string op_name, data_dict* par
     for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
         param_name = op_metadata_.param_names[param_i];
         param_type = op_metadata_.param_types[param_i];
-        if (parameters_[param_name] == NULL) {
-            continue;
-        }
+        if (parameters_[param_name] == NULL) { continue; }
 
         switch (param_type) {
             case visual_ops::INT_ARG:
@@ -65,7 +63,7 @@ visual_operation_node::visual_operation_node(std::string op_name, data_dict* par
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 break;
         }
-        si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+        param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
     }
 }
 
@@ -95,8 +93,43 @@ bool visual_operation_node::evaluate() {
 
         parameters_[parent_param_name] = vog_->get_node_image(parent_node_id);
     }
-
     operation_(parameters_);
+
+    // Update WM outputs
+    std::string param_name;
+    visual_ops::ArgType param_type;
+    visual_ops::ArgDirection param_dir;
+    int         param_val_int;
+    double      param_val_dbl;
+    std::string param_val_str;
+    for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
+        param_name = op_metadata_.param_names[param_i];
+        param_type = op_metadata_.param_types[param_i];
+        param_dir = op_metadata_.param_direction[param_i];
+        if (parameters_[param_name] == NULL) { continue; }
+        if (param_dir == visual_ops::INPUT_ARG) { continue; }
+
+        // si_->del_sym(param_syms_[param_name]);
+        si_->remove_wme(param_wmes_[param_name]);
+
+        switch (param_type) {
+            case visual_ops::INT_ARG:
+                param_val_int = *(int*)(parameters_[param_name]);
+
+                param_syms_[param_name] = si_->make_sym(param_val_int);
+                break;
+            case visual_ops::DOUBLE_ARG:
+                param_val_dbl = *(double*)parameters_[param_name];
+                param_syms_[param_name] = si_->make_sym(param_val_dbl);
+                break;
+            case visual_ops::STRING_ARG:
+                param_val_str = *(std::string*)parameters_[param_name];
+                param_syms_[param_name] = si_->make_sym(param_val_str);
+                break;
+        }
+        param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+    }
+    
     vog_->mark_node_evaluated(id_);
     return true;
 }

@@ -33,6 +33,7 @@ private:
     Symbol* op_name_sym_;
     Symbol* node_id_sym_;
     std::unordered_map<std::string, Symbol*> param_syms_;
+    std::unordered_map<std::string, wme*> param_wmes_;
 public:
     visual_operation_node(std::string op_name, data_dict* params, 
                           visual_operation_graph* vog, soar_interface* si, Symbol* node_link);
