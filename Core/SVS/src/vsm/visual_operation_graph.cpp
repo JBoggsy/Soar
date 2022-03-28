@@ -107,7 +107,7 @@ bool visual_operation_node::evaluate() {
         param_type = op_metadata_.param_types[param_i];
         param_dir = op_metadata_.param_direction[param_i];
         if (parameters_[param_name] == NULL) { continue; }
-        if (param_dir == visual_ops::INPUT_ARG) { continue; }
+        if (param_dir == visual_ops::INPUT_ARG || param_type == visual_ops::IMAGE_ARG) { continue; }
 
         // si_->del_sym(param_syms_[param_name]);
         si_->remove_wme(param_wmes_[param_name]);
@@ -115,7 +115,6 @@ bool visual_operation_node::evaluate() {
         switch (param_type) {
             case visual_ops::INT_ARG:
                 param_val_int = *(int*)(parameters_[param_name]);
-
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 break;
             case visual_ops::DOUBLE_ARG:
