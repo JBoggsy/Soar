@@ -4,20 +4,21 @@
 // VISUAL BUFFER FRAME //
 /////////////////////////
 
-visual_buffer_frame::visual_buffer_frame(soar_interface* si, const cv::Mat& image, Symbol* frame_link) {
+visual_buffer_frame::visual_buffer_frame(soar_interface* si, const cv::Mat& image, wme* frame_link) {
     index_ = 0;
     si_ = si;
     image_ = new opencv_image();
     image_->update_image(image);
     timestamp_time_t_ = std::time(NULL);
     timestamp_ = (int)timestamp_time_t_;
-    frame_link_ = frame_link;
+    frame_wme_ = frame_link;
+    frame_sym_ = si_->get_wme_val(frame_wme_);
 
     timestamp_sym_ = si->make_sym(timestamp_);
-    timestamp_wme_ = si_->make_wme(frame_link_, std::string("timestamp"), timestamp_sym_);
+    timestamp_wme_ = si_->make_wme(frame_sym_, std::string("timestamp"), timestamp_sym_);
 
     index_sym_ = si_->make_sym(index_);
-    index_wme_ = si_->make_wme(frame_link_, std::string("index"), index_sym_);
+    index_wme_ = si_->make_wme(frame_sym_, std::string("index"), index_sym_);
 }
 
 visual_buffer_frame::~visual_buffer_frame()
@@ -25,13 +26,14 @@ visual_buffer_frame::~visual_buffer_frame()
     delete image_;
     si_->remove_wme(timestamp_wme_);
     si_->remove_wme(index_wme_);
+    si_->remove_wme(frame_wme_);
 }
 
 void visual_buffer_frame::increment_index() {
     index_++;
     si_->remove_wme(index_wme_);
     index_sym_ = si_->make_sym(index_);
-    index_wme_ = si_->make_wme(frame_link_, std::string("index"), index_sym_);
+    index_wme_ = si_->make_wme(frame_sym_, std::string("index"), index_sym_);
 }
 
 
@@ -85,6 +87,7 @@ bool visual_buffer::add_new_frame(const cv::Mat& new_image) {
     if (buffer_[MAX_SIZE_-1] != NULL) {
         delete buffer_[MAX_SIZE_-1];
         buffer_[MAX_SIZE_-1] = NULL;
+
     }
 
     // Move the remaining elements up
@@ -95,7 +98,7 @@ bool visual_buffer::add_new_frame(const cv::Mat& new_image) {
     } 
     
     // Create the latest element
-    Symbol* frame_link = si_->get_wme_val(si_->make_id_wme(frames_link_, std::string("frame")));
+    wme* frame_link = si_->make_id_wme(frames_link_, std::string("frame"));
     buffer_[0] = new visual_buffer_frame(si_, new_image, frame_link);
 
     // Update the "updated" values

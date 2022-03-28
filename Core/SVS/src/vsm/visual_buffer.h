@@ -23,13 +23,14 @@ private:
     int timestamp_;
     int index_;
 
-    Symbol* frame_link_;
+    Symbol* frame_sym_;
+    wme* frame_wme_;
     Symbol* timestamp_sym_;
     wme* timestamp_wme_;
     Symbol* index_sym_;
     wme* index_wme_;
 public:
-    visual_buffer_frame(soar_interface* si, const cv::Mat& image, Symbol* frame_link);
+    visual_buffer_frame(soar_interface* si, const cv::Mat& image, wme* frame_link);
     ~visual_buffer_frame();
     opencv_image* get_image() { return image_; }
     int get_timestamp() { return timestamp_; }
