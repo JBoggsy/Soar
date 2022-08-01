@@ -159,6 +159,18 @@ namespace visual_ops
         image->set_image(&result);
     }
 
+    /////////////////////////
+    // SPATIAL COMPUTATION //
+    /////////////////////////
+    void yaw_pitch_adjust_mat(data_dict args) {
+        int width = *(int*)args[VOP_ARG_WIDTH];
+        int height = *(int*)args[VOP_ARG_HEIGHT];
+        double fov_horiz = *(double*)args[VOP_ARG_FOV_HORIZ];
+        double fov_vert = *(double*)args[VOP_ARG_FOV_VERT];
+
+        
+    }
+
 
     //////////////////////
     // OBJECT DETECTION //

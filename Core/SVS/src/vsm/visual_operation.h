@@ -58,6 +58,8 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_WIDTH       std::string("width")
 #define VOP_ARG_HEIGHT      std::string("height")
 #define VOP_ARG_WINDOWNAME  std::string("window-name")
+#define VOP_ARG_FOV_VERT    std::string("fov-vert")
+#define VOP_ARG_FOV_HORIZ   std::string("fov-horiz")
 
 /**
  * All visual operations are performed IN-PLACE. That is, the target image is
