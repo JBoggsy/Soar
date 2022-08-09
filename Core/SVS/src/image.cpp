@@ -121,14 +121,14 @@ void opencv_image::set_image(cv::Mat* image) {
         _img = new cv::Mat();
         } 
     image->copyTo(*_img);
-    _img->convertTo(*_img, CV_32FC3);
+    // _img->convertTo(*_img, CV_32FC4);
 }
 
 void opencv_image::update_image(const cv::Mat& new_img) {
     bool prev_empty = is_empty();
     _img = new cv::Mat;
     *_img = new_img.clone();
-    _img->convertTo(*_img, CV_32FC3);
+    // _img->convertTo(*_img, CV_32FC4);
     if (is_empty() != prev_empty) notify_listeners();
 }
 

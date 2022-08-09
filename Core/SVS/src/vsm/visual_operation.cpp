@@ -77,7 +77,7 @@ namespace visual_ops
     void blur(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
         int size_x = *(int*)args[VOP_ARG_SIZEX];
-        int size_y = *(int*)args[VOP_ARG_SIZEX];
+        int size_y = *(int*)args[VOP_ARG_SIZEY];
         cv::Size ksize(size_x, size_y);
         
         cv::Point anchor;
@@ -109,7 +109,7 @@ namespace visual_ops
         opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
 
         int size_x = *(int*)args[VOP_ARG_SIZEX];
-        int size_y = *(int*)args[VOP_ARG_SIZEX];
+        int size_y = *(int*)args[VOP_ARG_SIZEY];
         cv::Size ksize(size_x, size_y);
 
         double sigmaX = *(double*)args[VOP_ARG_SIGMAX];
@@ -145,6 +145,68 @@ namespace visual_ops
         cv::threshold(*image->get_image(), result, thresh, maxval, type);
         image->set_image(&result);
     }
+
+    void flip_image(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        std::string axes = *(std::string*)args[VOP_ARG_AXES];
+        int flip_code;
+        if (axes.compare("x") == 0) { flip_code = 0; }
+        else if (axes.compare("y") == 0) { flip_code = 1; }
+        else if ((axes.compare("xy") == 0) || (axes.compare("yx") == 0)) { flip_code=-1; }
+        else { return; }
+
+        cv::Mat result;
+        cv::flip(*(image->get_image()), result, flip_code);
+        image->set_image(&result);
+    }
+
+    void create_int_filled_mat(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int size_x =         *(int*)args[VOP_ARG_SIZEX];
+        int size_y =         *(int*)args[VOP_ARG_SIZEY];
+        int fill =           *(int*)args[VOP_ARG_FILL_VAL];
+
+        cv::Mat new_mat = cv::Mat(size_y, size_x, CV_16U, fill);
+        image->set_image(&new_mat);
+    }
+
+    void create_float_filled_mat(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int size_x =         *(int*)args[VOP_ARG_SIZEX];
+        int size_y =         *(int*)args[VOP_ARG_SIZEY];
+        double fill =        *(double*)args[VOP_ARG_FILL_VAL];
+
+        cv::Mat new_mat = cv::Mat(size_y, size_x, CV_32F, fill);
+        image->set_image(&new_mat);
+    }
+
+    void create_x_coord_mat(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int size_x =         *(int*)args[VOP_ARG_SIZEX];
+        int size_y =         *(int*)args[VOP_ARG_SIZEY];
+
+        cv::Mat new_mat = cv::Mat(size_x, size_y, CV_32FC1);
+        new_mat.forEach<float>([](float &cell_val, const int position[]) -> void {
+            cell_val = (float)position[1];
+        });
+        image->set_image(&new_mat);
+    }
+    void create_y_coord_mat(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int size_x =         *(int*)args[VOP_ARG_SIZEX];
+        int size_y =         *(int*)args[VOP_ARG_SIZEY];
+
+        cv::Mat new_mat = cv::Mat(size_x, size_y, CV_32FC1);
+        new_mat.forEach<float>([](float &cell_val, const int position[]) -> void {
+            cell_val = (float)position[0];
+        });
+        image->set_image(&new_mat);
+    }
+
+    void add_mats(data_dict args) { return; }
+    void sub_mats(data_dict args) { return; }
+    void mul_mats(data_dict args) { return; }
+    void div_mats(data_dict args) { return; }
    
     
     //////////////////////
