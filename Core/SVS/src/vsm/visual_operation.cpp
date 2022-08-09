@@ -145,33 +145,8 @@ namespace visual_ops
         cv::threshold(*image->get_image(), result, thresh, maxval, type);
         image->set_image(&result);
     }
-
-    void crop_to_ROI(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
-        int x = *(int*)args[VOP_ARG_X];
-        int y = *(int*)args[VOP_ARG_Y];
-        int width = *(int*)args[VOP_ARG_WIDTH];
-        int height = *(int*)args[VOP_ARG_HEIGHT];
-
-        cv::Mat result;
-        cv::Rect ROI(x, y, width, height);
-        result = (*image->get_image())(ROI);
-        image->set_image(&result);
-    }
-
-    /////////////////////////
-    // SPATIAL COMPUTATION //
-    /////////////////////////
-    void yaw_pitch_adjust_mat(data_dict args) {
-        int width = *(int*)args[VOP_ARG_WIDTH];
-        int height = *(int*)args[VOP_ARG_HEIGHT];
-        double fov_horiz = *(double*)args[VOP_ARG_FOV_HORIZ];
-        double fov_vert = *(double*)args[VOP_ARG_FOV_VERT];
-
-        
-    }
-
-
+   
+    
     //////////////////////
     // OBJECT DETECTION //
     //////////////////////
@@ -195,6 +170,19 @@ namespace visual_ops
         cv::minMaxLoc(result, &min, &max, &minloc, &maxloc);
 
 
+        image->set_image(&result);
+    }
+
+    void crop_to_ROI(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        int x = *(int*)args[VOP_ARG_X];
+        int y = *(int*)args[VOP_ARG_Y];
+        int width = *(int*)args[VOP_ARG_WIDTH];
+        int height = *(int*)args[VOP_ARG_HEIGHT];
+
+        cv::Mat result;
+        cv::Rect ROI(x, y, width, height);
+        result = (*image->get_image())(ROI);
         image->set_image(&result);
     }
 

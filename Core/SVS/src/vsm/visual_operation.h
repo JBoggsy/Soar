@@ -18,48 +18,61 @@ class opencv_image;
 typedef std::unordered_map<std::string, void*> data_dict;
 
 // Define operation names as strings
-#define VOP_GET_FROM_VSM        std::string("get-from-vsm")
-#define VOP_LOAD_FROM_FILE      std::string("load-from-file")
-#define VOP_SAVE_TO_FILE        std::string("save-to-file")
-#define VOP_DISPLAY_IMAGE       std::string("display-image")
-#define VOP_IDENTITY            std::string("identity")
-#define VOP_BLUR                std::string("blur")
-#define VOP_GAUSSIANBLUR        std::string("gaussian-blur")
-#define VOP_GREYSCALE           std::string("greyscale")
-#define VOP_THRESHOLD           std::string("threshold")
-#define VOP_MATCH_TEMPLATE      std::string("match-template")
-#define VOP_CROP_TO_ROI         std::string("crop-to-roi")
-#define VOP_MIN_MAX_LOC         std::string("min-max-loc")
+#define VOP_GET_FROM_VSM            std::string("get-from-vsm")
+#define VOP_LOAD_FROM_FILE          std::string("load-from-file")
+#define VOP_SAVE_TO_FILE            std::string("save-to-file")
+#define VOP_BLUR                    std::string("blur")
+#define VOP_DISPLAY_IMAGE           std::string("display-image")
+#define VOP_IDENTITY                std::string("identity")
+#define VOP_GAUSSIANBLUR            std::string("gaussian-blur")
+#define VOP_GREYSCALE               std::string("greyscale")
+#define VOP_THRESHOLD               std::string("threshold")
+#define VOP_FLIP_IMAGE              std::string("flip-image")
+#define VOP_CREATE_INT_FILLED_MAT   std::string("create-int-filled-mat")
+#define VOP_CREATE_FLOAT_FILLED_MAT std::string("create-float-filled-mat")
+#define VOP_CREATE_X_COORD_MAT      std::string("create-x-coord-mat")
+#define VOP_CREATE_Y_COORD_MAT      std::string("create-y-coord-mat")
+#define VOP_ADD_MATS                std::string("add-mats")
+#define VOP_SUB_MATS                std::string("sub-mats")
+#define VOP_MUL_MATS                std::string("mul-mats")
+#define VOP_DIV_MATS                std::string("div-mats")
+#define VOP_MATCH_TEMPLATE          std::string("match-template")
+#define VOP_CROP_TO_ROI             std::string("crop-to-roi")
+#define VOP_MIN_MAX_LOC             std::string("min-max-loc")
 
 // Define argument names as strings
-#define VOP_ARG_TARGET      std::string("target")
-#define VOP_ARG_FILEPATH    std::string("filepath")
-#define VOP_ARG_SIZEX       std::string("size-x")
-#define VOP_ARG_SIZEY       std::string("size-y")
+#define VOP_ARG_A           std::string("a")
 #define VOP_ARG_ANCHORX     std::string("anchor-x")
 #define VOP_ARG_ANCHORY     std::string("anchor-y")
+#define VOP_ARG_AXES        std::string{"axes"}
+#define VOP_ARG_B           std::string("b")
 #define VOP_ARG_BORDERTYPE  std::string("border-type")
-#define VOP_ARG_SIGMAX      std::string("sigma-x")
-#define VOP_ARG_SIGMAY      std::string("sigma-y")
-#define VOP_ARG_THRESH      std::string("thresh")
-#define VOP_ARG_MAXVAL      std::string("maxval")
-#define VOP_ARG_TYPE        std::string("type")
-#define VOP_ARG_METHOD      std::string("method")
-#define VOP_ARG_TEMPLATE    std::string("template")
-#define VOP_ARG_MINVAL      std::string("minval")
-#define VOP_ARG_MAXLOCX     std::string("maxloc-x")
-#define VOP_ARG_MAXLOCY     std::string("maxloc-y")
-#define VOP_ARG_MINLOCX     std::string("minloc-x")
-#define VOP_ARG_MINLOCY     std::string("minloc-y")
 #define VOP_ARG_BUFFERINDEX std::string("buffer-index")
-#define VOP_ARG_VSM         std::string("vsm")
-#define VOP_ARG_X           std::string("x")
-#define VOP_ARG_Y           std::string("y")
-#define VOP_ARG_WIDTH       std::string("width")
-#define VOP_ARG_HEIGHT      std::string("height")
-#define VOP_ARG_WINDOWNAME  std::string("window-name")
+#define VOP_ARG_FILEPATH    std::string("filepath")
+#define VOP_ARG_FILL_VAL    std::string("fill-val")
 #define VOP_ARG_FOV_VERT    std::string("fov-vert")
 #define VOP_ARG_FOV_HORIZ   std::string("fov-horiz")
+#define VOP_ARG_HEIGHT      std::string("height")
+#define VOP_ARG_MAXLOCX     std::string("maxloc-x")
+#define VOP_ARG_MAXLOCY     std::string("maxloc-y")
+#define VOP_ARG_MAXVAL      std::string("maxval")
+#define VOP_ARG_METHOD      std::string("method")
+#define VOP_ARG_MINLOCX     std::string("minloc-x")
+#define VOP_ARG_MINLOCY     std::string("minloc-y")
+#define VOP_ARG_MINVAL      std::string("minval")
+#define VOP_ARG_SIGMAX      std::string("sigma-x")
+#define VOP_ARG_SIGMAY      std::string("sigma-y")
+#define VOP_ARG_SIZEX       std::string("size-x")
+#define VOP_ARG_SIZEY       std::string("size-y")
+#define VOP_ARG_TEMPLATE    std::string("template")
+#define VOP_ARG_TARGET      std::string("target")
+#define VOP_ARG_THRESH      std::string("thresh")
+#define VOP_ARG_TYPE        std::string("type")
+#define VOP_ARG_VSM         std::string("vsm")
+#define VOP_ARG_WIDTH       std::string("width")
+#define VOP_ARG_WINDOWNAME  std::string("window-name")
+#define VOP_ARG_X           std::string("x")
+#define VOP_ARG_Y           std::string("y")
 
 /**
  * All visual operations are performed IN-PLACE. That is, the target image is
@@ -104,6 +117,11 @@ namespace visual_ops
      */
     void display_image(data_dict args);
 
+
+    ////////////////////////////
+    // VISUAL TRANSFORMATIONS //
+    ////////////////////////////
+
     /**
      * @brief Returns the input image without changes, used to add a no-op node.
      * @param args
@@ -114,17 +132,23 @@ namespace visual_ops
     /**
      * @brief Blur the single target image
      * @param args
-     *        `cv::Size ksize`: Blurring kernel size
-     *        `cv::Point anchor`: Anchor point; default value Point(-1,-1) means that the anchor is at the kernel center
+     *        `int size-x`: Blurring kernel size along the x dimension
+     *        `int size-y`: Blurring kernel size along the y dimension
+     *        `int anchor-x`: Anchor point x coordinate; default value of-1 means that the anchor is at the kernel's center
+     *        `int anchor-y`: Anchor point y coordinate; default value of-1 means that the anchor is at the kernel's center
      *        `int borderType`: Border mode used to extrapolate pixels outside of the image
      *        `opencv_image* target`: The image to blur
      */
     void blur(data_dict args);
 
     /**
-     * @brief Blur the single target image using a Gaussian filter
+     * @brief Blur the single target image using a Gaussian filter.
+     * 
+     * @note ksize-x and ksize-yt can differ but they both must be positive and odd. Alternatively, they can be zeroes and
+     *       then they are computed from sigma.
      * @param args
-     *        `cv::Size ksize`: Gaussian kernel size. ksize.width and ksize.height can differ but they both must be positive and odd. Or, they can be zero's and then they are computed from sigma
+     *        `int ksize-x`: Gaussian kernel width
+     *        `int ksize-y`: Gaussian kernel height
      *        `double sigmaX`: Gaussian kernel standard deviation in X direction. 
      *        `double sigmaY`: Gaussian kernel standard deviation in Y direction; if sigmaY is zero, it is set to be equal to sigmaX, if both sigmas are zeros, they are computed from ksize.width and ksize.height, respectively (see getGaussianKernel for details); to fully control the result regardless of possible future modifications of all this semantics, it is recommended to specify all of ksize, sigmaX, and sigmaY.
      *        `int borderType`: Border mode used to extrapolate pixels outside of the image
@@ -148,6 +172,107 @@ namespace visual_ops
      *        `opencv_image* target`: The image to greyscale
      */
     void threshold(data_dict args);
+
+    /**
+     * @brief Flip the image across the x or y axis, or both.
+     * 
+     * @param args 
+     *      `std:string axes`: One of `x`, `y`, `xy,` or `yx`. Indicates axes to flip across.
+     *      `opencv_image* target`: The image to flip
+     */
+    void flip_image(data_dict args);
+
+
+    /////////////////////////////
+    // MATHEMATICAL PRIMITIVES //
+    /////////////////////////////
+
+    /**
+     * @brief Create a matrix of the given size filled with the given value.
+     * 
+     * @param args
+     *      `int size-x`: Width of the new matrix in pixels
+     *      `int size-y`: Height of the new matrix in pixels
+     *      `int fill`: Value to fill the matrix with
+     *      `opencv_image* target`: Matrix filled with the given value
+     */
+    void create_int_filled_mat(data_dict args);
+
+    /**
+     * @brief Create a matrix of the given size filled with the given value.
+     * 
+     * @param args
+     *      `int size-x`: Width of the new matrix in pixels
+     *      `int size-y`: Height of the new matrix in pixels
+     *      `float fill`: Value to fill the matrix with
+     *      `opencv_image* target`: Matrix filled with the given value
+     */
+    void create_float_filled_mat(data_dict args);
+
+    /**
+     * @brief Create a matrix of the given size where the value of a each cell is its x coordinate.
+     * 
+     * @param args
+     *      `int size-x`: Width of the new matrix in pixels
+     *      `int size-y`: Height of the new matrix in pixels
+     *      `opencv_image* target`: Filled matrix
+     */
+    void create_x_coord_mat(data_dict args);
+
+    /**
+     * @brief Create a matrix of the given size where the value of a each cell is its y coordinate.
+     * 
+     * @param args
+     *      `int size-x`: Width of the new matrix in pixels
+     *      `int size-y`: Height of the new matrix in pixels
+     *      `opencv_image* target`: Filled matrix
+     */
+    void create_y_coord_mat(data_dict args);
+
+    /**
+     * @brief Add two matrices together element-wise as `c[x,y] = a[x,y]+b[x,y]`.
+     * 
+     * @param args 
+     *      `opencv_image* a`: First addend
+     *      `opencv_image* b`: Second addend
+     *      `opencv_image* target`: Result of element-wise addition`
+     */
+    void add_mats(data_dict args);
+
+    /**
+     * @brief Subtract matrix `a` from matrix `b` element-wise as `c[x,y] = a[x,y]-b[x,y]`.
+     * 
+     * @param args 
+     *      `opencv_image* a`: Multiplicand 
+     *      `opencv_image* b`: Multiplier
+     *      `opencv_image* target`: Result of element-wise subtraction`
+     */
+    void sub_mats(data_dict args);
+    
+    /**
+     * @brief Multiply matrix `a` by matrix `b` element-wise as `c[x,y] = a[x,y]*b[x,y]`.
+     * 
+     * @param args 
+     *      `opencv_image* a`: Minuend 
+     *      `opencv_image* b`: Subtrahend
+     *      `opencv_image* target`: Result of element-wise multiplication`
+     */
+    void mul_mats(data_dict args);
+
+    /**
+     * @brief Divide matrix `a` by matrix `b` element-wise as `c[x,y] = a[x,y]/b[x,y]`.
+     * 
+     * @param args 
+     *      `opencv_image* a`: Dividend 
+     *      `opencv_image* b`: Divisor
+     *      `opencv_image* target`: Result of element-wise division`
+     */
+    void div_mats(data_dict args);
+    
+
+    //////////////////////
+    // OBJECT DETECTION //
+    //////////////////////
 
     /**
      * @brief Match a template image and return a new, single-channel image of
@@ -310,6 +435,96 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    // FLIP IMAGE
+    inline vop_params_metadata flip_image_metadata = {
+        /* vop_function = */        flip_image,
+        /* num_params = */          2,
+        /* param_names = */         {VOP_ARG_AXES, VOP_ARG_TARGET},
+        /* param_types = */         {STRING_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // CREATE INT FILLED MATRIX
+    inline vop_params_metadata create_int_filled_mat_metadata = {
+        /* vop_function = */        create_int_filled_mat,
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_TARGET},
+        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // CREATE FLOAT FILLED MATRIX
+    inline vop_params_metadata create_float_filled_mat_metadata = {
+        /* vop_function = */        create_float_filled_mat,
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_TARGET},
+        /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // CREATE X COORDINATE FILLED MATRIX
+    inline vop_params_metadata create_x_coord_mat_metadata = {
+        /* vop_function = */        create_x_coord_mat,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_TARGET},
+        /* param_types = */         {INT_ARG, INT_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // CREATE Y COORDINATE FILLED MATRIX
+    inline vop_params_metadata create_y_coord_mat_metadata = {
+        /* vop_function = */        create_y_coord_mat,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_TARGET},
+        /* param_types = */         {INT_ARG, INT_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // ADD MATRICES
+    inline vop_params_metadata add_mats_metadata = {
+        /* vop_function = */        add_mats,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_types = */         {IMAGE_ARG, IMAGE_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // SUBTRACT MATRICES
+    inline vop_params_metadata sub_mats_metadata = {
+        /* vop_function = */        sub_mats,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_types = */         {IMAGE_ARG, IMAGE_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // MULTIPLY MATRICES
+    inline vop_params_metadata mul_mats_metadata = {
+        /* vop_function = */        mul_mats,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_types = */         {IMAGE_ARG, IMAGE_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // DIVIDE MATRICES
+    inline vop_params_metadata div_mats_metadata = {
+        /* vop_function = */        div_mats,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_types = */         {IMAGE_ARG, IMAGE_ARG, IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     // MATCH TEMPLATE
     inline vop_params_metadata match_template_metadata = {
         /* vop_function = */        match_template,
@@ -352,6 +567,15 @@ namespace visual_ops
         {VOP_GAUSSIANBLUR, gaussian_blur_metadata},
         {VOP_GREYSCALE, greyscale_metadata},
         {VOP_THRESHOLD, threshold_metadata},
+        {VOP_FLIP_IMAGE, flip_image_metadata},
+        {VOP_CREATE_INT_FILLED_MAT, create_int_filled_mat_metadata},
+        {VOP_CREATE_FLOAT_FILLED_MAT, create_float_filled_mat_metadata},
+        {VOP_CREATE_X_COORD_MAT, create_x_coord_mat_metadata},
+        {VOP_CREATE_Y_COORD_MAT, create_y_coord_mat_metadata},
+        {VOP_ADD_MATS, add_mats_metadata},
+        {VOP_SUB_MATS, sub_mats_metadata},
+        {VOP_MUL_MATS, mul_mats_metadata},
+        {VOP_DIV_MATS, div_mats_metadata},
         {VOP_MATCH_TEMPLATE, match_template_metadata},
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata}
