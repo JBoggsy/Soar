@@ -296,8 +296,9 @@ void visual_operation_graph::evaluate() {
 /**
  * @brief Get the node image of the given node. If the node has already been evaluated,
  * then just get its image. Otherwise, evaluate it first and then get the resulting image.
- * For now, assume a node ALWAYS has precisely one node image and it is stored in 
- * `parameters_["target"]`.
+ * For now, assume a node ALWAYS outputs precisely one node image and it is stored in 
+ * `parameters_["target"]`. Other images can be used as input, but only the `target` is
+ * used as output.
  * 
  * @param node_id The id of the node whose image is requested. A node_id of -1 indicates
  *                an "origin" node and will always result in a new, blank image.
