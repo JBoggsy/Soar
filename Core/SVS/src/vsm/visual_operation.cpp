@@ -203,10 +203,76 @@ namespace visual_ops
         image->set_image(&new_mat);
     }
 
-    void add_mats(data_dict args) { return; }
-    void sub_mats(data_dict args) { return; }
-    void mul_mats(data_dict args) { return; }
-    void div_mats(data_dict args) { return; }
+    void add_mats(data_dict args) { 
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
+        opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
+
+        // Check to ensure channel compatibility
+        int image_chans = image->get_image()->channels();
+        int a_chans = a->get_image()->channels();
+        int b_chans = b->get_image()->channels();
+        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+            return;
+        }
+
+        cv::Mat result = cv::Mat(*a->get_image() + *b->get_image());
+        image->set_image(&result);
+    }
+
+    void sub_mats(data_dict args) { 
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
+        opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
+
+        // Check to ensure channel compatibility
+        int image_chans = image->get_image()->channels();
+        int a_chans = a->get_image()->channels();
+        int b_chans = b->get_image()->channels();
+        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+            return;
+        }
+
+        cv::Mat result = cv::Mat(*a->get_image() - *b->get_image());
+        image->set_image(&result);
+    }
+
+    void mul_mats(data_dict args) { 
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
+        opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
+
+        // Check to ensure channel compatibility
+        int image_chans = image->get_image()->channels();
+        int a_chans = a->get_image()->channels();
+        int b_chans = b->get_image()->channels();
+        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+            return;
+        }
+
+        cv::Mat result = cv::Mat(image->get_image()->size(), image->get_image()->type());
+        cv::multiply(*a->get_image(), *b->get_image(), result);
+        image->set_image(&result);
+    }
+
+    void div_mats(data_dict args) { 
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
+        opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
+
+        // Check to ensure channel compatibility
+        int image_chans = image->get_image()->channels();
+        int a_chans = a->get_image()->channels();
+        int b_chans = b->get_image()->channels();
+        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+            return;
+        }
+
+        cv::Mat result = cv::Mat(image->get_image()->size(), image->get_image()->type());
+        cv::divide(*a->get_image(), *b->get_image(), result);
+        image->set_image(&result);
+    }
+
    
     
     //////////////////////
