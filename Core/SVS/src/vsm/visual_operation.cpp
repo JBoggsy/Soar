@@ -166,7 +166,7 @@ namespace visual_ops
         int size_y =         *(int*)args[VOP_ARG_SIZEY];
         int fill =           *(int*)args[VOP_ARG_FILL_VAL];
 
-        cv::Mat new_mat = cv::Mat(size_y, size_x, CV_16U, fill);
+        cv::Mat new_mat = cv::Mat(size_y, size_x, CV_16S, fill);
         image->set_image(&new_mat);
     }
 
@@ -203,20 +203,19 @@ namespace visual_ops
         image->set_image(&new_mat);
     }
 
-    void add_mats(data_dict args) { 
+    void add_mats(data_dict args) {
         opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
         // Check to ensure channel compatibility
-        int image_chans = image->get_image()->channels();
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
-        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+        if (a_chans != b_chans) {
             return;
         }
 
-        cv::Mat result = cv::Mat(*a->get_image() + *b->get_image());
+        cv::Mat result = *a->get_image() + *b->get_image();
         image->set_image(&result);
     }
 
@@ -226,14 +225,13 @@ namespace visual_ops
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
         // Check to ensure channel compatibility
-        int image_chans = image->get_image()->channels();
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
-        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+        if (a_chans != b_chans) {
             return;
         }
 
-        cv::Mat result = cv::Mat(*a->get_image() - *b->get_image());
+        cv::Mat result = *a->get_image() - *b->get_image();
         image->set_image(&result);
     }
 
@@ -243,10 +241,9 @@ namespace visual_ops
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
         // Check to ensure channel compatibility
-        int image_chans = image->get_image()->channels();
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
-        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+        if (a_chans != b_chans) {
             return;
         }
 
@@ -261,10 +258,9 @@ namespace visual_ops
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
         // Check to ensure channel compatibility
-        int image_chans = image->get_image()->channels();
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
-        if ( (image_chans != a_chans ) || (image_chans != b_chans) || (a_chans != b_chans) ) {
+        if (a_chans != b_chans) {
             return;
         }
 
