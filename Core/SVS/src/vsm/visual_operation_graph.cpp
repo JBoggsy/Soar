@@ -72,6 +72,73 @@ visual_operation_node::~visual_operation_node() {
 }
 
 /**
+ * @brief Edit the value of a parameter used as an arguments for the VOp in this node.
+ * 
+ * @param param_name The name of the parameter to edit
+ * @param new_value The new value to give the parameter
+ * @return true If the parameter is successfully edited
+ * @return false If the parameter is not changed
+ */
+bool visual_operation_node::edit_parameter(std::string param_name, long new_value) {
+    std::vector<std::string>::iterator param_names_start = op_metadata_.param_names.begin();
+    std::vector<std::string>::iterator param_names_end = op_metadata_.param_names.end();
+    std::vector<std::string>::iterator param_name_itr;
+    param_name_itr = std::find(param_names_start, param_names_end, param_name);
+    if (param_name_itr == param_names_end) {return false; }
+    int param_index = std::distance(param_names_start, param_name_itr);
+
+    visual_ops::ArgType param_type = op_metadata_.param_types.at(param_index);
+    if ( (param_type != visual_ops::INT_ARG) || (param_type != visual_ops::NODE_ID_ARG) ) { return false; }
+
+    *((long*)parameters_[param_name]) = new_value;
+    return true;
+}
+/**
+ * @brief Edit the value of a parameter used as an arguments for the VOp in this node.
+ * 
+ * @param param_name The name of the parameter to edit
+ * @param new_value The new value to give the parameter
+ * @return true If the parameter is successfully edited
+ * @return false If the parameter is not changed
+ */
+bool visual_operation_node::edit_parameter(std::string param_name, double new_value) {
+    std::vector<std::string>::iterator param_names_start = op_metadata_.param_names.begin();
+    std::vector<std::string>::iterator param_names_end = op_metadata_.param_names.end();
+    std::vector<std::string>::iterator param_name_itr;
+    param_name_itr = std::find(param_names_start, param_names_end, param_name);
+    if (param_name_itr == param_names_end) {return false; }
+    int param_index = std::distance(param_names_start, param_name_itr);
+
+    visual_ops::ArgType param_type = op_metadata_.param_types.at(param_index);
+    if ( param_type != visual_ops::DOUBLE_ARG ) { return false; }
+
+    *((double*)parameters_[param_name]) = new_value;
+    return true;
+}
+/**
+ * @brief Edit the value of a parameter used as an arguments for the VOp in this node.
+ * 
+ * @param param_name The name of the parameter to edit
+ * @param new_value The new value to give the parameter
+ * @return true If the parameter is successfully edited
+ * @return false If the parameter is not changed
+ */
+bool visual_operation_node::edit_parameter(std::string param_name, std::string new_value) {
+    std::vector<std::string>::iterator param_names_start = op_metadata_.param_names.begin();
+    std::vector<std::string>::iterator param_names_end = op_metadata_.param_names.end();
+    std::vector<std::string>::iterator param_name_itr;
+    param_name_itr = std::find(param_names_start, param_names_end, param_name);
+    if (param_name_itr == param_names_end) {return false; }
+    int param_index = std::distance(param_names_start, param_name_itr);
+
+    visual_ops::ArgType param_type = op_metadata_.param_types.at(param_index);
+    if ( param_type != visual_ops::STRING_ARG ) { return false; }
+
+    *((std::string*)parameters_[param_name]) = new_value;
+    return true;
+}
+
+/**
  * @brief Evaluate the visual operation node
  * 
  * @invariant `NODE_ID_ARG` type params will be NULL when evaluate is called,
