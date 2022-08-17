@@ -41,6 +41,7 @@ command_table_entry* set_file_command_entry();
 command_table_entry* save_percept_command_entry();
 command_table_entry* load_percept_command_entry();
 command_table_entry* add_vop_node_command_entry();
+command_table_entry* edit_vop_node_command_entry();
 
 // VISUAL WORKING MEMORY COMMANDS
 ///////////////////////
@@ -77,6 +78,7 @@ command_table::command_table()
     add(save_percept_command_entry());
     add(load_percept_command_entry());
     add(add_vop_node_command_entry());
+    add(edit_vop_node_command_entry());
 
     // Visual Working Memory
     add(flip_percept_command_entry());
