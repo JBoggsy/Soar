@@ -6,10 +6,10 @@
 ///////////////////////////
 // VISUAL OPERATION NODE //
 ///////////////////////////
-visual_operation_node::visual_operation_node(std::string op_name, data_dict* params, 
+visual_operation_node::visual_operation_node(std::string op_type, data_dict* params, 
                                              visual_operation_graph* vog, soar_interface* si, Symbol* node_link) {
-    op_name_     = op_name;
-    op_metadata_ = visual_ops::vops_param_table[op_name];
+    op_type_     = op_type;
+    op_metadata_ = visual_ops::vops_param_table[op_type];
     parameters_  = *params;
     operation_   = op_metadata_.vop_function;
     id_          = vog->assign_new_node_id();
@@ -21,7 +21,7 @@ visual_operation_node::visual_operation_node(std::string op_name, data_dict* par
     node_link_ = node_link;
 
     // Populate the WM link with the op name and node id
-    op_name_sym_ = si_->make_sym(op_name_);
+    op_name_sym_ = si_->make_sym(op_type_);
     si_->make_wme(node_link_, std::string("op-name"), op_name_sym_);
 
     node_id_sym_ = si_->make_sym(id_);
@@ -160,7 +160,7 @@ visual_operation_graph::~visual_operation_graph() {
 /**
  * @brief Insert a new operation into the graph as a child of the nodes
  * with the specified ids. 
- * @param `op_name`: The name of the operation of the new node. This should
+ * @param `op_type`: The name of the operation of the new node. This should
  *        correspond with a valid key in `visual_ops::vops_param_table`.
  * @param `params`: A newly allocated `data_dict` containing the 
  *        parameters for the visual operation
@@ -168,8 +168,8 @@ visual_operation_graph::~visual_operation_graph() {
  * @returns The ID of the new visual operations in the graph. If insertion
  * fails, will return -1.
  */
-int visual_operation_graph::insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids) {
-    visual_ops::vop_params_metadata op_metadata = visual_ops::vops_param_table[op_name];
+int visual_operation_graph::insert(std::string op_type, data_dict* params, std::unordered_map<std::string, int> parent_ids) {
+    visual_ops::vop_params_metadata op_metadata = visual_ops::vops_param_table[op_type];
 
     // Check if the parents actually exist; -1 means no parent and is a valid value!
     std::unordered_map<std::string, int>::iterator parents_itr;
@@ -183,7 +183,7 @@ int visual_operation_graph::insert(std::string op_name, data_dict* params, std::
     }
     
     Symbol* new_node_link = si_->get_wme_val(si_->make_id_wme(vog_link_, std::string("node")));
-    visual_operation_node* new_node = new visual_operation_node(op_name, params, this, si_, new_node_link);
+    visual_operation_node* new_node = new visual_operation_node(op_type, params, this, si_, new_node_link);
     nodes_[new_node->get_id()] = new_node;
     num_operations_++;
     add_leaf_node(new_node->get_id());  // A newly created node is always a leaf node
@@ -292,6 +292,11 @@ void visual_operation_graph::evaluate() {
             leaf = nodes_[*leaf_itr];
             leaf->evaluate();
     }
+}
+
+visual_operation_node* visual_operation_graph::get_node(int node_id) {
+    if (nodes_.find(node_id) == nodes_.end()) { return NULL; }
+    return nodes_.at(node_id);
 }
 
 /**
