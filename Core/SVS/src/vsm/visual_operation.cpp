@@ -185,7 +185,7 @@ namespace visual_ops
         int size_x =         *(int*)args[VOP_ARG_SIZEX];
         int size_y =         *(int*)args[VOP_ARG_SIZEY];
 
-        cv::Mat new_mat = cv::Mat(size_x, size_y, CV_32FC1);
+        cv::Mat new_mat = cv::Mat(size_y, size_x, CV_32FC1);
         new_mat.forEach<float>([](float &cell_val, const int position[]) -> void {
             cell_val = (float)position[1];
         });
@@ -196,7 +196,7 @@ namespace visual_ops
         int size_x =         *(int*)args[VOP_ARG_SIZEX];
         int size_y =         *(int*)args[VOP_ARG_SIZEY];
 
-        cv::Mat new_mat = cv::Mat(size_x, size_y, CV_32FC1);
+        cv::Mat new_mat = cv::Mat(size_y, size_x, CV_32FC1);
         new_mat.forEach<float>([](float &cell_val, const int position[]) -> void {
             cell_val = (float)position[0];
         });
@@ -212,6 +212,15 @@ namespace visual_ops
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
         if (a_chans != b_chans) {
+            printf("Failed to add mats: channel error: %d != %d\n", a_chans, b_chans);
+            return;
+        }
+
+        // Check to ensure size compatibility
+        cv::Size a_size = a->get_image()->size();
+        cv::Size b_size = b->get_image()->size();
+        if ( (a_size.height != b_size.height) || (a_size.width != b_size.width) ) {
+            printf("Failed to add mats: size error: (%d,%d) != (%d,%d)\n", a_size.height, a_size.width, b_size.height, b_size.width);
             return;
         }
 
@@ -228,6 +237,15 @@ namespace visual_ops
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
         if (a_chans != b_chans) {
+            printf("Failed to sub mats: channel error: %d != %d\n", a_chans, b_chans);
+            return;
+        }
+
+        // Check to ensure size compatibility
+        cv::Size a_size = a->get_image()->size();
+        cv::Size b_size = b->get_image()->size();
+        if ( (a_size.height != b_size.height) || (a_size.width != b_size.width) ) {
+            printf("Failed to sub mats: size error: (%d,%d) != (%d,%d)\n", a_size.height, a_size.width, b_size.height, b_size.width);
             return;
         }
 
@@ -244,10 +262,19 @@ namespace visual_ops
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
         if (a_chans != b_chans) {
+            printf("Failed to mul mats: channel error: %d != %d\n", a_chans, b_chans);
             return;
         }
 
-        cv::Mat result = cv::Mat(image->get_image()->size(), image->get_image()->type());
+        // Check to ensure size compatibility
+        cv::Size a_size = a->get_image()->size();
+        cv::Size b_size = b->get_image()->size();
+        if ( (a_size.height != b_size.height) || (a_size.width != b_size.width) ) {
+            printf("Failed to mul mats: size error: (%d,%d) != (%d,%d)\n", a_size.height, a_size.width, b_size.height, b_size.width);
+            return;
+        }
+
+        cv::Mat result = cv::Mat(a->get_image()->size(), a->get_image()->type());
         cv::multiply(*a->get_image(), *b->get_image(), result);
         image->set_image(&result);
     }
@@ -261,10 +288,19 @@ namespace visual_ops
         int a_chans = a->get_image()->channels();
         int b_chans = b->get_image()->channels();
         if (a_chans != b_chans) {
+            printf("Failed to div mats: channel error: %d != %d\n", a_chans, b_chans);
             return;
         }
 
-        cv::Mat result = cv::Mat(image->get_image()->size(), image->get_image()->type());
+        // Check to ensure size compatibility
+        cv::Size a_size = a->get_image()->size();
+        cv::Size b_size = b->get_image()->size();
+        if ( (a_size.height != b_size.height) || (a_size.width != b_size.width) ) {
+            printf("Failed to div mats: size error: (%d,%d) != (%d,%d)\n", a_size.height, a_size.width, b_size.height, b_size.width);
+            return;
+        }
+
+        cv::Mat result = cv::Mat(a->get_image()->size(), a->get_image()->type());
         cv::divide(*a->get_image(), *b->get_image(), result);
         image->set_image(&result);
     }
