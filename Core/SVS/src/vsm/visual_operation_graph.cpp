@@ -51,7 +51,7 @@ visual_operation_node::visual_operation_node(std::string op_name, data_dict* par
                 param_val_str = *(std::string*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_str);
                 break;
-            case visual_ops::IMAGE_ARG:
+            case visual_ops::NODE_ID_ARG:
                 param_val_int = *(int*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 parent_ids_[param_name] = param_val_int;
@@ -74,10 +74,10 @@ visual_operation_node::~visual_operation_node() {
 /**
  * @brief Evaluate the visual operation node
  * 
- * @invariant `IMAGE_ARG` type params will be NULL when evaluate is called,
+ * @invariant `NODE_ID_ARG` type params will be NULL when evaluate is called,
  *            meaning this method doesn't need to `delete` old `opencv_image`
  *            instances.
- * @invariant the creation of new `opencv_image` instances for `IMAGE_ARG` type
+ * @invariant the creation of new `opencv_image` instances for `NODE_ID_ARG` type
  *            params is handled by the `vog_->get_node_image` call, meaning
  *            this method doesn't need to `new` any opencv_image instances.
  * 
@@ -108,7 +108,7 @@ bool visual_operation_node::evaluate() {
         param_type = op_metadata_.param_types[param_i];
         param_dir = op_metadata_.param_direction[param_i];
         if (parameters_[param_name] == NULL) { continue; }
-        if (param_dir == visual_ops::INPUT_ARG || param_type == visual_ops::IMAGE_ARG) { continue; }
+        if (param_dir == visual_ops::INPUT_ARG || param_type == visual_ops::NODE_ID_ARG) { continue; }
 
         // si_->del_sym(param_syms_[param_name]);
         si_->remove_wme(param_wmes_[param_name]);
