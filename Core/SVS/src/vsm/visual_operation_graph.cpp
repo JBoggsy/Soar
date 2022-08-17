@@ -92,6 +92,7 @@ bool visual_operation_node::evaluate() {
         parent_node_id = parent_itr->second;
 
         parameters_[parent_param_name] = vog_->get_node_image(parent_node_id);
+        if (parameters_[parent_param_name] == NULL) { printf("ERROR: Node %d not found\n", parent_node_id); }
     }
     operation_(parameters_);
 
@@ -304,12 +305,12 @@ void visual_operation_graph::evaluate() {
  *                an "origin" node and will always result in a new, blank image.
  * 
  * @return opencv_image* The image of the given node, or NULL if such a
- *         node doesn't exist or cannot be evaluated. If the
+ *         node doesn't exist or cannot be evaluated.
  */
 opencv_image* visual_operation_graph::get_node_image(int node_id) {
     if (node_id == -1) { return new opencv_image(); }
     if (nodes_.find(node_id) == nodes_.end()) { return NULL; }
-
+    
     visual_operation_node* node = nodes_[node_id];
     if (evaluated_nodes_.find(node_id) == evaluated_nodes_.end()) {
         bool node_eval_result = node->evaluate();
@@ -319,6 +320,7 @@ opencv_image* visual_operation_graph::get_node_image(int node_id) {
     }
 
     opencv_image* ret_image;
+
     if (node->get_child_ids()->size() > 1) {
         ret_image = new opencv_image();
         ret_image->copy_from(node->get_node_image());
