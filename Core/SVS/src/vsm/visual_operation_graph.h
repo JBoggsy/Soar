@@ -20,7 +20,7 @@ private:
     std::unordered_set<int> child_ids_;
     std::unordered_map<std::string, int> parent_ids_;
 
-    std::string op_name_;
+    std::string op_type_;
     data_dict parameters_;
     void (*operation_)(data_dict args);  
     visual_ops::vop_params_metadata op_metadata_;
@@ -38,6 +38,8 @@ public:
     visual_operation_node(std::string op_name, data_dict* params, 
                           visual_operation_graph* vog, soar_interface* si, Symbol* node_link);
     ~visual_operation_node();
+
+    std::string get_op_type() { return op_type_; }
     
     void set_id(int id) { id_ = id; }
     int get_id() { return id_; }
@@ -116,6 +118,7 @@ public:
     void evaluate();
     void mark_node_evaluated(int node_id);
 
+    visual_operation_node* get_node(int node_id);
     opencv_image* get_node_image(int node_id);
 
 
