@@ -83,7 +83,7 @@ bool add_vop_node_command::update_sub() {
                 node_data_dict[param_name] = new std::string;
                 param_present = si->get_const_attr(root, param_name, *((std::string*)node_data_dict[param_name]));
                 break;
-            case visual_ops::IMAGE_ARG:
+            case visual_ops::NODE_ID_ARG:
                 node_data_dict[param_name] = new long;
                 param_present = si->get_const_attr(root, param_name, *((long*)node_data_dict[param_name]));
                 node_parents[param_name] = (int)*((long*)node_data_dict[param_name]);
@@ -113,7 +113,7 @@ bool add_vop_node_command::update_sub() {
                 sprintf(status_buffer, "missing req'd param %s\n", param_name.c_str());
                 set_status(std::string(status_buffer));
                 return false;
-            } else if (param_type == visual_ops::IMAGE_ARG) {
+            } else if (param_type == visual_ops::NODE_ID_ARG) {
                 node_data_dict[param_name] = new long(-1);
                 node_parents[param_name] = -1;
             } else if (param_dir != visual_ops::INPUT_ARG) {  // outputs must be allocated for later use
