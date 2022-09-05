@@ -48,11 +48,18 @@ std::string add_vop_node_command::description() {
 
 bool add_vop_node_command::update_sub() {
     std::string op_type;
+    std::string status;
     wme_vector children;
 
     if (!si->get_const_attr(root, "op-type", op_type)) {
         set_status("no op-type specified");
         return false;
+    }
+
+    if (si->get_const_attr(root, "status", status)) {
+        if (status.compare("success") == 0) {
+            return false;
+        }
     }
 
     visual_ops::vop_params_metadata node_params_metadata = visual_ops::vops_param_table[op_type];
