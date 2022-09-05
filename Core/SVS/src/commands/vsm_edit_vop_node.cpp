@@ -59,6 +59,13 @@ bool edit_vop_node_command::update_sub() {
         return false;
     }
 
+    std::string status;
+    if (si->get_const_attr(root, "status", status)) {
+        if (status.compare("success") == 0) {
+            return false;
+        }
+    }
+
     std::string vop_type = vop_node->get_op_type();
     visual_ops::vop_params_metadata vop_params_metadata = visual_ops::vops_param_table[vop_type];
     int num_params = vop_params_metadata.num_params;
@@ -72,13 +79,13 @@ bool edit_vop_node_command::update_sub() {
             case visual_ops::INT_ARG:
                 new_value = new long;
                 if (si->get_const_attr(root, param_name, *((long*)new_value))) {
-                    vop_node->edit_parameter(param_name, *((long*)new_value));
+                    vop_node->edit_parameter(param_name, (int)*((long*)new_value));
                 }
                 break;
             case visual_ops::NODE_ID_ARG:
                 new_value = new long;
                 if (si->get_const_attr(root, param_name, *((long*)new_value))) {
-                    vop_node->edit_parameter(param_name, *((long*)new_value));
+                    vop_node->edit_parameter(param_name, (int)*((long*)new_value));
                 }
                 break;
             case visual_ops::DOUBLE_ARG:

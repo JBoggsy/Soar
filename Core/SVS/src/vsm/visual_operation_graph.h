@@ -46,7 +46,7 @@ public:
     std::unordered_set<int>* get_child_ids() { return &child_ids_; }
     std::unordered_map<std::string, int>* get_parent_ids() { return &parent_ids_; }
 
-    bool edit_parameter(std::string param_name, long new_value);
+    bool edit_parameter(std::string param_name, int new_value);
     bool edit_parameter(std::string param_name, double new_value);
     bool edit_parameter(std::string param_name, std::string new_value);
 
