@@ -1,4 +1,5 @@
 #include <iostream>
+#include <math.h>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -303,6 +304,25 @@ namespace visual_ops
         cv::Mat result = cv::Mat(a->get_image()->size(), a->get_image()->type());
         cv::divide(*a->get_image(), *b->get_image(), result);
         image->set_image(&result);
+    }
+
+    void apply_unary_op(data_dict args) {
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        std::string op = *(std::string*)args[VOP_ARG_OP];
+
+        if (op.compare("negate") == 0){
+            image->get_image()->forEach<float>([](float& value, const int* pos) -> void {
+                value = value*-1;
+            });
+        } else if (op.compare("cos") == 0) {
+            image->get_image()->forEach<float>([](float& value, const int* pos) -> void {
+                value = cos(value*M_PI/180);
+            });
+        } else if (op.compare("sin") == 0) {
+            image->get_image()->forEach<float>([](float& value, const int* pos) -> void {
+                value = sin(value*M_PI/180);
+            });
+        }
     }
 
    

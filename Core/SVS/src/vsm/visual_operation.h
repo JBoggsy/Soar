@@ -36,6 +36,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_SUB_MATS                std::string("sub-mats")
 #define VOP_MUL_MATS                std::string("mul-mats")
 #define VOP_DIV_MATS                std::string("div-mats")
+#define VOP_APPLY_UNARY_OP          std::string("apply-unary-op")
 #define VOP_MATCH_TEMPLATE          std::string("match-template")
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
@@ -60,6 +61,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_MINLOCX     std::string("minloc-x")
 #define VOP_ARG_MINLOCY     std::string("minloc-y")
 #define VOP_ARG_MINVAL      std::string("minval")
+#define VOP_ARG_OP          std::string("unary-op")
 #define VOP_ARG_SIGMAX      std::string("sigma-x")
 #define VOP_ARG_SIGMAY      std::string("sigma-y")
 #define VOP_ARG_SIZEX       std::string("size-x")
@@ -193,7 +195,7 @@ namespace visual_ops
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
-     *      `int fill`: Value to fill the matrix with
+     *      `int fill-val`: Value to fill the matrix with
      *      `opencv_image* target`: Matrix filled with the given value
      */
     void create_int_filled_mat(data_dict args);
@@ -204,7 +206,7 @@ namespace visual_ops
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
-     *      `float fill`: Value to fill the matrix with
+     *      `float fill-val`: Value to fill the matrix with
      *      `opencv_image* target`: Matrix filled with the given value
      */
     void create_float_filled_mat(data_dict args);
@@ -235,7 +237,7 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: First addend
      *      `opencv_image* b`: Second addend
-     *      `opencv_image* target`: Result of element-wise addition`
+     *      `opencv_image* target`: Result of element-wise addition
      */
     void add_mats(data_dict args);
 
@@ -245,7 +247,7 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: Multiplicand 
      *      `opencv_image* b`: Multiplier
-     *      `opencv_image* target`: Result of element-wise subtraction`
+     *      `opencv_image* target`: Result of element-wise subtraction
      */
     void sub_mats(data_dict args);
     
@@ -255,7 +257,7 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: Minuend 
      *      `opencv_image* b`: Subtrahend
-     *      `opencv_image* target`: Result of element-wise multiplication`
+     *      `opencv_image* target`: Result of element-wise multiplication
      */
     void mul_mats(data_dict args);
 
@@ -265,10 +267,24 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: Dividend 
      *      `opencv_image* b`: Divisor
-     *      `opencv_image* target`: Result of element-wise division`
+     *      `opencv_image* target`: Result of element-wise division
      */
     void div_mats(data_dict args);
-    
+
+    /**
+     * @brief Apply the specifid unary operation elementwise across the target.
+     * 
+     * @note Presently only applicable to single-channel arrays.
+     * 
+     * @param args 
+     *      `opencv_image* target`: The matrix to apply the operation to
+     *      `std::string op`: The name of the operation to apply. One of:
+     *          "negate"
+     *          "cos"
+     *          "sin"
+     */
+    void apply_unary_op(data_dict args);
+
 
     //////////////////////
     // OBJECT DETECTION //
@@ -531,6 +547,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    // APPLY UNARY OPERATION
+    inline vop_params_metadata apply_unary_op_metadata = {
+        /* vop_function = */        apply_unary_op,
+        /* num_params = */          2,
+        /* param_names = */         {VOP_ARG_OP, VOP_ARG_TARGET},
+        /* param_types = */         {STRING_ARG, NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     // MATCH TEMPLATE
     inline vop_params_metadata match_template_metadata = {
         /* vop_function = */        match_template,
@@ -582,6 +608,7 @@ namespace visual_ops
         {VOP_SUB_MATS, sub_mats_metadata},
         {VOP_MUL_MATS, mul_mats_metadata},
         {VOP_DIV_MATS, div_mats_metadata},
+        {VOP_APPLY_UNARY_OP, apply_unary_op_metadata},
         {VOP_MATCH_TEMPLATE, match_template_metadata},
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata}
