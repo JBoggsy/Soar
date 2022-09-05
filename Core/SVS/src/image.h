@@ -106,6 +106,7 @@ public:
     float compare(opencv_image* other);
 
     void draw_image(std::string filename);
+    void save_image_data(char* filename);
 private:
     cv::Mat* _img = NULL;
 };
