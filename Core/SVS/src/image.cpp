@@ -208,6 +208,11 @@ void opencv_image::draw_image(std::string filename) {
     cv::imwrite(filename, *_img);
 }
 
+void opencv_image::save_image_data(char* filename) {
+    cv::FileStorage file(filename, cv::FileStorage::WRITE);
+    file << "Image Data" << *_img;
+}
+
 #endif
 
 

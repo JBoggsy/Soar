@@ -198,6 +198,11 @@ bool visual_operation_node::evaluate() {
     }
     
     vog_->mark_node_evaluated(id_);
+
+    char debug_save_filename[64];
+    snprintf(debug_save_filename, 64, "node-%d.dat", id_);
+    
+    ((opencv_image*)parameters_["target"])->save_image_data(debug_save_filename);
     return true;
 }
 
