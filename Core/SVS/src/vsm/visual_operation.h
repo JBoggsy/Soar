@@ -32,6 +32,9 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_CREATE_FLOAT_FILLED_MAT std::string("create-float-filled-mat")
 #define VOP_CREATE_X_COORD_MAT      std::string("create-x-coord-mat")
 #define VOP_CREATE_Y_COORD_MAT      std::string("create-y-coord-mat")
+#define VOP_EXTRACT_CHANNEL         std::string("extract-channel")
+#define VOP_EXTRACT_CHANNELS        std::string("extract-channels")
+#define VOP_STACK_MATRICES          std::string("stack-matrices")
 #define VOP_ADD_MATS                std::string("add-mats")
 #define VOP_SUB_MATS                std::string("sub-mats")
 #define VOP_MUL_MATS                std::string("mul-mats")
@@ -49,6 +52,8 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_B           std::string("b")
 #define VOP_ARG_BORDERTYPE  std::string("border-type")
 #define VOP_ARG_BUFFERINDEX std::string("buffer-index")
+#define VOP_ARG_CHANNEL     std::string("channel")
+#define VOP_ARG_END         std::string("end")
 #define VOP_ARG_FILEPATH    std::string("filepath")
 #define VOP_ARG_FILL_VAL    std::string("fill-val")
 #define VOP_ARG_FOV_VERT    std::string("fov-vert")
@@ -66,6 +71,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_SIGMAY      std::string("sigma-y")
 #define VOP_ARG_SIZEX       std::string("size-x")
 #define VOP_ARG_SIZEY       std::string("size-y")
+#define VOP_ARG_START       std::string("start")
 #define VOP_ARG_TEMPLATE    std::string("template")
 #define VOP_ARG_SOURCE      std::string("source")
 #define VOP_ARG_THRESH      std::string("thresh")
@@ -230,6 +236,50 @@ namespace visual_ops
      *      `opencv_image* source`: Filled matrix
      */
     void create_y_coord_mat(data_dict args);
+
+
+    ////////////////////////
+    // MATRIX MODIFICTION //
+    ////////////////////////
+
+    /**
+     * @brief Combine two matrices by stacking them channel-wise. 
+     * 
+     * @details This is essentially the cv::merge method, but slightly more limited. It allows the
+     * agent to combine two matrices of the same size and depth by "stacking" them. For example, if
+     * matrix A has three channels R,G,B, and matrix B has three channels X,Y,Z, then stacking A on
+     * B creates a new matrix with six channels R,G,B,X,Y,Z.
+     * 
+     * @param args 
+     *      `opencv_image* a`: The matrix whose channels will come first in the new matrix
+     *      `opencv_image* b`: The matrix whose channels will come last in the new matrix
+     *      `opencv_image* source`: The matrix resulting from the stacking of `a` on `b`.
+     */
+    void stack_matrices(data_dict args);
+
+    /**
+     * @brief Extract a single channel from the source image into a new matrix.
+     * 
+     * @param args 
+     *      `int channel`: THe (0-based) index of the channel to extract
+     *      `opencv_image* source`: The image to extract channels from
+     */
+    void extract_channel(data_dict args);
+
+    /**
+     * @brief Extract one or more sequential channels from the source image into a new matrix.
+     * 
+     * @param args 
+     *      `int start`: the index of the lowest channel to extract, the "bottom" of the extracted channels
+     *      `int end`: the index of the highest channel to extract, the "bottom" of the extracted channels
+     *      `opencv_image* source`: The image to extract channels from
+     */
+    void extract_channels(data_dict args);
+
+
+    /////////////////////////////
+    // MATHEMATICAL PRIMITIVES //
+    /////////////////////////////
 
     /**
      * @brief Add two matrices together element-wise as `c[x,y] = a[x,y]+b[x,y]`.
@@ -507,6 +557,36 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    // STACK MATRICES
+    inline vop_params_metadata stack_matrices_metadata = {
+        /* vop_function = */        stack_matrices,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
+        /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // EXTRACT CHANNEL FROM MATRIX
+    inline vop_params_metadata extract_channel_metadata = {
+        /* vop_function = */        extract_channel,
+        /* num_params = */          2,
+        /* param_names = */         {VOP_ARG_CHANNEL, VOP_ARG_SOURCE},
+        /* param_types = */         {INT_ARG, NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // EXTRACT CHANNELS FROM MATRIX
+    inline vop_params_metadata extract_channels_metadata = {
+        /* vop_function = */        extract_channels,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_START, VOP_ARG_END, VOP_ARG_SOURCE},
+        /* param_types = */         {INT_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     // ADD MATRICES
     inline vop_params_metadata add_mats_metadata = {
         /* vop_function = */        add_mats,
@@ -604,6 +684,9 @@ namespace visual_ops
         {VOP_CREATE_FLOAT_FILLED_MAT, create_float_filled_mat_metadata},
         {VOP_CREATE_X_COORD_MAT, create_x_coord_mat_metadata},
         {VOP_CREATE_Y_COORD_MAT, create_y_coord_mat_metadata},
+        {VOP_STACK_MATRICES, stack_matrices_metadata},
+        {VOP_EXTRACT_CHANNEL, extract_channel_metadata},
+        {VOP_EXTRACT_CHANNELS, extract_channels_metadata},
         {VOP_ADD_MATS, add_mats_metadata},
         {VOP_SUB_MATS, sub_mats_metadata},
         {VOP_MUL_MATS, mul_mats_metadata},
