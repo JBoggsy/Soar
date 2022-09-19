@@ -29,7 +29,10 @@ namespace visual_ops
         visual_sensory_memory* vsm;
         vsm = (visual_sensory_memory*)args[VOP_ARG_VSM];
 
-        image->copy_from(vsm->get_vision(buffer_index));
+        cv::Mat converted_image;
+        vsm->get_vision(buffer_index)->get_image()->convertTo(converted_image, CV_32F);
+
+        image->set_image(&converted_image);
         cv::Size image_shape = image->get_image()->size();
         // printf("VSM image shape: (%d, %d, %d), type: %d\n", image_shape.width, image_shape.height, image->get_image()->channels(), image->get_image()->type());
     }
@@ -209,6 +212,62 @@ namespace visual_ops
         image->set_image(&new_mat);
     }
 
+
+    //////////////////////
+    // MATRIX ACCESSING //
+    //////////////////////
+
+    void stack_matrices(data_dict args) {
+        opencv_image* image     = (opencv_image*)args[VOP_ARG_SOURCE];
+        opencv_image* a         = (opencv_image*)args[VOP_ARG_A];
+        opencv_image* b         = (opencv_image*)args[VOP_ARG_B];
+
+        // Check to ensure depth compatibility
+        int a_depth = a->get_image()->depth();
+        int b_depth = b->get_image()->depth();
+        if (a_depth != b_depth) {
+            printf("Failed to mul mats: type error: %d != %d\n", a_depth, b_depth);
+            return;
+        }
+
+        // Check to ensure size compatibility
+        cv::Size a_size = a->get_image()->size();
+        cv::Size b_size = b->get_image()->size();
+        if ( (a_size.height != b_size.height) || (a_size.width != b_size.width) ) {
+            printf("Failed to mul mats: size error: (%d,%d) != (%d,%d)\n", a_size.height, a_size.width, b_size.height, b_size.width);
+            return;
+        }
+
+        int a_chans = a->get_image()->channels();
+        int b_chans = b->get_image()->channels();
+
+        cv::Mat input_matrices[2] = {*(a->get_image()), *(b->get_image())};
+        cv::Mat result;
+        cv::merge(input_matrices, 2, result);
+
+        image->set_image(&result);
+    }
+
+    void extract_channel(data_dict args) {
+        opencv_image* image     = (opencv_image*)args[VOP_ARG_SOURCE];
+        int channel             = *(int*)args[VOP_ARG_CHANNEL];
+
+        int output_depth = image->get_image()->depth();
+        int output_type = CV_MAKETYPE(output_depth, 1);
+
+        cv::Mat new_mat = cv::Mat(image->get_image()->size(), output_type);
+        cv::extractChannel(*(image->get_image()), new_mat, channel);
+        image->update_image(new_mat);
+    }
+
+    void extract_channels(data_dict args) {
+    }
+
+
+    /////////////////////////////
+    // MATHEMATICAL PRIMITIVES //
+    /////////////////////////////
+
     void add_mats(data_dict args) {
         opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
@@ -230,7 +289,8 @@ namespace visual_ops
             return;
         }
 
-        cv::Mat result = *a->get_image() + *b->get_image();
+        cv::Mat result = cv::Mat(a->get_image()->size(), a->get_image()->type());
+        cv::add(*a->get_image(), *b->get_image(), result, cv::noArray(), a->get_image()->type());
         image->set_image(&result);
     }
 
@@ -255,7 +315,8 @@ namespace visual_ops
             return;
         }
 
-        cv::Mat result = *a->get_image() - *b->get_image();
+        cv::Mat result = cv::Mat(a->get_image()->size(), a->get_image()->type());
+        cv::subtract(*a->get_image(),*b->get_image(),result, cv::noArray(), a->get_image()->type());
         image->set_image(&result);
     }
 
@@ -272,6 +333,14 @@ namespace visual_ops
             return;
         }
 
+        // Check to ensure type compatibility
+        int a_type = a->get_image()->type();
+        int b_type = b->get_image()->type();
+        if (a_type != b_type) {
+            printf("Failed to mul mats: type error: %d != %d\n", a_type, b_type);
+            return;
+        }
+
         // Check to ensure size compatibility
         cv::Size a_size = a->get_image()->size();
         cv::Size b_size = b->get_image()->size();
@@ -281,7 +350,7 @@ namespace visual_ops
         }
 
         cv::Mat result = cv::Mat(a->get_image()->size(), a->get_image()->type());
-        cv::multiply(*a->get_image(), *b->get_image(), result);
+        cv::multiply(*a->get_image(), *b->get_image(), result, 1.0, a->get_image()->type());
         image->set_image(&result);
     }
 
@@ -307,7 +376,7 @@ namespace visual_ops
         }
 
         cv::Mat result = cv::Mat(a->get_image()->size(), a->get_image()->type());
-        cv::divide(*a->get_image(), *b->get_image(), result);
+        cv::divide(*a->get_image(), *b->get_image(), result, 1.0, a->get_image()->type());
         image->set_image(&result);
     }
 

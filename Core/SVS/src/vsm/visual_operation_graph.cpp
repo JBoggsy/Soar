@@ -164,6 +164,7 @@ bool visual_operation_node::edit_parameter(std::string param_name, std::string n
  * @returns true iff evaluation succeeded
  */
 bool visual_operation_node::evaluate() {
+    printf("Evaluating node %d...\n", id_);
     std::string parent_param_name;
     int parent_node_id;
     std::unordered_map<std::string, int>::iterator parent_itr;
@@ -211,10 +212,13 @@ bool visual_operation_node::evaluate() {
     }
     
     vog_->mark_node_evaluated(id_);
+    printf("Done with node %d\n", id_);
 
-    char debug_save_filename[64];
-    snprintf(debug_save_filename, 64, "node-%d.dat", id_);
+    if (op_type_.compare(VOP_SAVE_TO_FILE) != 0) {
+        char debug_save_filename[64];
+        snprintf(debug_save_filename, 64, "node-%d.json", id_);
         ((opencv_image*)parameters_["source"])->save_image_data(debug_save_filename);
+    }
     
     return true;
 }
