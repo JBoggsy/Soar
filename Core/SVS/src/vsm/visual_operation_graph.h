@@ -113,7 +113,7 @@ public:
     int assign_new_node_id() {return next_node_id_++;}
 
     int insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids);
-    int remove(int target_id);
+    int remove(int source_id);
     
     bool add_child_to_node(int child_id, int parent_id);
     void add_leaf_node(int node_id);
@@ -141,7 +141,7 @@ public:
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
     /**
      * @brief Provides the "base" functionality for the `svs vsm` command.
-     * In particular, it writes the current target image file and a help message.
+     * In particular, it writes the current source image file and a help message.
      * 
      * @param args The args sent to the command. These are discarded.
      * @param os The output stream to write to.

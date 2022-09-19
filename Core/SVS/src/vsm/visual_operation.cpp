@@ -17,7 +17,7 @@ namespace visual_ops
 
     void get_from_vsm(data_dict args) {
         opencv_image* image;
-        image = (opencv_image*)args[VOP_ARG_TARGET];
+        image = (opencv_image*)args[VOP_ARG_SOURCE];
 
         int buffer_index;
         if (args[VOP_ARG_BUFFERINDEX] == NULL) {
@@ -35,7 +35,7 @@ namespace visual_ops
     }
 
     void load_from_file(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         std::string* filepath = (std::string*)args[VOP_ARG_FILEPATH];
         
         image->update_image(cv::imread(*filepath, cv::IMREAD_UNCHANGED));
@@ -43,7 +43,7 @@ namespace visual_ops
     }
 
     void save_to_file(data_dict args) {
-        cv::Mat image = *(((opencv_image*)args[VOP_ARG_TARGET])->get_image());
+        cv::Mat image = *(((opencv_image*)args[VOP_ARG_SOURCE])->get_image());
         std::string filepath = *(std::string*)args[VOP_ARG_FILEPATH];
         
         try {
@@ -55,7 +55,7 @@ namespace visual_ops
     }
 
     void display_image(data_dict args) {
-        cv::Mat image = *(((opencv_image*)args[VOP_ARG_TARGET])->get_image());
+        cv::Mat image = *(((opencv_image*)args[VOP_ARG_SOURCE])->get_image());
         std::string window_name = *(std::string*)args[VOP_ARG_WINDOWNAME];
 
         cv::imshow(window_name, image);
@@ -68,7 +68,7 @@ namespace visual_ops
     ////////////////////////////
 
     void identity(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
 
         cv::Mat result;
         result = *(image->get_image());
@@ -76,7 +76,7 @@ namespace visual_ops
     }
 
     void blur(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         int size_x = *(int*)args[VOP_ARG_SIZEX];
         int size_y = *(int*)args[VOP_ARG_SIZEY];
         cv::Size ksize(size_x, size_y);
@@ -107,7 +107,7 @@ namespace visual_ops
     }
 
     void gaussian_blur(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
 
         int size_x = *(int*)args[VOP_ARG_SIZEX];
         int size_y = *(int*)args[VOP_ARG_SIZEY];
@@ -129,7 +129,7 @@ namespace visual_ops
     }
 
     void greyscale(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
 
         cv::Mat result;
         cv::cvtColor(*image->get_image(), result, cv::COLOR_BGRA2GRAY);
@@ -137,7 +137,7 @@ namespace visual_ops
     }
 
     void threshold(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         double thresh = *(double*)args[VOP_ARG_THRESH];
         double maxval = *(double*)args[VOP_ARG_MAXVAL];
         int type = *(int*)args[VOP_ARG_TYPE];
@@ -148,7 +148,7 @@ namespace visual_ops
     }
 
     void flip_image(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         std::string axes = *(std::string*)args[VOP_ARG_AXES];
         int flip_code;
         if (axes.compare("x") == 0) { flip_code = 0; }
@@ -161,8 +161,13 @@ namespace visual_ops
         image->set_image(&result);
     }
 
+
+    /////////////////////
+    // MATRIX CREATION //
+    /////////////////////
+
     void create_int_filled_mat(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         int size_x =         *(int*)args[VOP_ARG_SIZEX];
         int size_y =         *(int*)args[VOP_ARG_SIZEY];
         int fill =           *(int*)args[VOP_ARG_FILL_VAL];
@@ -172,7 +177,7 @@ namespace visual_ops
     }
 
     void create_float_filled_mat(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         int size_x =         *(int*)args[VOP_ARG_SIZEX];
         int size_y =         *(int*)args[VOP_ARG_SIZEY];
         double fill =        *(double*)args[VOP_ARG_FILL_VAL];
@@ -182,7 +187,7 @@ namespace visual_ops
     }
 
     void create_x_coord_mat(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         int size_x =         *(int*)args[VOP_ARG_SIZEX];
         int size_y =         *(int*)args[VOP_ARG_SIZEY];
 
@@ -193,7 +198,7 @@ namespace visual_ops
         image->set_image(&new_mat);
     }
     void create_y_coord_mat(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         int size_x =         *(int*)args[VOP_ARG_SIZEX];
         int size_y =         *(int*)args[VOP_ARG_SIZEY];
 
@@ -205,7 +210,7 @@ namespace visual_ops
     }
 
     void add_mats(data_dict args) {
-        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
@@ -230,7 +235,7 @@ namespace visual_ops
     }
 
     void sub_mats(data_dict args) { 
-        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
@@ -255,7 +260,7 @@ namespace visual_ops
     }
 
     void mul_mats(data_dict args) { 
-        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
@@ -281,7 +286,7 @@ namespace visual_ops
     }
 
     void div_mats(data_dict args) { 
-        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
 
@@ -307,7 +312,7 @@ namespace visual_ops
     }
 
     void apply_unary_op(data_dict args) {
-        opencv_image* image =   (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         std::string op = *(std::string*)args[VOP_ARG_OP];
 
         if (op.compare("negate") == 0){
@@ -332,7 +337,7 @@ namespace visual_ops
     //////////////////////
 
     void match_template(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* templ = (opencv_image*)args[VOP_ARG_TEMPLATE];
         int method = *(int*)args[VOP_ARG_METHOD];
 
@@ -354,7 +359,7 @@ namespace visual_ops
     }
 
     void crop_to_ROI(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         int x = *(int*)args[VOP_ARG_X];
         int y = *(int*)args[VOP_ARG_Y];
         int width = *(int*)args[VOP_ARG_WIDTH];
@@ -367,7 +372,7 @@ namespace visual_ops
     }
 
     void min_max_loc(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_TARGET];
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
 
         cv::Point minloc;
         cv::Point maxloc;

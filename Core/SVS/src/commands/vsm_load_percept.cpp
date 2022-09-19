@@ -65,7 +65,7 @@ command_table_entry* load_percept_command_entry()
 {
     command_table_entry* e = new command_table_entry();
     e->name = "load-percept";
-    e->description = "Load an image from the target file into vision.";
+    e->description = "Load an image from the source file into vision.";
     e->create = &_make_load_percept_command_;
     return e;
 }
