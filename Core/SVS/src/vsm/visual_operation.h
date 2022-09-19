@@ -67,7 +67,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_SIZEX       std::string("size-x")
 #define VOP_ARG_SIZEY       std::string("size-y")
 #define VOP_ARG_TEMPLATE    std::string("template")
-#define VOP_ARG_TARGET      std::string("target")
+#define VOP_ARG_SOURCE      std::string("source")
 #define VOP_ARG_THRESH      std::string("thresh")
 #define VOP_ARG_TYPE        std::string("type")
 #define VOP_ARG_VSM         std::string("vsm")
@@ -77,7 +77,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_Y           std::string("y")
 
 /**
- * All visual operations are performed IN-PLACE. That is, the target image is
+ * All visual operations are performed IN-PLACE. That is, the source image is
  * altered by the operation. When passing in `data_dict` based arguments, 
  * arguments which have default values can be given a NULL value, but ALL 
  * arguments must be passed in.
@@ -91,15 +91,15 @@ namespace visual_ops
      *        `int buffer_index`: The index of the VSM buffer which should be
      *         retrieved. Optional, defaults to 0.
      *        `visual_sensory_memory* vsm`: Pointer to vsm
-     *        `opencv_image* target` New `opencv_image` to copy the VSM image into
+     *        `opencv_image* source` New `opencv_image` to copy the VSM image into
      */ 
     void get_from_vsm(data_dict args);
     
     /**
      * @brief Load an image from a file
      * @param args
-     *        `std::string filepath`: The absolute path to the target file
-     *        `opencv_image* target` Object to load the specified file into
+     *        `std::string filepath`: The absolute path to the source file
+     *        `opencv_image* source` Object to load the specified file into
      */ 
     void load_from_file(data_dict args);
 
@@ -107,15 +107,15 @@ namespace visual_ops
      * @brief Save an image to a file
      * @param args
      *        `std::string filepath`: The absolute path to save location
-     *        `opencv_image* target` Object to save into the specified file
+     *        `opencv_image* source` Object to save into the specified file
      */ 
     void save_to_file(data_dict args);
 
     /**
-     * @brief Display the target image, opening a new window if needed.
+     * @brief Display the source image, opening a new window if needed.
      * @param args
      *        `std::string windowName`: The name to give the display window
-     *        `opencv_image* target`: The image to display
+     *        `opencv_image* source`: The image to display
      */
     void display_image(data_dict args);
 
@@ -127,24 +127,24 @@ namespace visual_ops
     /**
      * @brief Returns the input image without changes, used to add a no-op node.
      * @param args
-     *        `opencv_image* target`: Image to do nothing with
+     *        `opencv_image* source`: Image to do nothing with
      */
     void identity(data_dict args);
 
     /**
-     * @brief Blur the single target image
+     * @brief Blur the single source image
      * @param args
      *        `int size-x`: Blurring kernel size along the x dimension
      *        `int size-y`: Blurring kernel size along the y dimension
      *        `int anchor-x`: Anchor point x coordinate; default value of-1 means that the anchor is at the kernel's center
      *        `int anchor-y`: Anchor point y coordinate; default value of-1 means that the anchor is at the kernel's center
      *        `int borderType`: Border mode used to extrapolate pixels outside of the image
-     *        `opencv_image* target`: The image to blur
+     *        `opencv_image* source`: The image to blur
      */
     void blur(data_dict args);
 
     /**
-     * @brief Blur the single target image using a Gaussian filter.
+     * @brief Blur the single source image using a Gaussian filter.
      * 
      * @note ksize-x and ksize-yt can differ but they both must be positive and odd. Alternatively, they can be zeroes and
      *       then they are computed from sigma.
@@ -154,14 +154,14 @@ namespace visual_ops
      *        `double sigmaX`: Gaussian kernel standard deviation in X direction. 
      *        `double sigmaY`: Gaussian kernel standard deviation in Y direction; if sigmaY is zero, it is set to be equal to sigmaX, if both sigmas are zeros, they are computed from ksize.width and ksize.height, respectively (see getGaussianKernel for details); to fully control the result regardless of possible future modifications of all this semantics, it is recommended to specify all of ksize, sigmaX, and sigmaY.
      *        `int borderType`: Border mode used to extrapolate pixels outside of the image
-     *        `opencv_image* target`: The image to blur
+     *        `opencv_image* source`: The image to blur
      */
     void gaussian_blur(data_dict args);
 
     /**
-     * @brief Converts the target image into greyscale.
+     * @brief Converts the source image into greyscale.
      * @param args
-     *        `opencv_image* target`: The image to convert to greyscale
+     *        `opencv_image* source`: The image to convert to greyscale
      */
     void greyscale(data_dict args);
 
@@ -171,7 +171,7 @@ namespace visual_ops
      *        `double thresh`: The threshold value.
      *        `double maxval`: maximum value to use with the THRESH_BINARY and THRESH_BINARY_INV thresholding types.
      *        `int type`: The thresholding type.
-     *        `opencv_image* target`: The image to greyscale
+     *        `opencv_image* source`: The image to greyscale
      */
     void threshold(data_dict args);
 
@@ -180,14 +180,14 @@ namespace visual_ops
      * 
      * @param args 
      *      `std:string axes`: One of `x`, `y`, `xy,` or `yx`. Indicates axes to flip across.
-     *      `opencv_image* target`: The image to flip
+     *      `opencv_image* source`: The image to flip
      */
     void flip_image(data_dict args);
 
 
-    /////////////////////////////
-    // MATHEMATICAL PRIMITIVES //
-    /////////////////////////////
+    /////////////////////
+    // MATRIX CREATION //
+    /////////////////////
 
     /**
      * @brief Create a matrix of the given size filled with the given value.
@@ -196,7 +196,7 @@ namespace visual_ops
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
      *      `int fill-val`: Value to fill the matrix with
-     *      `opencv_image* target`: Matrix filled with the given value
+     *      `opencv_image* source`: Matrix filled with the given value
      */
     void create_int_filled_mat(data_dict args);
 
@@ -207,7 +207,7 @@ namespace visual_ops
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
      *      `float fill-val`: Value to fill the matrix with
-     *      `opencv_image* target`: Matrix filled with the given value
+     *      `opencv_image* source`: Matrix filled with the given value
      */
     void create_float_filled_mat(data_dict args);
 
@@ -217,7 +217,7 @@ namespace visual_ops
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
-     *      `opencv_image* target`: Filled matrix
+     *      `opencv_image* source`: Filled matrix
      */
     void create_x_coord_mat(data_dict args);
 
@@ -227,7 +227,7 @@ namespace visual_ops
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
-     *      `opencv_image* target`: Filled matrix
+     *      `opencv_image* source`: Filled matrix
      */
     void create_y_coord_mat(data_dict args);
 
@@ -237,7 +237,7 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: First addend
      *      `opencv_image* b`: Second addend
-     *      `opencv_image* target`: Result of element-wise addition
+     *      `opencv_image* source`: Result of element-wise addition
      */
     void add_mats(data_dict args);
 
@@ -247,7 +247,7 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: Multiplicand 
      *      `opencv_image* b`: Multiplier
-     *      `opencv_image* target`: Result of element-wise subtraction
+     *      `opencv_image* source`: Result of element-wise subtraction
      */
     void sub_mats(data_dict args);
     
@@ -257,7 +257,7 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: Minuend 
      *      `opencv_image* b`: Subtrahend
-     *      `opencv_image* target`: Result of element-wise multiplication
+     *      `opencv_image* source`: Result of element-wise multiplication
      */
     void mul_mats(data_dict args);
 
@@ -267,17 +267,17 @@ namespace visual_ops
      * @param args 
      *      `opencv_image* a`: Dividend 
      *      `opencv_image* b`: Divisor
-     *      `opencv_image* target`: Result of element-wise division
+     *      `opencv_image* source`: Result of element-wise division
      */
     void div_mats(data_dict args);
 
     /**
-     * @brief Apply the specifid unary operation elementwise across the target.
+     * @brief Apply the specifid unary operation elementwise across the source.
      * 
      * @note Presently only applicable to single-channel arrays.
      * 
      * @param args 
-     *      `opencv_image* target`: The matrix to apply the operation to
+     *      `opencv_image* source`: The matrix to apply the operation to
      *      `std::string op`: The name of the operation to apply. One of:
      *          "negate"
      *          "cos"
@@ -293,23 +293,23 @@ namespace visual_ops
     /**
      * @brief Match a template image and return a new, single-channel image of
      *        comparison results. The returned image will be a single-channel
-     *        32-bit floating-point image. If the target image is W×H and template
+     *        32-bit floating-point image. If the source image is W×H and template
      *        is w×h , then result is (W−w+1)×(H−h+1).
      * @param args
      *        `int method`: Parameter specifying the comparison method
-     *        `opencv_image* target`: The image to be searched for template matches.
+     *        `opencv_image* source`: The image to be searched for template matches.
      *        `opencv_image* template`: The template image to search for.
      */
     void match_template(data_dict args);
 
     /**
-     * @brief Crop the target image to the specified rectangle.
+     * @brief Crop the source image to the specified rectangle.
      * @param args
      *        `int x`: x-coord of the top-left corner of the rectangle
      *        `int y`: y-coord of the top-left corner of the rectangle
      *        `int width`: width of the rectangle
      *        `int height`: height of the rectangle
-     *        `opencv_image* target`: The target imager to crop
+     *        `opencv_image* source`: The source imager to crop
      */
     void crop_to_ROI(data_dict args);
 
@@ -322,7 +322,7 @@ namespace visual_ops
      *        `int* minloc_y`: pointer to the returned minimum location's y coordinate
      *        `int* maxloc_x`: pointer to the returned maximum location's x coordinate
      *        `int* maxloc_y`: pointer to the returned maximum location's y coordinate
-     *        `opencv_image* target`: The single-channel input image to find
+     *        `opencv_image* source`: The single-channel input image to find
      *                                min/max of
      */
     void min_max_loc(data_dict args);
@@ -371,7 +371,7 @@ namespace visual_ops
     inline vop_params_metadata get_from_vsm_metadata = {
         /* vop_function = */        get_from_vsm,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_BUFFERINDEX, VOP_ARG_VSM, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_BUFFERINDEX, VOP_ARG_VSM, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, VSM_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {OPTIONAL_ARG, REQUIRED_ARG, OPTIONAL_ARG}
@@ -381,7 +381,7 @@ namespace visual_ops
     inline vop_params_metadata load_from_file_metadata = {
         /* vop_function = */        load_from_file,
         /* num_params = */          2,
-        /* param_names = */         {VOP_ARG_FILEPATH, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_FILEPATH, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG}
@@ -391,7 +391,7 @@ namespace visual_ops
     inline vop_params_metadata save_to_file_metadata = {
         /* vop_function = */        save_to_file,
         /* num_params = */          2,
-        /* param_names = */         {VOP_ARG_FILEPATH, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_FILEPATH, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
@@ -401,7 +401,7 @@ namespace visual_ops
     inline vop_params_metadata display_image_metadata = {
         /* vop_function = */        display_image,
         /* num_params = */          2,
-        /* param_names = */         {VOP_ARG_WINDOWNAME, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_WINDOWNAME, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
@@ -411,7 +411,7 @@ namespace visual_ops
     inline vop_params_metadata identity_metadata = {
         /* vop_function = */        identity,
         /* num_params = */          1,
-        /* param_names = */         {VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SOURCE},
         /* param_types = */         {NODE_ID_ARG},
         /* param_directions */      {INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG}
@@ -421,7 +421,7 @@ namespace visual_ops
     inline vop_params_metadata blur_metadata = {
         /* vop_function = */        blur,
         /* num_params = */          6,
-        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_ANCHORX, VOP_ARG_ANCHORY, VOP_ARG_BORDERTYPE, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_ANCHORX, VOP_ARG_ANCHORY, VOP_ARG_BORDERTYPE, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -431,7 +431,7 @@ namespace visual_ops
     inline vop_params_metadata gaussian_blur_metadata = {
         /* vop_function = */        gaussian_blur,
         /* num_params = */          6,
-        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SIGMAX, VOP_ARG_SIGMAY, VOP_ARG_BORDERTYPE, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SIGMAX, VOP_ARG_SIGMAY, VOP_ARG_BORDERTYPE, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, DOUBLE_ARG, INT_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -441,7 +441,7 @@ namespace visual_ops
     inline vop_params_metadata greyscale_metadata = {
         /* vop_function = */        greyscale,
         /* num_params = */          1,
-        /* param_names = */         {VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SOURCE},
         /* param_types = */         {NODE_ID_ARG},
         /* param_directions */      {INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG}
@@ -451,7 +451,7 @@ namespace visual_ops
     inline vop_params_metadata threshold_metadata = {
         /* vop_function = */        threshold,
         /* num_params = */          4,
-        /* param_names = */         {VOP_ARG_THRESH, VOP_ARG_MAXVAL, VOP_ARG_TYPE, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_THRESH, VOP_ARG_MAXVAL, VOP_ARG_TYPE, VOP_ARG_SOURCE},
         /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, INT_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -461,7 +461,7 @@ namespace visual_ops
     inline vop_params_metadata flip_image_metadata = {
         /* vop_function = */        flip_image,
         /* num_params = */          2,
-        /* param_names = */         {VOP_ARG_AXES, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_AXES, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
@@ -471,7 +471,7 @@ namespace visual_ops
     inline vop_params_metadata create_int_filled_mat_metadata = {
         /* vop_function = */        create_int_filled_mat,
         /* num_params = */          4,
-        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -481,7 +481,7 @@ namespace visual_ops
     inline vop_params_metadata create_float_filled_mat_metadata = {
         /* vop_function = */        create_float_filled_mat,
         /* num_params = */          4,
-        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -491,7 +491,7 @@ namespace visual_ops
     inline vop_params_metadata create_x_coord_mat_metadata = {
         /* vop_function = */        create_x_coord_mat,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -501,7 +501,7 @@ namespace visual_ops
     inline vop_params_metadata create_y_coord_mat_metadata = {
         /* vop_function = */        create_y_coord_mat,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -511,7 +511,7 @@ namespace visual_ops
     inline vop_params_metadata add_mats_metadata = {
         /* vop_function = */        add_mats,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
         /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -521,7 +521,7 @@ namespace visual_ops
     inline vop_params_metadata sub_mats_metadata = {
         /* vop_function = */        sub_mats,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
         /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -531,7 +531,7 @@ namespace visual_ops
     inline vop_params_metadata mul_mats_metadata = {
         /* vop_function = */        mul_mats,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
         /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -541,7 +541,7 @@ namespace visual_ops
     inline vop_params_metadata div_mats_metadata = {
         /* vop_function = */        div_mats,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
         /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -551,7 +551,7 @@ namespace visual_ops
     inline vop_params_metadata apply_unary_op_metadata = {
         /* vop_function = */        apply_unary_op,
         /* num_params = */          2,
-        /* param_names = */         {VOP_ARG_OP, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_OP, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
@@ -561,7 +561,7 @@ namespace visual_ops
     inline vop_params_metadata match_template_metadata = {
         /* vop_function = */        match_template,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_TARGET, VOP_ARG_TEMPLATE},
+        /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_SOURCE, VOP_ARG_TEMPLATE},
         /* param_types = */         {INT_ARG, NODE_ID_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -571,7 +571,7 @@ namespace visual_ops
     inline vop_params_metadata crop_to_roi_metadata = {
         /* vop_function = */        crop_to_ROI,
         /* num_params = */          5,
-        /* param_names = */         {VOP_ARG_X, VOP_ARG_Y, VOP_ARG_WIDTH, VOP_ARG_HEIGHT, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_X, VOP_ARG_Y, VOP_ARG_WIDTH, VOP_ARG_HEIGHT, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
@@ -581,7 +581,7 @@ namespace visual_ops
     inline vop_params_metadata min_max_loc_metadata = {
         /* vop_function = */        min_max_loc,
         /* num_params = */          7,
-        /* param_names = */         {VOP_ARG_MINVAL, VOP_ARG_MAXVAL, VOP_ARG_MINLOCX, VOP_ARG_MINLOCY, VOP_ARG_MAXLOCX, VOP_ARG_MAXLOCY, VOP_ARG_TARGET},
+        /* param_names = */         {VOP_ARG_MINVAL, VOP_ARG_MAXVAL, VOP_ARG_MINLOCX, VOP_ARG_MINLOCY, VOP_ARG_MAXLOCX, VOP_ARG_MAXLOCY, VOP_ARG_SOURCE},
         /* param_types = */         {DOUBLE_ARG,     DOUBLE_ARG,     INT_ARG,         INT_ARG,         INT_ARG,         INT_ARG,         NODE_ID_ARG},
         /* param_directions */      {OUTPUT_ARG,     OUTPUT_ARG,     OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}

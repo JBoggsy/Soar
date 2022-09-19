@@ -214,13 +214,13 @@ bool visual_operation_node::evaluate() {
 
     char debug_save_filename[64];
     snprintf(debug_save_filename, 64, "node-%d.dat", id_);
+        ((opencv_image*)parameters_["source"])->save_image_data(debug_save_filename);
     
-    ((opencv_image*)parameters_["target"])->save_image_data(debug_save_filename);
     return true;
 }
 
 opencv_image* visual_operation_node::get_node_image() {
-    return (opencv_image*)parameters_["target"];
+    return (opencv_image*)parameters_["source"];
 }
 
 ////////////////////////////
@@ -303,41 +303,41 @@ bool visual_operation_graph::add_child_to_node(int child_id, int parent_id) {
  * @returns The new number of visual operations in the graph. If removal
  * fails, the number will be the same as it was prior to the operation.
  */
-int visual_operation_graph::remove(int target_id) {
+int visual_operation_graph::remove(int source_id) {
     visual_operation_node* child;
     visual_operation_node* parent;
-    visual_operation_node* target_node;
+    visual_operation_node* source_node;
 
-    if (nodes_.find(target_id) == nodes_.end()) {
+    if (nodes_.find(source_id) == nodes_.end()) {
         return num_operations_;
     }
-    target_node = nodes_[target_id];
+    source_node = nodes_[source_id];
 
-    // Remove all children of the target node
+    // Remove all children of the source node
     std::unordered_set<int>::iterator children_itr;
-    for (children_itr=target_node->get_child_ids()->begin(); children_itr != target_node->get_child_ids()->end(); children_itr++) {
+    for (children_itr=source_node->get_child_ids()->begin(); children_itr != source_node->get_child_ids()->end(); children_itr++) {
         child = nodes_[*children_itr];
         remove(child->get_id());
     }
 
-    // Remove target node from all of its parents, and check them for leaf status
+    // Remove source node from all of its parents, and check them for leaf status
     std::unordered_map<std::string, int>::iterator parents_itr;
-    for (parents_itr = target_node->get_parent_ids()->begin(); parents_itr != target_node->get_parent_ids()->end(); parents_itr++) {
+    for (parents_itr = source_node->get_parent_ids()->begin(); parents_itr != source_node->get_parent_ids()->end(); parents_itr++) {
             parent = nodes_[parents_itr->second];
-            parent->remove_child_id(target_id);
+            parent->remove_child_id(source_id);
             if (parent->get_child_ids()->size() == 0) {
                 add_leaf_node(parents_itr->second);
             }
         }
     
-    delete &target_node;
+    delete &source_node;
     num_operations_--;
     return num_operations_;
 }
 
 /**
  * @brief Designate the node with the specified ID as a leaf node(i.e.,
- * a node with no other nodes using it as a `target`.) This method does
+ * a node with no other nodes using it as a `source`.) This method does
  * NOT check that the given node is, in fact, a leaf node.
  * 
  * @param node_id The node id of the node to be designated a leaf node.
@@ -348,7 +348,7 @@ void visual_operation_graph::add_leaf_node(int node_id) {
 
 /**
  * @brief Undesignate the node with the specified ID as a leaf node(i.e.,
- * a node with no other nodes using it as a `target`.) This method does
+ * a node with no other nodes using it as a `source`.) This method does
  * NOT check that the given node is not, in fact, a leaf node.
  * 
  * @param node_id The node id of the node to be undesignated as a leaf node.
@@ -388,7 +388,7 @@ visual_operation_node* visual_operation_graph::get_node(int node_id) {
  * @brief Get the node image of the given node. If the node has already been evaluated,
  * then just get its image. Otherwise, evaluate it first and then get the resulting image.
  * For now, assume a node ALWAYS outputs precisely one node image and it is stored in 
- * `parameters_["target"]`. Other images can be used as input, but only the `target` is
+ * `parameters_["source"]`. Other images can be used as input, but only the `source` is
  * used as output.
  * 
  * @param node_id The id of the node whose image is requested. A node_id of -1 indicates
