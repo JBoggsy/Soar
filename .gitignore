@@ -72,6 +72,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+venv
 
 # C extensions
 *.so
@@ -240,6 +241,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+compile_commands.json
 
 # Visual Studo 2015 cache/options directory
 .vs/
@@ -250,7 +252,7 @@ bld/
 
 # NUNIT
 *.VisualState.xml
-TestResult.xml
+TestResults.xml
 
 # Build Results of an ATL Project
 [Dd]ebugPS/
@@ -348,7 +350,7 @@ publish/
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml
-# TODO: Comment the next line if you want to checkin your web deploy settings 
+# TODO: Comment the next line if you want to checkin your web deploy settings
 # but database connection strings (with potential passwords) will be unencrypted
 *.pubxml
 *.publishproj
@@ -471,6 +473,9 @@ local.properties
 .settings/
 .loadpath
 
+# IDEA
+.idea/
+
 # Eclipse Core
 .project
 
@@ -486,6 +491,9 @@ local.properties
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
+# IntelliJ
+*.iml
+
 # PDT-specific
 .buildpath
 
@@ -497,7 +505,7 @@ local.properties
 
 ### Soar ###
 out/
-build*/
+build/
 /.sconf_temp/
 /.externalToolBuilders/
 /.settings/
@@ -511,6 +519,5 @@ testCommandToFile-output.soar
 soarversion
 build_time_date
 .vscode/
-SoarManual.pdf
-
-percept_buffer.png
+backup.sqlite
+temp_chunks.soar

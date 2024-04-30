@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * AbstractSingleCommandView.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Apr 10, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.modules;
@@ -17,13 +17,14 @@ import org.eclipse.swt.graphics.Color;
 import edu.umich.soar.debugger.dialogs.PropertiesDialog;
 
 /************************************************************************
- * 
+ *
  * A window that shows the output from a single command, rather than from a
  * complete run.
- * 
+ *
  ************************************************************************/
 public abstract class AbstractSingleTextView extends AbstractTextView
 {
+    @Override
     public Color getBackgroundColor()
     {
 //        if (!m_UpdateOnStop)
@@ -34,9 +35,10 @@ public abstract class AbstractSingleTextView extends AbstractTextView
                 SWT.COLOR_WIDGET_BACKGROUND);
     }
 
+    @Override
     public void showProperties()
     {
-        PropertiesDialog.Property properties[] = new PropertiesDialog.Property[3];
+        PropertiesDialog.Property[] properties = new PropertiesDialog.Property[3];
 
         properties[0] = new PropertiesDialog.BooleanProperty(
                 "Update automatically on stop", m_UpdateOnStop);

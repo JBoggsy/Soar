@@ -20,7 +20,7 @@
 #include "working_memory.h"
 #include "xml.h"
 
-#include <assert.h>
+#include <cassert>
 
 using namespace soar_TraceNames;
 
@@ -99,7 +99,6 @@ void Explanation_Based_Chunker::reinit()
     m_prod_name                         = NULL;
     chunk_free_problem_spaces           = NIL;
     chunky_problem_spaces               = NIL;
-    m_failure_type                      = ebc_success;
     m_rule_type                         = ebc_no_rule;
     m_learning_on_for_instantiation     = ebc_settings[SETTING_EBC_LEARNING_ON];
 }

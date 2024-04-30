@@ -114,8 +114,14 @@ int jUpdateCallback = pKernel.RegisterForSystemEvent(pKernel, smlEventId.smlEVEN
 // A native thread cannot be attached simultaneously to two Java VMs.
 // When a thread is attached to the VM, the context class loader is the bootstrap loader.
 
+
 #include <string>
 #include <list>
+
+#ifdef __cplusplus
+// We expose the public methods in a DLL with C naming (not C++ mangled names)
+extern "C" {
+#endif
 
 class JavaCallbackData
 {
@@ -185,6 +191,93 @@ public:
         }
 } ;
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+// This is the C++ handler which will be called by clientSML when the event fires.
+// Then from here we need to call back to Java to pass back the message.
+static std::string StringEventHandler(sml::smlStringEventId id, void* pUserData, sml::Kernel* pKernel, char const* pData)
+{
+        // The user data is the class we declared above, where we store the Java data to use in the callback.
+        JavaCallbackData* pJavaData = (JavaCallbackData*)pUserData ;
+
+        // Now try to call back to Java
+        JNIEnv *jenv = pJavaData->GetEnv() ;
+
+        // Create the string to return to the caller
+        jstring data = pData != NULL ? jenv->NewStringUTF(pData) : 0 ;
+
+        // Make the method call.
+        jstring result = (jstring)jenv->CallObjectMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_KernelObject, data);
+
+        // Get the returned string
+        std::string resultStr = "" ;
+
+        if (result != 0)
+        {
+                // Get the C string
+                char const* pResult = jenv->GetStringUTFChars(result, 0);
+
+                // Copy it into our std::string
+                resultStr = pResult ;
+
+                // Release the Java string
+                jenv->ReleaseStringUTFChars(result, pResult);
+        }
+
+        // Cleaning up the local references just in case
+        jenv->DeleteLocalRef(data);
+
+        // Return the result
+        return resultStr ;
+
+}
+
+static std::string handleRhsEvent(sml::smlRhsEventId id, void *pUserData, sml::Agent *pAgent,
+                                        char const *pFunctionName, char const *pArgument)
+{
+        // The user data is the class we declared above, where we store the Java data to use in the callback.
+        JavaCallbackData *pJavaData = (JavaCallbackData *)pUserData;
+
+        // Now try to call back to Java
+        JNIEnv *jenv = pJavaData->GetEnv();
+
+        // Convert our C++ strings to Java strings
+        jstring agentName = pAgent != NULL ? jenv->NewStringUTF(pAgent->GetAgentName()) : 0;
+        jstring functionName = pFunctionName != NULL ? jenv->NewStringUTF(pFunctionName) : 0;
+        jstring argument = pArgument != NULL ? jenv->NewStringUTF(pArgument) : 0;
+
+        // Make the method call.
+        jstring result = (jstring)jenv->CallObjectMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, agentName, functionName, argument);
+
+        // Cleaning up the local references just in case
+        jenv->DeleteLocalRef(agentName);
+        jenv->DeleteLocalRef(functionName);
+        jenv->DeleteLocalRef(argument);
+
+        // Get the returned string
+        std::string resultStr = "";
+
+        if (result != 0)
+        {
+                // Get the C string
+                char const *pResult = jenv->GetStringUTFChars(result, 0);
+
+                // Copy it into our std::string
+                resultStr = pResult;
+
+                // Release the Java string
+                jenv->ReleaseStringUTFChars(result, pResult);
+        }
+        return resultStr;
+}
+
+#ifdef __cplusplus
+// We expose the public methods in a DLL with C naming (not C++ mangled names)
+extern "C" {
+#endif
+
 std::list<JavaCallbackData*> callbackdatas;
 
 void ReleaseCallbackData(JavaCallbackData* pJavaData) {
@@ -219,10 +312,6 @@ static JavaCallbackData* CreateJavaCallbackData(bool storeAgent, JNIEnv *jenv, j
         jobject jglobal4 = jenv->NewGlobalRef(jarg4) ;  // The Java object which will handle this callback
         jobject jglobal6 = jenv->NewGlobalRef(jarg6) ;  // Arbitrary object passed back to the caller
 
-        // Get the method name from the Java string
-        // We used to pass this in as a parameter to the callback, but now its imbedded in the interface definition.
-        //const char *pMethodName = jenv->GetStringUTFChars(jarg5, 0);
-
         // Record the virtual machine we are using
         JavaVM vm ;
         JavaVM* pvm = &vm ;
@@ -239,9 +328,6 @@ static JavaCallbackData* CreateJavaCallbackData(bool storeAgent, JNIEnv *jenv, j
         // Save the callback data so we can free it later
         callbackdatas.push_back(pJavaData);
 
-        // Release the string we got from Java
-        //jenv->ReleaseStringUTFChars(jarg5, pMethodName);
-
         return pJavaData ;
 }
 
@@ -251,36 +337,7 @@ static void RunEventHandler(sml::smlRunEventId id, void* pUserData, sml::Agent* 
 {
         // The user data is the class we declared above, where we store the Java data to use in the callback.
         JavaCallbackData* pJavaData = (JavaCallbackData*)pUserData ;
-
-//        // Now try to call back to Java
-//        JNIEnv *jenv = pJavaData->GetEnv();
-//
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Lsml/Agent;I)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
-//
-//       //Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, (int)phase);
         pJavaData->GetEnv()->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, (int)phase);
-
 }
 
 // This is the hand-written JNI method for registering a callback.
@@ -328,37 +385,7 @@ static void OutputNotificationHandler(void* pUserData, sml::Agent* pAgent)
 {
         // The user data is the class we declared above, where we store the Java data to use in the callback.
         JavaCallbackData* pJavaData = (JavaCallbackData*)pUserData ;
-
-//        // Now try to call back to Java
-//        JNIEnv *jenv = pJavaData->GetEnv();
-//
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(Ljava/lang/Object;Lsml/Agent;)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
-//
-//        // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, pJavaData->m_CallbackData, pJavaData->m_AgentObject);
-
         pJavaData->GetEnv()->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, pJavaData->m_CallbackData, pJavaData->m_AgentObject);
-
 }
 
 JNIEXPORT jlong JNICALL Java_sml_smlJNI_Agent_1RegisterForOutputNotification(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg3, jobject jarg4, jobject jarg6)
@@ -406,35 +433,12 @@ static void ProductionEventHandler(sml::smlProductionEventId id, void* pUserData
 
         // Now try to call back to Java
         JNIEnv *jenv = pJavaData->GetEnv() ;
-//
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Lsml/Agent;Ljava/lang/String;Ljava/lang/String;)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
 
         // Convert our C++ strings to Java strings
         jstring prod = pProdName != NULL ? jenv->NewStringUTF(pProdName) : 0 ;
         jstring inst = pInstantiation != NULL ? jenv->NewStringUTF(pInstantiation) : 0 ;
 
         // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, prod, inst);
         jenv->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, prod, inst);
 
         // Cleaning up the local references just in case
@@ -493,33 +497,10 @@ static void PrintEventHandler(sml::smlPrintEventId id, void* pUserData, sml::Age
         // Now try to call back to Java
         JNIEnv *jenv = pJavaData->GetEnv() ;
 
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Lsml/Agent;Ljava/lang/String;)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
-
         // Convert our C++ strings to Java strings
         jstring message = pMessage != NULL ? jenv->NewStringUTF(pMessage) : 0 ;
 
         // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, message);
         jenv->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, message);
 
         // Cleaning up the local references just in case
@@ -576,28 +557,6 @@ static void XMLEventHandler(sml::smlXMLEventId id, void* pUserData, sml::Agent* 
         // Now try to call back to Java
         JNIEnv *jenv = pJavaData->GetEnv() ;
 
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Lsml/Agent;Lsml/ClientXML;)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
-
         // Wrap our C++ ClientXML object with a SWIG sml/ClientXML Java object so we can
         // pass it back to Java.
         // OK, time to roll up our JNI sleeves and get dirty.  We need to create a new Java object.
@@ -639,7 +598,6 @@ static void XMLEventHandler(sml::smlXMLEventId id, void* pUserData, sml::Agent* 
         }
 
         // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, jNewObject);
         jenv->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_AgentObject, jNewObject);
 
 }
@@ -693,30 +651,6 @@ static void OutputEventHandler(void* pUserData, sml::Agent* pAgent, char const* 
 
         // Now try to call back to Java
         JNIEnv *jenv = pJavaData->GetEnv() ;
-
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        // Method sig here is:
-//        // Object userData, String agentName, String attributeName, WMElement* wmeAdded
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lsml/WMElement;)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
 
         // Convert our C++ strings to Java strings
         jstring agentName = pAgent != NULL ? jenv->NewStringUTF(pAgent->GetAgentName()) : 0 ;
@@ -777,7 +711,6 @@ static void OutputEventHandler(void* pUserData, sml::Agent* pAgent, char const* 
         }
 
         // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, pJavaData->m_CallbackData, agentName, attributeName, jNewObject) ;
         jenv->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, pJavaData->m_CallbackData, agentName, attributeName, jNewObject);
 
         // Cleaning up the local references just in case
@@ -835,30 +768,7 @@ static void SystemEventHandler(sml::smlSystemEventId id, void* pUserData, sml::K
         // Now try to call back to Java
         JNIEnv *jenv = pJavaData->GetEnv() ;
 
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Lsml/Kernel;)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
-
         // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_KernelObject);
         jenv->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_KernelObject);
 }
 
@@ -912,30 +822,7 @@ static void UpdateEventHandler(sml::smlUpdateEventId id, void* pUserData, sml::K
         // Now try to call back to Java
         JNIEnv *jenv = pJavaData->GetEnv() ;
 
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//              printf("Failed to get Java class\n") ;
-//              return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Lsml/Kernel;I)V") ;
-//
-//        if (mid == 0)
-//        {
-//              printf("Failed to get Java method\n") ;
-//              return ;
-//        }
-
         // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_KernelObject, runFlags);
         jenv->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_KernelObject, runFlags);
 
 }
@@ -980,84 +867,6 @@ JNIEXPORT bool JNICALL Java_sml_smlJNI_Kernel_1UnregisterForUpdateEvent(JNIEnv *
         return result ;
 }
 
-// This is a bit ugly.  We compile this header with extern "C" around it so that the public methods can be
-// exposed in a DLL with C naming (not C++ mangled names).  However, StringEventHandler (below) returns a std::string
-// which won't compile under "C"...even though it's a static function and hence won't appear in the DLL anyway.
-// The solution is to turn off extern "C" for this method and turn it back on afterwards.
-#ifdef __cplusplus
-}
-#endif
-
-// This is the C++ handler which will be called by clientSML when the event fires.
-// Then from here we need to call back to Java to pass back the message.
-static std::string StringEventHandler(sml::smlStringEventId id, void* pUserData, sml::Kernel* pKernel, char const* pData)
-{
-        // The user data is the class we declared above, where we store the Java data to use in the callback.
-        JavaCallbackData* pJavaData = (JavaCallbackData*)pUserData ;
-
-        // Now try to call back to Java
-        JNIEnv *jenv = pJavaData->GetEnv() ;
-
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return "Error -- failed to get Java class";
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Lsml/Kernel;Ljava/lang/String;)Ljava/lang/String;") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return "Error -- failed to get Java method";
-//        }
-
-        // Create the string to return to the caller
-        jstring data = pData != NULL ? jenv->NewStringUTF(pData) : 0 ;
-
-        // Make the method call.
-//        jstring result = (jstring)jenv->CallObjectMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_KernelObject, data);
-        jstring result = (jstring)jenv->CallObjectMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, pJavaData->m_KernelObject, data);
-
-                // Get the returned string
-        std::string resultStr = "" ;
-
-        if (result != 0)
-        {
-                // Get the C string
-                char const* pResult = jenv->GetStringUTFChars(result, 0);
-
-                // Copy it into our std::string
-                resultStr = pResult ;
-
-                // Release the Java string
-                jenv->ReleaseStringUTFChars(result, pResult);
-        }
-        
-        // Cleaning up the local references just in case
-        jenv->DeleteLocalRef(data);
-
-        // Return the result
-        return resultStr ;
-
-}
-
-// This is a bit ugly.  We compile this header with extern "C" around it so that the public methods can be
-// exposed in a DLL with C naming (not C++ mangled names).  However, StringEventHandler (above) returns a std::string
-// which won't compile under "C"...even though it's a static function and hence won't appear in the DLL anyway.
-// The solution is to turn off extern "C" for this method and turn it back on afterwards.
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // This is the hand-written JNI method for registering a callback.
 // I'm going to model it after the existing SWIG JNI methods so hopefully it'll be easier to patch this into SWIG eventually.
 JNIEXPORT jlong JNICALL Java_sml_smlJNI_Kernel_1RegisterForStringEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jobject jarg3, jobject jarg4, jobject jarg6)
@@ -1098,157 +907,6 @@ JNIEXPORT bool JNICALL Java_sml_smlJNI_Kernel_1UnregisterForStringEvent(JNIEnv *
         return result ;
 }
 
-// This is a bit ugly.  We compile this header with extern "C" around it so that the public methods can be
-// exposed in a DLL with C naming (not C++ mangled names).  However, RhsEventHandler (below) returns a std::string
-// which won't compile under "C"...even though it's a static function and hence won't appear in the DLL anyway.
-// The solution is to turn off extern "C" for this method and turn it back on afterwards.
-#ifdef __cplusplus
-}
-#endif
-
-// This is the C++ handler which will be called by clientSML when the event fires.
-// Then from here we need to call back to Java to pass back the message.
-static std::string RhsEventHandler(sml::smlRhsEventId id, void* pUserData, sml::Agent* pAgent,
-                                                        char const* pFunctionName, char const* pArgument)
-{
-        // The user data is the class we declared above, where we store the Java data to use in the callback.
-        JavaCallbackData* pJavaData = (JavaCallbackData*)pUserData ;
-
-        // Now try to call back to Java
-        JNIEnv *jenv = pJavaData->GetEnv() ;
-
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return "Error -- failed to get Java class" ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        // Method sig here is:
-//        // Int eventID, Object userData, String agentName, String functionName, String argument returning a String.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return "Error -- failed to get Java method" ;
-//        }
-
-        // Convert our C++ strings to Java strings
-        jstring agentName = pAgent != NULL ? jenv->NewStringUTF(pAgent->GetAgentName()) : 0 ;
-        jstring functionName = pFunctionName != NULL ? jenv->NewStringUTF(pFunctionName) : 0 ;
-        jstring argument = pArgument != NULL ? jenv->NewStringUTF(pArgument) : 0 ;
-
-        // Make the method call.
-//        jstring result = (jstring)jenv->CallObjectMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, agentName, functionName, argument) ;
-        jstring result = (jstring)jenv->CallObjectMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, agentName, functionName, argument) ;
-
-        // Cleaning up the local references just in case
-        jenv->DeleteLocalRef(agentName);
-        jenv->DeleteLocalRef(functionName);
-        jenv->DeleteLocalRef(argument);
-
-        // Get the returned string
-        std::string resultStr = "" ;
-
-        if (result != 0)
-        {
-                // Get the C string
-                char const* pResult = jenv->GetStringUTFChars(result, 0);
-
-                // Copy it into our std::string
-                resultStr = pResult ;
-
-                // Release the Java string
-                jenv->ReleaseStringUTFChars(result, pResult);
-        }
-
-        // Return the result
-        return resultStr ;
-}
-
-// This is the C++ handler which will be called by clientSML when the event fires.
-// Then from here we need to call back to Java to pass back the message.
-static std::string ClientMessageHandler(sml::smlRhsEventId id, void* pUserData, sml::Agent* pAgent,
-                                                        char const* pFunctionName, char const* pArgument)
-{
-        // The user data is the class we declared above, where we store the Java data to use in the callback.
-        JavaCallbackData* pJavaData = (JavaCallbackData*)pUserData ;
-
-        // Now try to call back to Java
-        JNIEnv *jenv = pJavaData->GetEnv() ;
-
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return "Error -- failed to get Java class" ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        // Method sig here is:
-//        // Int eventID, Object userData, String agentName, String functionName, String argument returning a String.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return "Error -- failed to get Java method" ;
-//        }
-
-        // Convert our C++ strings to Java strings
-        jstring agentName = pAgent != NULL ? jenv->NewStringUTF(pAgent->GetAgentName()) : 0 ;
-        jstring functionName = pFunctionName != NULL ? jenv->NewStringUTF(pFunctionName) : 0 ;
-        jstring argument = pArgument != NULL ? jenv->NewStringUTF(pArgument) : 0 ;
-
-        // Make the method call.
-//        jstring result = (jstring)jenv->CallObjectMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, agentName, functionName, argument) ;
-        jstring result = (jstring)jenv->CallObjectMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, agentName, functionName, argument) ;
-
-        // Cleaning up the local references just in case
-        jenv->DeleteLocalRef(agentName);
-        jenv->DeleteLocalRef(functionName);
-        jenv->DeleteLocalRef(argument);
-
-        // Get the returned string
-        std::string resultStr = "" ;
-
-        if (result != 0)
-        {
-                // Get the C string
-                char const* pResult = jenv->GetStringUTFChars(result, 0);
-
-                // Copy it into our std::string
-                resultStr = pResult ;
-
-                // Release the Java string
-                jenv->ReleaseStringUTFChars(result, pResult);
-        }
-
-        // Return the result
-        return resultStr ;
-}
-
-// This is a bit ugly.  We compile this header with extern "C" around it so that the public methods can be
-// exposed in a DLL with C naming (not C++ mangled names).  However, RhsEventHandler (above) returns a std::string
-// which won't compile under "C"...even though it's a static function and hence won't appear in the DLL anyway.
-// The solution is to turn off extern "C" for this method and turn it back on afterwards.
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // This is the hand-written JNI method for registering a callback.
 // I'm going to model it after the existing SWIG JNI methods so hopefully it'll be easier to patch this into SWIG eventually.
@@ -1264,7 +922,7 @@ JNIEXPORT jlong JNICALL Java_sml_smlJNI_Kernel_1AddRhsFunction(JNIEnv *jenv, jcl
         JavaCallbackData* pJavaData = CreateJavaCallbackData(false, jenv, jcls, jarg1, 0, jarg3, jarg4, "rhsFunctionHandler", "(ILjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", jarg6) ;
 
         // Register our handler.  When this is called we'll call back to the Java method.
-        pJavaData->m_CallbackID = arg1->AddRhsFunction(pFunctionName, &RhsEventHandler, pJavaData) ;
+        pJavaData->m_CallbackID = arg1->AddRhsFunction(pFunctionName, &handleRhsEvent, pJavaData) ;
 
         // Release the string we got from Java
         jenv->ReleaseStringUTFChars(jarg2, pFunctionName);
@@ -1307,7 +965,7 @@ JNIEXPORT jlong JNICALL Java_sml_smlJNI_Kernel_1RegisterForClientMessageEvent(JN
         JavaCallbackData* pJavaData = CreateJavaCallbackData(false, jenv, jcls, jarg1, 0, jarg3, jarg4, "clientMessageHandler", "(ILjava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", jarg6) ;
 
         // Register our handler.  When this is called we'll call back to the Java method.
-        pJavaData->m_CallbackID = arg1->RegisterForClientMessageEvent(pFunctionName, &ClientMessageHandler, pJavaData) ;
+        pJavaData->m_CallbackID = arg1->RegisterForClientMessageEvent(pFunctionName, &handleRhsEvent, pJavaData) ;
 
         // Release the string we got from Java
         jenv->ReleaseStringUTFChars(jarg2, pFunctionName);
@@ -1348,33 +1006,10 @@ static void AgentEventHandler(sml::smlAgentEventId id, void* pUserData, sml::Age
         // Now try to call back to Java
         JNIEnv *jenv = pJavaData->GetEnv() ;
 
-//        // We start from the Java object whose method we wish to call.
-//        jobject jobj = pJavaData->m_HandlerObject ;
-//        jclass cls = jenv->GetObjectClass(jobj) ;
-//
-//        if (cls == 0)
-//        {
-//                printf("Failed to get Java class\n") ;
-//                return ;
-//        }
-//
-//        // Look up the Java method we want to call.
-//        // The method name is passed in by the user (and needs to match exactly, including case).
-//        // The method should be owned by the m_HandlerObject that the user also passed in.
-//        // Any slip here and you get a NoSuchMethod exception and my Java VM shuts down.
-//        jmethodID mid = jenv->GetMethodID(cls, pJavaData->m_HandlerMethod.c_str(), "(ILjava/lang/Object;Ljava/lang/String;)V") ;
-//
-//        if (mid == 0)
-//        {
-//                printf("Failed to get Java method\n") ;
-//                return ;
-//        }
-
         // Convert our C++ strings to Java strings
         jstring agentName = pAgent != NULL ? jenv->NewStringUTF(pAgent->GetAgentName()) : 0 ;
 
         // Make the method call.
-//        jenv->CallVoidMethod(jobj, mid, (int)id, pJavaData->m_CallbackData, agentName);
         jenv->CallVoidMethod(pJavaData->m_HandlerObject, pJavaData->m_Mid, (int)id, pJavaData->m_CallbackData, agentName);
 
         // Cleaning up the local references just in case
@@ -1420,3 +1055,7 @@ JNIEXPORT bool JNICALL Java_sml_smlJNI_Kernel_1UnregisterForAgentEvent(JNIEnv *j
 
         return result ;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

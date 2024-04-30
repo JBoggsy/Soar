@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * AgentMenu.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Jan 31, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.menu;
@@ -20,10 +20,10 @@ import edu.umich.soar.debugger.dialogs.SelectAgentDialog;
 import edu.umich.soar.debugger.doc.Document;
 
 /************************************************************************
- * 
+ *
  * A menu for controlling agent level commands--creating them, destroying them
  * etc.
- * 
+ *
  ************************************************************************/
 public class AgentMenu
 {
@@ -31,62 +31,69 @@ public class AgentMenu
 
     private MainFrame m_Frame = null;
 
-    private AbstractAction m_SelectAgent = new AbstractAction(
+    private final AbstractAction m_SelectAgent = new AbstractAction(
             "Select Current Agent")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             selectAgent(e);
         }
     };
 
-    private AbstractAction m_CreateAgentSame = new AbstractAction(
+    private final AbstractAction m_CreateAgentSame = new AbstractAction(
             "Create Agent - Same Window")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             createAgent(e, false);
         }
     };
 
-    private AbstractAction m_CreateAgentNew = new AbstractAction(
+    private final AbstractAction m_CreateAgentNew = new AbstractAction(
             "Create Agent - New Window")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             createAgent(e, true);
         }
     };
 
-    private AbstractAction m_CreateNewWindow = new AbstractAction(
+    private final AbstractAction m_CreateNewWindow = new AbstractAction(
             "Create Window - No New Agent")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             createWindow(e);
         }
     };
 
-    private AbstractAction m_CreateNewOnAgent = new AbstractAction(
+    private final AbstractAction m_CreateNewOnAgent = new AbstractAction(
             "Create New Window on Agent Creation")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             createNewOnAgent(e);
         }
     };
 
-    private AbstractAction m_CloseOnDestroy = new AbstractAction(
+    private final AbstractAction m_CloseOnDestroy = new AbstractAction(
             "Close Window on Agent Destruction")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             closeOnDestroy(e);
         }
     };
 
-    private AbstractAction m_DestroyAgent = new AbstractAction("Destroy Agent")
+    private final AbstractAction m_DestroyAgent = new AbstractAction("Destroy Agent")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             destroyAgent(e);
@@ -144,13 +151,7 @@ public class AgentMenu
         if (!m_CreateNewOnAgent.getMenuItem().isDisposed())
         {
             final boolean check = isCreateNewWindowForNewAgent();
-            this.m_Frame.getDisplay().asyncExec(new Runnable()
-            {
-                public void run()
-                {
-                    m_CreateNewOnAgent.setChecked(check, false);
-                }
-            });
+            this.m_Frame.getDisplay().asyncExec(() -> m_CreateNewOnAgent.setChecked(check, false));
 
         }
     }
@@ -227,7 +228,7 @@ public class AgentMenu
                 "Enter new agent name", generatedName);
 
         // Check if cancelled
-        if (name == null || name == "")
+        if (name == null || name.isEmpty())
             return;
 
         if (m_Document.getAgent(name) != null)

@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * LoggingDialog.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Feb 9, 2006
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.dialogs;
@@ -28,13 +28,11 @@ import edu.umich.soar.debugger.modules.AbstractView;
 
 public class LoggingDialog extends BaseDialog
 {
-    private AbstractView m_View;
+    private final AbstractView m_View;
 
-    private MainFrame m_Frame;
+    private final MainFrame m_Frame;
 
     private Text m_FilenameText;
-
-    private Button m_Browse;
 
     private Button m_Append;
 
@@ -89,7 +87,7 @@ public class LoggingDialog extends BaseDialog
         m_FilenameText.selectAll();
 
         // Browse for a filename
-        m_Browse = new Button(text, SWT.PUSH);
+        Button m_Browse = new Button(text, SWT.PUSH);
         m_Browse.setText("&Browse...");
         data = new GridData(GridData.FILL_HORIZONTAL);
         data.horizontalSpan = 1;
@@ -113,6 +111,7 @@ public class LoggingDialog extends BaseDialog
         // Do a find
         m_Browse.addSelectionListener(new SelectionAdapter()
         {
+            @Override
             public void widgetSelected(SelectionEvent event)
             {
                 String filename = SaveLoad.SaveFileDialog(m_Frame.getWindow(),
@@ -130,10 +129,11 @@ public class LoggingDialog extends BaseDialog
     }
 
     /********************************************************************************************
-     * 
+     *
      * Close the dialog -- either successfully or cancelled.
-     * 
+     *
      ********************************************************************************************/
+    @Override
     protected void endDialog(boolean ok)
     {
         // Only process values if the user selected ok

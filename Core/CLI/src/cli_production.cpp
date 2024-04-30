@@ -37,7 +37,7 @@
 #include "test.h"
 
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 
 using namespace cli;
 using namespace sml;
@@ -101,11 +101,11 @@ bool CommandLineInterface::ParseExcise(std::vector< std::string >& argv)
     {
         {'a', "all",            OPTARG_NONE},
         {'c', "chunks",         OPTARG_NONE},
-        {'d', "default",        OPTARG_NONE},
+        {'d', "defaults",        OPTARG_NONE},
         {'n', "never-fired",    OPTARG_NONE},
         {'r', "rl",             OPTARG_NONE},
         {'t', "task",           OPTARG_NONE},
-        {'T', "template",       OPTARG_NONE},
+        {'T', "templates",      OPTARG_NONE},
         {'u', "user",           OPTARG_NONE},
         {0, 0,                  OPTARG_NONE}
     };
@@ -181,14 +181,14 @@ bool CommandLineInterface::ParseFC(std::vector< std::string >& argv)
     cli::Options opt;
     OptionsData optionsData[] =
     {
-        {'a', "all",            OPTARG_NONE},
-        {'c', "chunks",            OPTARG_NONE},
+        {'a', "all",             OPTARG_NONE},
+        {'c', "chunks",          OPTARG_NONE},
         {'d', "defaults",        OPTARG_NONE},
-        {'j', "justifications",    OPTARG_NONE},
-        {'r', "rl",                OPTARG_NONE},
-        {'T', "template",        OPTARG_NONE},
+        {'j', "justifications",  OPTARG_NONE},
+        {'r', "rl",              OPTARG_NONE},
+        {'T', "templates",       OPTARG_NONE},
         {'u', "user",            OPTARG_NONE},
-        {'f', "fired",            OPTARG_NONE},
+        {'f', "fired",           OPTARG_NONE},
         {0, 0, OPTARG_NONE}
     };
 
@@ -826,7 +826,6 @@ bool CommandLineInterface::DoFiringCounts(PrintBitset options, const int numberT
     }
     else
     {
-        bool foundProduction = false;
         bool printRL = options.test(PRINT_RL);
 
         // Print all productions if there are no other production flags set
@@ -1867,10 +1866,10 @@ bool CommandLineInterface::ParseMemories(std::vector< std::string >& argv)
     cli::Options opt;
     OptionsData optionsData[] =
     {
-        {'c', "chunks",            OPTARG_NONE},
-        {'d', "default",        OPTARG_NONE},
-        {'j', "justifications",    OPTARG_NONE},
-        {'T', "template",        OPTARG_NONE},
+        {'c', "chunks",          OPTARG_NONE},
+        {'d', "defaults",         OPTARG_NONE},
+        {'j', "justifications",  OPTARG_NONE},
+        {'T', "templates",       OPTARG_NONE},
         {'u', "user",            OPTARG_NONE},
         {0, 0, OPTARG_NONE}
     };

@@ -35,6 +35,7 @@
 #include "xml.h"
 
 #include <ctype.h>
+#include <cinttypes>
 #include <stdlib.h>
 
 using soar::Lexer;
@@ -77,7 +78,7 @@ Symbol* make_placeholder_var(agent* thisAgent, char first_letter)
 
     /* --- create variable with "#" in its name:  this couldn't possibly be a
        variable in the user's code, since the lexer doesn't handle "#" --- */
-    SNPRINTF(buf, sizeof(buf) - 1, "<#%c*%lu>", first_letter, static_cast<long unsigned int>(thisAgent->placeholder_counter[i]++));
+    SNPRINTF(buf, sizeof(buf) - 1, "<#%c*%" SCNu64 ">", first_letter, thisAgent->placeholder_counter[i]++);
     buf[sizeof(buf) - 1] = '\0';
 
     v = thisAgent->symbolManager->make_variable(buf);
@@ -180,7 +181,7 @@ void substitute_for_placeholders_in_test(agent* thisAgent, test* t)
                 substitute_for_placeholders_in_test(thisAgent, reinterpret_cast<test*>(&(c->first)));
             }
             return;
-        default:  /* relational tests other than equality */
+        default:
             substitute_for_placeholders_in_symbol(thisAgent, &(ct->data.referent));
             return;
     }
@@ -322,7 +323,7 @@ Symbol* make_symbol_for_lexeme(agent* thisAgent, Lexeme* lexeme, bool allow_lti)
         {
 //            thisAgent->outputManager->printa_sf(thisAgent, "Found potential Soar identifier that would be invalid.  Adding as string.\n", lexeme->id_letter, lexeme->id_number);
             char buf[30];
-            SNPRINTF(buf, sizeof(buf) - 1, "%c%llu", lexeme->id_letter, lexeme->id_number);
+            SNPRINTF(buf, sizeof(buf) - 1, "%c%" SCNu64, lexeme->id_letter, lexeme->id_number);
              buf[sizeof(buf) - 1] = '\0';
             newSymbol = thisAgent->symbolManager->make_str_constant(buf);
 
@@ -583,7 +584,7 @@ test parse_test(agent* thisAgent, Lexer* lexer)
         }
     }
     while (lexer->current_lexeme.type != R_BRACE_LEXEME);
-    if (!lexer->get_lexeme()) 
+    if (!lexer->get_lexeme())
     {
         deallocate_test(thisAgent, t);
         return NULL;
@@ -994,18 +995,23 @@ condition* parse_attr_value_tests(agent* thisAgent, Lexer* lexer)
    any error occurs).
 ----------------------------------------------------------------- */
 
-test parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_letter_if_no_id_given)
+auto parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_letter_if_no_id_given)
 {
     test id_test, id_goal_impasse_test, check_for_symconstant;
     Symbol* sym;
+
+    struct ret_vals {
+        test id_test;
+        bool is_state_or_impasse_cond;
+    };
 
     if (lexer->current_lexeme.type != L_PAREN_LEXEME)
     {
         thisAgent->outputManager->printa_sf(thisAgent,  "Expected ( to begin condition element\n");
 
-        return NIL;
+        return ret_vals {nullptr, false};
     }
-    if (!lexer->get_lexeme()) return NULL;
+    if (!lexer->get_lexeme()) return ret_vals {nullptr, false};
 
     /* --- look for goal/impasse indicator --- */
     if (lexer->current_lexeme.type == STR_CONSTANT_LEXEME)
@@ -1016,7 +1022,7 @@ test parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_l
             if (!lexer->get_lexeme())
             {
                 deallocate_test(thisAgent, id_goal_impasse_test);
-                return NULL;
+                return ret_vals {nullptr, true};
             }
             first_letter_if_no_id_given = 's';
         }
@@ -1026,7 +1032,7 @@ test parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_l
             if (!lexer->get_lexeme())
             {
                 deallocate_test(thisAgent, id_goal_impasse_test);
-                return NULL;
+                return ret_vals {nullptr, true};
             }
             first_letter_if_no_id_given = 'i';
         }
@@ -1049,7 +1055,7 @@ test parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_l
         if (!id_test)
         {
             deallocate_test(thisAgent, id_goal_impasse_test);
-            return NIL;
+            return ret_vals {nullptr, id_goal_impasse_test != nullptr};
         }
         if (!id_test->eq_test)
         {
@@ -1076,7 +1082,7 @@ test parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_l
                 free_growable_string(thisAgent, gs);
                 //TODO: should we append this to the previous XML message or create a new message for it?
                 deallocate_test(thisAgent, id_test);    /* AGR 527c */
-                return NIL;                  /* AGR 527c */
+                return ret_vals {nullptr, true};                  /* AGR 527c */
             }
         }
     }
@@ -1089,7 +1095,7 @@ test parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_l
     add_test(thisAgent, &id_test, id_goal_impasse_test);
 
     /* --- return the resulting id test --- */
-    return id_test;
+    return ret_vals {id_test, id_goal_impasse_test != nullptr};
 }
 
 /* -----------------------------------------------------------------
@@ -1103,7 +1109,8 @@ test parse_head_of_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_l
    It does not fill in the id tests of the conditions.
 ----------------------------------------------------------------- */
 
-condition* parse_tail_of_conds_for_one_id(agent* thisAgent, Lexer* lexer)
+condition* parse_tail_of_conds_for_one_id(agent* thisAgent, Lexer* lexer,
+    bool is_state_or_impasse_cond)
 {
     condition* first_c, *last_c, *new_conds;
     condition* c;
@@ -1111,6 +1118,12 @@ condition* parse_tail_of_conds_for_one_id(agent* thisAgent, Lexer* lexer)
     /* --- if no <attr_value_tests> are given, create a dummy one --- */
     if (lexer->current_lexeme.type == R_PAREN_LEXEME)
     {
+        if (is_state_or_impasse_cond) {
+            thisAgent->outputManager->printa_sf(thisAgent,  "Error: Expected attribute-value test "\
+                "after state/impasse test. Did you forget to add \"^type state\" or \"^superstate nil\"?\n");
+            return nullptr;
+        }
+
         /* consume the right parenthesis */
         if (!lexer->get_lexeme()) return NULL;
         c = make_condition( thisAgent,
@@ -1175,18 +1188,15 @@ condition* parse_tail_of_conds_for_one_id(agent* thisAgent, Lexer* lexer)
 condition* parse_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_letter_if_no_id_given,
                                   test* dest_id_test)
 {
-    condition* conds;
-    test id_test, equality_test_from_id_test;
-
     /* --- parse the head --- */
-    id_test = parse_head_of_conds_for_one_id(thisAgent, lexer, first_letter_if_no_id_given);
+    auto [id_test, is_state_or_impasse_cond] = parse_head_of_conds_for_one_id(thisAgent, lexer, first_letter_if_no_id_given);
     if (! id_test)
     {
         return NIL;
     }
 
     /* --- parse the tail --- */
-    conds = parse_tail_of_conds_for_one_id(thisAgent, lexer);
+    condition* conds = parse_tail_of_conds_for_one_id(thisAgent, lexer, is_state_or_impasse_cond);
     if (! conds)
     {
         deallocate_test(thisAgent, id_test);
@@ -1197,7 +1207,7 @@ condition* parse_conds_for_one_id(agent* thisAgent, Lexer* lexer, char first_let
     if (dest_id_test)
     {
         *dest_id_test = id_test;
-        equality_test_from_id_test = copy_test(thisAgent, id_test->eq_test);
+        test equality_test_from_id_test = copy_test(thisAgent, id_test->eq_test);
         fill_in_id_tests(thisAgent, conds, equality_test_from_id_test);
         deallocate_test(thisAgent, equality_test_from_id_test);
     }
@@ -1238,7 +1248,6 @@ condition* parse_cond(agent* thisAgent, Lexer* lexer)
         /* --- read conjunctive condition --- */
         if (!lexer->get_lexeme())
         {
-            if (c) deallocate_condition_list(thisAgent, c);
             return NULL;
         }
         c = parse_cond_plus(thisAgent, lexer);
@@ -1447,14 +1456,41 @@ rhs_value parse_function_call_after_lparen(agent* thisAgent,
     }
     else
     {
-        fun_name = thisAgent->symbolManager->find_str_constant(lexer->current_lexeme.string());
+      fun_name = thisAgent->symbolManager->find_str_constant(lexer->current_lexeme.string());
+
+        if ( std::string(lexer->current_lexeme.string()) == "succeeded" || std::string(lexer->current_lexeme.string()) == "failed" )
+        {
+            // unit tests
+        }
+        else
+        {
+            if ( fun_name )
+            {
+                // might still be bad, so lookup the rh
+                rf = lookup_rhs_function(thisAgent, fun_name);
+
+                if ( !rf )
+                    fun_name = NULL;
+            }
+
+            if ( !fun_name )
+            {
+                thisAgent->outputManager->printa_sf(thisAgent, "Adding exec to RHS function: %s\n", lexer->current_lexeme.string() );
+
+                lexer->addExec();
+
+                thisAgent->outputManager->printa_sf(thisAgent, "%s\n", lexer->current_orig_string() );
+
+                fun_name = thisAgent->symbolManager->find_str_constant(lexer->current_lexeme.string());
+            }
+        }
     }
 
-	if (!fun_name && (std::string(lexer->current_lexeme.string()) == "succeeded" || std::string(lexer->current_lexeme.string()) == "failed"))
-	{
-		thisAgent->outputManager->printa_sf(thisAgent, "WARNING: Replacing function named %s with halt since this is a unit test but running in a non-unit testing environment.\n", lexer->current_lexeme.string());
-		fun_name = thisAgent->symbolManager->find_str_constant("halt");
-	}
+    if (!fun_name && (std::string(lexer->current_lexeme.string()) == "succeeded" || std::string(lexer->current_lexeme.string()) == "failed"))
+    {
+        thisAgent->outputManager->printa_sf(thisAgent, "WARNING: Replacing function named %s with halt since this is a unit test but running in a non-unit testing environment.\n", lexer->current_lexeme.string());
+        fun_name = thisAgent->symbolManager->find_str_constant("halt");
+    }
 
     if (!fun_name)
     {
@@ -1464,11 +1500,11 @@ rhs_value parse_function_call_after_lparen(agent* thisAgent,
     }
     rf = lookup_rhs_function(thisAgent, fun_name);
 
-	if (!rf && (std::string(lexer->current_lexeme.string()) == "succeeded" || std::string(lexer->current_lexeme.string()) == "failed"))
-	{
-		thisAgent->outputManager->printa_sf(thisAgent, "WARNING: Replacing function named %s with halt since this is a unit test but running in a non-unit testing environment.\n", lexer->current_lexeme.string());
-		rf = lookup_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("halt"));
-	}
+    if (!rf && (std::string(lexer->current_lexeme.string()) == "succeeded" || std::string(lexer->current_lexeme.string()) == "failed"))
+    {
+        thisAgent->outputManager->printa_sf(thisAgent, "WARNING: Replacing function named %s with halt since this is a unit test but running in a non-unit testing environment.\n", lexer->current_lexeme.string());
+        rf = lookup_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("halt"));
+    }
 
     if (!rf)
     {
@@ -1497,7 +1533,10 @@ rhs_value parse_function_call_after_lparen(agent* thisAgent,
     fl->first = rf;
     prev_c = fl;
     /* consume function name, advance to argument list */
-    if (!lexer->get_lexeme()) return NULL;
+    if (!lexer->get_lexeme())
+    {
+        return NULL;
+    }
     num_args = 0;
     while (lexer->current_lexeme.type != R_PAREN_LEXEME)
     {
@@ -1520,13 +1559,17 @@ rhs_value parse_function_call_after_lparen(agent* thisAgent,
     if ((rf->num_args_expected != -1) && (rf->num_args_expected != num_args))
     {
         thisAgent->outputManager->printa_sf(thisAgent,  "Wrong number of arguments to function %s (expected %d)\n",
-              rf->name->sc->name, rf->num_args_expected);
+              rf->name->sc->name, static_cast<int64_t>(rf->num_args_expected));
         deallocate_rhs_value(thisAgent, funcall_list_to_rhs_value(fl));
         return NIL;
     }
 
     /* consume the right parenthesis */
-    if (!lexer->get_lexeme()) return NULL;
+    if (!lexer->get_lexeme())
+    {
+        return NULL;
+    }
+
     return funcall_list_to_rhs_value(fl);
 }
 
@@ -2417,7 +2460,7 @@ production* parse_production(agent* thisAgent, const char* prod_string, unsigned
     for (lhs_bottom = lhs; lhs_bottom->next != NIL; lhs_bottom = lhs_bottom->next);
 
     thisAgent->name_of_production_being_reordered = name->sc->name;
-    if (!reorder_and_validate_lhs_and_rhs(thisAgent, &lhs_top, &rhs, true))
+    if (reorder_and_validate_lhs_and_rhs(thisAgent, &lhs_top, &rhs, true) != reorder_success)
     {
         abort_parse_production(thisAgent, name, &documentation, &lhs, &rhs);
         return NIL;

@@ -6,6 +6,7 @@
  * multicli (which was based on mincli) */
 
 #include "ElementXML.h"
+#include "portability.h"
 #include "sml_Client.h"
 #include "thread_Thread.h"
 #include "thread_Lock.h"
@@ -48,7 +49,6 @@ class InputThread : public soar_thread::Thread
             while (!this->m_QuitNow && std::cin.good())
             {
                 lReadCmdResult = readcmd(line);
-//                std::getline(std::cin, line);
                 if (!lReadCmdResult || std::cin.bad())
                 {
                     break;
@@ -57,7 +57,7 @@ class InputThread : public soar_thread::Thread
                 lock = new soar_thread::Lock(&mutex);
                 lines.push(line);
                 write_event.TriggerEvent();
-                if (line == "quit" || line == "exit")
+                if (line == "quit" || line == "exit" || std::cin.eof())
                 {
                     this->m_QuitNow = true;
                 }
@@ -103,7 +103,7 @@ class InputThread : public soar_thread::Thread
         }
         bool readcmd(std::string& result)
         {
-            int nestlvl, i, n;
+            int nestlvl, n;
             std::string line;
             std::stringstream cmd;
 
@@ -186,10 +186,10 @@ class SoarCLI
         SoarCLI()
             : m_kernel(0), m_currentAgent(0), m_quit(false), m_isMultiAgent(false),
               m_longestAgentName(0), m_seen_newline(true),
-              #if defined(_WIN32) || defined(NO_COLORS)
+              #if defined(NO_COLORS)
                   m_color(false),
               #else
-                  m_color(true),
+                  m_color(stdout_supports_ansi_colors()),
               #endif
               m_listen(false), m_port(sml::Kernel::kUseAnyPort) {}
 
@@ -231,7 +231,6 @@ class SoarCLI
         void updateMultiAgent();
         void deleteagent(const char* agentname);
         void sendAllAgentsCommand(const char* cmd);
-        void agent_init_source(const char* agentname);
 
 };
 

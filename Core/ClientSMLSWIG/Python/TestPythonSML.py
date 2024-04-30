@@ -2,129 +2,208 @@
 #
 # This is a test script which tests several aspects of the Python SML interface
 #  including kernel and agent creation, running, registering and unregistering
-#  several kinds of callbacks, inreinitializing, agent destruction, and kernel
+#  several kinds of callbacks, reinitializing, agent destruction, and kernel
 #  destruction (and maybe some other things, too).
 #
-import sys, os
-sys.path.append('../lib')
+from dataclasses import dataclass
+from pathlib import Path
+import sys
+import time
+
 import Python_sml_ClientInterface
 from Python_sml_ClientInterface import *
 
-BASEDIR = os.path.dirname(os.path.dirname(Python_sml_ClientInterface.__file__))
+AGENT_DIR = Path(Python_sml_ClientInterface.__file__).parent / 'SoarUnitTests'
+
+@dataclass
+class CalledSignal:
+    called: bool = False
+
+# towers_of_hanoi_file = AGENT_DIR / 'test-towers-of-hanoi-SML.soar'
+towers_of_hanoi_file = AGENT_DIR / 'Chunking' / 'tests' / 'towers-of-hanoi-recursive' / 'towers-of-hanoi-recursive' / 'towers-of-hanoi-recursive_source.soar'
+toh_test_file = AGENT_DIR / 'TOHtest.soar'
+for source_file in (towers_of_hanoi_file, toh_test_file):
+    if not source_file.is_file():
+        raise FileNotFoundError(f"Source file doesn't exist: {source_file}")
 
 def PrintCallback(id, userData, agent, message):
-	print message
+    print(message)
 
-def ProductionExcisedCallback(id, userData, agent, prodName, instantiation):
-	print "removing", prodName
+def ProductionExcisedCallback(id, signal: CalledSignal, agent, prodName, instantiation):
+    print(f"removing {prodName} ({instantiation})")
+    signal.called = True
 
-def ProductionFiredCallback(id, userData, agent, prodName, instantiation):
-	print "fired", prodName
+def ProductionFiredCallback(id, signal: CalledSignal, agent, prodName, instantiation):
+    print("fired", prodName)
 
-def PhaseExecutedCallback(id, userData, agent, phase):
-	print "phase", phase, "executed"
+def PhaseExecutedCallback(id, signal: CalledSignal, agent, phase):
+    print("phase", phase, "executed")
+    signal.called = True
 
-def AgentCreatedCallback(id, userData, agent):
-	print agent.GetAgentName(), "created"
+def AgentCreatedCallback(id, signal: CalledSignal, agent):
+    print(agent.GetAgentName(), "created")
+    signal.called = True
 
-def AgentReinitializedCallback(id, userData, agent):
-	print agent.GetAgentName(), "reinitialized"
+def AgentReinitializedCallback(id, signal: CalledSignal, agent):
+    print(agent.GetAgentName(), "reinitialized")
+    signal.called = True
 
-def AgentDestroyedCallback(id, userData, agent):
-	print "destroying agent", agent.GetAgentName()
+def AgentDestroyedCallback(id, signal: CalledSignal, agent):
+    print("destroying agent", agent.GetAgentName())
+    signal.called = True
 
-def SystemShutdownCallback(id, userData, kernel):
-	print "Shutting down kernel", kernel
+def SystemShutdownCallback(id, signal: CalledSignal, kernel):
+    print("Shutting down kernel ", kernel)
+    signal.called = True
 
 def RhsFunctionTest(id, userData, agent, functionName, argument):
-	print "Agent", agent.GetAgentName(), "called RHS function", functionName, "with argument(s) '", argument, "' and userData '", userData, "'"
-	return "success"
+    print("Agent", agent.GetAgentName(), "called RHS function", functionName, "with argument(s) '", argument, "' and userData '", userData, "'")
+    assert argument == "this is a test"
+    assert userData == {"foo": "bar"}
+    return "success"
 
-def StructuredTraceCallback(id, userData, agent, pXML):
-	print "structured data:", pXML.GenerateXMLString(True)
-	
-def UpdateEventCallback(id, userData, kernel, runFlags):
-	print "update event fired with flags", runFlags
+def StructuredTraceCallback(id, signal: CalledSignal, agent, pXML):
+    print("structured data:", pXML.GenerateXMLString(True))
+    signal.called = True
 
-def UserMessageCallback(id, userData, agent, clientName, message):
-	print "Agent", agent.GetAgentName(), "received usermessage event for clientName '", clientName, "' with message '", message, "'"
-	return ""
+def UpdateEventCallback(id, signal: CalledSignal, kernel, runFlags):
+    print("update event fired with flags", runFlags)
+    signal.called = True
+
+def UserMessageCallback(id, tester, agent, clientName, message):
+    print("Agent", agent.GetAgentName(), "received usermessage event for clientName '", clientName, "' with message '", message, "'")
+    assert tester(clientName, message), f"❌ UserMessageCallback called with unexpected clientName '{clientName}' or message '{message}'"
+    return ""
 
 kernel = Kernel.CreateKernelInNewThread()
 if not kernel:
-	print >> sys.stderr, 'kernel creation failed'
-	sys.exit(1)
+    print('❌ Kernel creation failed', file=sys.stderr)
+    sys.exit(1)
+else:
+    print('✅ Kernel creation succeeded')
 
-agentCallbackId0 = kernel.RegisterForAgentEvent(smlEVENT_AFTER_AGENT_CREATED, AgentCreatedCallback, None)
-agentCallbackId1 = kernel.RegisterForAgentEvent(smlEVENT_BEFORE_AGENT_REINITIALIZED, AgentReinitializedCallback, None)
-agentCallbackId2 = kernel.RegisterForAgentEvent(smlEVENT_BEFORE_AGENT_DESTROYED, AgentDestroyedCallback, None)
-systemCallbackId = kernel.RegisterForSystemEvent(smlEVENT_BEFORE_SHUTDOWN, SystemShutdownCallback, None)
-rhsCallbackId = kernel.AddRhsFunction("RhsFunctionTest", RhsFunctionTest, None)
-updateCallbackId = kernel.RegisterForUpdateEvent(smlEVENT_AFTER_ALL_OUTPUT_PHASES, UpdateEventCallback, None)
-messageCallbackId = kernel.RegisterForClientMessageEvent("TestMessage", UserMessageCallback, None)
+agent_create_called = CalledSignal()
+agentCallbackId0 = kernel.RegisterForAgentEvent(smlEVENT_AFTER_AGENT_CREATED, AgentCreatedCallback, agent_create_called)
 
-agent = kernel.CreateAgent('Soar1')
-if not agent:
-	print >> sys.stderr, 'agent creation failed'
-	sys.exit(1)
+agent_reinit_called = CalledSignal()
+agentReinitCallback = kernel.RegisterForAgentEvent(smlEVENT_BEFORE_AGENT_REINITIALIZED, AgentReinitializedCallback, agent_reinit_called)
+
+agent_destroy_called = CalledSignal()
+agentCallbackId2 = kernel.RegisterForAgentEvent(smlEVENT_BEFORE_AGENT_DESTROYED, AgentDestroyedCallback, agent_destroy_called)
+
+shutdown_handler_called = CalledSignal()
+shutdownCallbackId = kernel.RegisterForSystemEvent(smlEVENT_BEFORE_SHUTDOWN, SystemShutdownCallback, shutdown_handler_called)
+
+rhsCallbackId = kernel.AddRhsFunction("RhsFunctionTest", RhsFunctionTest, {"foo": "bar"})
+
+update_handler_called = CalledSignal()
+updateCallbackId = kernel.RegisterForUpdateEvent(smlEVENT_AFTER_ALL_OUTPUT_PHASES, UpdateEventCallback, update_handler_called)
+messageCallbackId = kernel.RegisterForClientMessageEvent("TestMessage", UserMessageCallback, lambda clientName, message: clientName == "TestMessage" and message == "This is a \"quoted\"\" message")
+
+def test_create_agent(kernel):
+    assert not agent_create_called.called
+    agent = kernel.CreateAgent('Soar1')
+    if not agent:
+        print('❌ Agent creation failed', file=sys.stderr)
+        sys.exit(1)
+    else:
+        print('✅ Agent creation succeeded')
+    assert agent_create_called.called
+    return agent
+
+agent = test_create_agent(kernel)
 
 printcallbackid = agent.RegisterForPrintEvent(smlEVENT_PRINT, PrintCallback, None)
-productionCallbackId = agent.RegisterForProductionEvent(smlEVENT_BEFORE_PRODUCTION_REMOVED, ProductionExcisedCallback, None)
-productionCallbackId = agent.RegisterForProductionEvent(smlEVENT_AFTER_PRODUCTION_FIRED, ProductionFiredCallback, None)
-runCallbackId = agent.RegisterForRunEvent(smlEVENT_AFTER_PHASE_EXECUTED, PhaseExecutedCallback, None)
-structuredCallbackId = agent.RegisterForXMLEvent(smlEVENT_XML_TRACE_OUTPUT, StructuredTraceCallback, None)
 
-#load the TOH productions
-result = agent.LoadProductions(os.path.join(BASEDIR, 'share', 'soar', 'Demos', 'towers-of-hanoi', 'towers-of-hanoi.soar'))
+prod_removed_handler_signal = CalledSignal()
+prod_removed_callback_id = agent.RegisterForProductionEvent(smlEVENT_BEFORE_PRODUCTION_REMOVED, ProductionExcisedCallback, prod_removed_handler_signal)
+
+prod_fired_handler_signal = CalledSignal()
+prod_fired_callback_id = agent.RegisterForProductionEvent(smlEVENT_AFTER_PRODUCTION_FIRED, ProductionFiredCallback, prod_fired_handler_signal)
+
+phase_executed_handler_signal = CalledSignal()
+runCallbackId = agent.RegisterForRunEvent(smlEVENT_AFTER_PHASE_EXECUTED, PhaseExecutedCallback, phase_executed_handler_signal)
+
+xml_trace_handler_signal = CalledSignal()
+structuredCallbackId = agent.RegisterForXMLEvent(smlEVENT_XML_TRACE_OUTPUT, StructuredTraceCallback, xml_trace_handler_signal)
+
+# load the TOH productions
+result = agent.LoadProductions(str(towers_of_hanoi_file))
+
 #loads a function to test the user-defined RHS function stuff
-result = agent.LoadProductions(os.path.join(BASEDIR, 'share', 'soar', 'Tests', 'TOHtest.soar'))
+result = agent.LoadProductions(str(toh_test_file))
 
 kernel.SendClientMessage(agent, "TestMessage", "This is a \"quoted\"\" message")
 kernel.UnregisterForClientMessageEvent(messageCallbackId)
 
 agent.RunSelf(2, sml_ELABORATION)
 
-agent.UnregisterForProductionEvent(productionCallbackId)
-agent.UnregisterForRunEvent(runCallbackId)
-
 kernel.RunAllAgents(3)
-
-kernel.UnregisterForUpdateEvent(updateCallbackId)
-
-print ""
 
 #set the watch level to 0
 result = kernel.ExecuteCommandLine("watch 0", "Soar1")
 
-#excise the monitor production
-result = kernel.ExecuteCommandLine("excise towers-of-hanoi*monitor*operator-execution*move-disk", "Soar1")
+# excise the monitor production
+def test_excise(kernel):
+    assert not prod_removed_handler_signal.called, "❌ Production excise handler called before excise"
+    result = kernel.ExecuteCommandLine("excise towers-of-hanoi*monitor*operator-execution*move-disk", "Soar1")
+    assert prod_removed_handler_signal.called, "❌ Production excise handler not called"
+    print(f"✅ Production excise: {result}")
+
+test_excise(kernel)
 
 #run TOH the rest of the way and time it
-import time
-start = time.clock()
+start = time.time()
 result = agent.RunSelfForever()
-end = time.clock()
-print "\nTime in seconds:", end - start
+end = time.time()
+print("\nTime in seconds:", end - start)
 
-#the output of "print s1" should contain "^rhstest success"
-if kernel.ExecuteCommandLine("print s1", "Soar1").find("^rhstest success") == -1:
-	print >> sys.stderr, "\nRHS test FAILED"
-	sys.exit(1)
+def check_rhs_handler_called(kernel):
+    s1 = kernel.ExecuteCommandLine("print s1", "Soar1")
+    if s1.find("^rhstest success") == -1:
+        print(f"\n❌RHS test FAILED; s1 is {s1}", file=sys.stderr)
+        sys.exit(1)
+    else:
+        print("\n✅RHS test PASSED")
 
-result = kernel.ExecuteCommandLine("init-soar", "Soar1")
+check_rhs_handler_called(kernel)
 
-kernel.DestroyAgent(agent)
+def test_agent_reinit(agent):
+    assert not agent_reinit_called.called, "❌ Agent reinit handler called before reinit"
+    kernel.ExecuteCommandLine("init-soar", "Soar1")
+    assert agent_reinit_called.called, "❌ Agent reinit handler not called"
+    print("✅ Agent reinit")
 
-#remove all the remaining kernel callback functions (not required, just to test)
-print "removing callbacks"
+# test unregistering callbacks (not required, just to test)
+agent.UnregisterForProductionEvent(prod_removed_callback_id)
+agent.UnregisterForProductionEvent(prod_fired_callback_id)
+agent.UnregisterForRunEvent(runCallbackId)
+
+test_agent_reinit(agent)
+
+def test_agent_destroy(agent):
+    assert not agent_destroy_called.called, "❌ Agent destroy handler called before destroy"
+    kernel.DestroyAgent(agent)
+    assert agent_destroy_called.called, "❌ Agent destroy handler not called"
+    print("✅ Agent destroy")
+
+test_agent_destroy(agent)
+
+# test unregistering callbacks (except shutdown) (not required, just to test)
+print("Removing callbacks...")
 kernel.UnregisterForAgentEvent(agentCallbackId0)
-kernel.UnregisterForAgentEvent(agentCallbackId1)
+kernel.UnregisterForAgentEvent(agentReinitCallback)
 kernel.UnregisterForAgentEvent(agentCallbackId2)
-kernel.UnregisterForSystemEvent(systemCallbackId)
 kernel.RemoveRhsFunction(rhsCallbackId)
+kernel.UnregisterForUpdateEvent(updateCallbackId)
 
-#shutdown the kernel; this makes sure agents are deleted and events fire correctly
-kernel.Shutdown()
+def test_shutdown(kernel):
+    assert not shutdown_handler_called.called, "❌ Kernel shutdown handler called before shutdown"
+    #shutdown the kernel; this makes sure agents are deleted and events fire correctly
+    kernel.Shutdown()
+    assert shutdown_handler_called.called, "❌ Kernel shutdown handler not called"
+    print("✅ Kernel shutdown")
 
+test_shutdown(kernel)
 #delete kernel object
 del kernel

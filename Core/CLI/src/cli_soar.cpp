@@ -129,6 +129,20 @@ bool CommandLineInterface::DoSoar(const char pOp, const std::string* pArg1, cons
         {
             thisAgent->Decider->params->print_settings(thisAgent);
         }
+        else if (my_param == thisAgent->Decider->params->stop_phase)
+        {
+            if (m_RawOutput)
+            {
+                m_Result << "Stop before " << my_param->get_string();
+            }
+            else
+            {
+                smlPhase stopPhase = m_pKernelSML->GetStopBefore();
+                std::ostringstream buffer;
+                buffer << stopPhase;
+                AppendArgTagFast(sml_Names::kParamPhase, sml_Names::kTypeInt, buffer.str());
+            }
+        }
         else {
             /* Command was a valid ebc_param name, so print it's value */
             tempStringStream << my_param->get_name() << " is" ;
@@ -168,7 +182,6 @@ bool CommandLineInterface::DoSoar(const char pOp, const std::string* pArg1, cons
         {
         }
 
-        const char* lCmdName = pArg1->c_str();
         if (my_param == thisAgent->Decider->params->stop_phase)
         {
             thisAgent->Decider->settings[DECIDER_STOP_PHASE] = thisAgent->Decider->params->stop_phase->get_value();
@@ -179,10 +192,10 @@ bool CommandLineInterface::DoSoar(const char pOp, const std::string* pArg1, cons
                 PrintCLIMessage("Soar will now stop before the apply phase.");
 
             }
-            else if (thisAgent->Decider->params->stop_phase->get_value() == DECISION_PHASE)
+            else if (thisAgent->Decider->params->stop_phase->get_value() == DECIDE_PHASE)
             {
-                m_pKernelSML->SetStopBefore(sml::sml_DECISION_PHASE) ;
-                PrintCLIMessage("Soar will now stop before the decision phase.");
+                m_pKernelSML->SetStopBefore(sml::sml_DECIDE_PHASE) ;
+                PrintCLIMessage("Soar will now stop before the decide phase.");
             }
             else if (thisAgent->Decider->params->stop_phase->get_value() == INPUT_PHASE)
             {
@@ -196,8 +209,8 @@ bool CommandLineInterface::DoSoar(const char pOp, const std::string* pArg1, cons
             }
             else if (thisAgent->Decider->params->stop_phase->get_value() == PROPOSE_PHASE)
             {
-                m_pKernelSML->SetStopBefore(sml::sml_PROPOSAL_PHASE) ;
-                PrintCLIMessage("Soar will now stop before the proposal phase.");
+                m_pKernelSML->SetStopBefore(sml::sml_PROPOSE_PHASE) ;
+                PrintCLIMessage("Soar will now stop before the propose phase.");
             }
         }
         else if (my_param == thisAgent->Decider->params->keep_all_top_oprefs)

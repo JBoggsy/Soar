@@ -1,11 +1,13 @@
 /* File : sml_ClientInterface.i */
+// Settings common to all target languages
 
 //
-// SWIG support for std::string
+// SWIG support for std::string (https://www.swig.org/Doc4.1/Library.html#Library_std_string)
 //
 %include std_string.i
 
 // handle windows calling convention, __declspec(dllimport), correctly
+// see https://www.swig.org/Doc4.1/Windows.html#Windows_interface_file
 %include <windows.i>
 
 //
@@ -17,12 +19,8 @@
 %rename(SetCharacterDataConst) soarxml::ElementXML::SetCharacterData(char const* characterData);
 %rename(SetBinaryCharacterDataConst) soarxml::ElementXML::SetBinaryCharacterData(char const* characterData, int length);
 
-//
 // These static functions create a new Kernel object that should be destroyed later.
-// For compatibility with PHP, these have been copied to the end of every
-// language except PHP.
-//
-// voigtjr 9/2012: Moved these back in to here since they had no effect in the other .i files. This presumably breaks PHP.
+
 %newobject sml::Kernel::CreateKernelInCurrentThread;
 %newobject sml::Kernel::CreateKernelInNewThread;
 %newobject sml::Kernel::CreateRemoteConnection;
@@ -93,6 +91,24 @@
 %ignore sml::Kernel::UnregisterForAgentEvent(int);
 %ignore sml::Kernel::RemoveRhsFunction(int);
 %ignore sml::Kernel::UnregisterForClientMessageEvent(int);
+
+// meant for C++ (non-SWIG) clients only
+%ignore sml::Kernel::AddRhsFunction(char const*, RhsEventHandlerCpp, bool addToBack = true);
+%ignore sml::Kernel::RegisterForClientMessageEvent(char const*, RhsEventHandlerCpp, void*, bool addToBack = true);
+
+// Internal classes not useful to the user
+%ignore sml::EventHandlerPlusData;
+%ignore sml::RhsEventHandlerPlusData;
+%ignore sml::AgentEventHandlerPlusData;
+%ignore sml::StringEventHandlerPlusData;
+%ignore sml::UpdateEventHandlerPlusData;
+%ignore sml::SystemEventHandlerPlusData;
+%ignore sml::XMLEventHandlerPlusData;
+%ignore sml::OutputNotificationHandlerPlusData;
+%ignore sml::RunEventHandlerPlusData;
+%ignore sml::ProductionEventHandlerPlusData;
+%ignore sml::PrintEventHandlerPlusData;
+%ignore sml::OutputEventHandlerPlusData;
 
 //
 // Tell SWIG to include these files in the generated wrapper code

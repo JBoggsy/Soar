@@ -16,6 +16,10 @@
 bool SMem_Manager::export_smem(uint64_t lti_id, std::string& result_text, std::string** err_msg)
 {
     ltm_set store_set;
+    if (!connected()) {
+        (*err_msg)->append("Cannot export semantic memory if it is not connected.");
+        return false;
+    }
 
     if (!lti_id)
     {
@@ -71,12 +75,6 @@ void SMem_Manager::create_store_set(ltm_set* store_set, uint64_t lti_id, uint64_
      * scijones Sept 9, 2016.
      */
     soar_module::sqlite_statement* expand_q = thisAgent->SMem->SQL->web_expand;
-    std::string attr_str;
-    int64_t attr_int;
-    double attr_double;
-    std::string val_str;
-    int64_t val_int;
-    double val_double;
 
     smem_vis_lti* new_lti;
     smem_vis_lti* parent_lti;
@@ -219,8 +217,6 @@ id_set SMem_Manager::print_LTM(uint64_t pLTI_ID, double lti_act, std::string* re
 
     return_val->append("(");
     get_lti_name(pLTI_ID, *return_val);
-
-    bool possible_id, possible_ic, possible_fc, possible_sc, possible_var, is_rereadable;
 
     // get direct children: attr_type, attr_hash, value_type, value_hash, value_letter, value_num, value_lti
     expand_q->bind_int(1, pLTI_ID);

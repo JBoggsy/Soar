@@ -1,18 +1,17 @@
 /********************************************************************************************
  *
  * HelpMenu.java
- * 
+ *
  * Description:	Help menu
- * 
+ *
  * Created on 	Apr 10, 2006
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.menu;
 
-import java.io.File;
-import java.net.URL;
+import java.util.Objects;
 
 import org.eclipse.swt.widgets.Menu;
 
@@ -28,33 +27,37 @@ public class HelpMenu
 
     private MainFrame m_Frame = null;
 
-    private AbstractAction m_About = new AbstractAction("About Soar's Debugger")
+    private final AbstractAction m_About = new AbstractAction("About Soar's Debugger")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             about();
         }
     };
 
-    private AbstractAction m_Homepage = new AbstractAction("Soar Home page")
+    private final AbstractAction m_Homepage = new AbstractAction("Soar Home page")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             open("http://soar.eecs.umich.edu/");
         }
     };
 
-    private AbstractAction m_Wiki = new AbstractAction(
+    private final AbstractAction m_Wiki = new AbstractAction(
             "Soar Wiki (many topics)")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             open("https://github.com/SoarGroup");
         }
     };
 
-    private AbstractAction m_CLI = new AbstractAction("Soar Command Line Help")
+    private final AbstractAction m_CLI = new AbstractAction("Soar Command Line Help")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             open("http://soar.eecs.umich.edu/articles/articles/general/73-command-line-help");
@@ -111,10 +114,7 @@ public class HelpMenu
 
         String kernelVersion = m_Document.getKernelVersion();
 
-        if (kernelVersion != null)
-            aboutText += kernelVersion;
-        else
-            aboutText += "no kernel is running.";
+        aboutText += Objects.requireNonNullElse(kernelVersion, "no kernel is running.");
 
         // This version is for the communication library
         aboutText += newLine + "\tSML version: \t\t"

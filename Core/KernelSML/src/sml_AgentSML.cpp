@@ -37,7 +37,8 @@
 //#define DEBUG_UPDATE
 #endif
 
-#include <assert.h>
+#include <cassert>
+#include <cinttypes>
 
 using namespace sml ;
 
@@ -315,7 +316,7 @@ uint64_t AgentSML::GetNumDecisionCyclesExecuted()
 //=============================
 uint64_t AgentSML::GetNumDecisionsExecuted()
 {
-    return m_agent->decision_phases_count;
+    return m_agent->decide_phases_count;
 }
 
 //=============================
@@ -371,9 +372,9 @@ smlPhase AgentSML::GetCurrentPhase()
         case INPUT_PHASE:
             return sml_INPUT_PHASE;
         case PROPOSE_PHASE:
-            return sml_PROPOSAL_PHASE;
-        case DECISION_PHASE:
-            return sml_DECISION_PHASE;
+            return sml_PROPOSE_PHASE;
+        case DECIDE_PHASE:
+            return sml_DECIDE_PHASE;
         case APPLY_PHASE:
             return sml_APPLY_PHASE;
         case OUTPUT_PHASE:
@@ -397,7 +398,7 @@ uint64_t AgentSML::GetRunCounter(smlRunStepSize runStepSize)
             return GetNumPhasesExecuted() ;
         case sml_ELABORATION:
             return GetNumElaborationsExecuted() ;
-        case sml_DECISION:
+        case sml_DECIDE:
             return GetNumDecisionCyclesExecuted() ;
         case sml_UNTIL_OUTPUT:
             return GetNumOutputsGenerated() ;
@@ -515,7 +516,7 @@ smlRunResult AgentSML::Step(smlRunStepSize stepSize)
             case  sml_PHASE:
                 run_for_n_phases(m_agent, count);
                 break;
-            case  sml_DECISION:
+            case  sml_DECIDE:
                 run_for_n_decision_cycles(m_agent, count);
                 break;
             case  sml_UNTIL_OUTPUT:
@@ -1013,7 +1014,7 @@ bool AgentSML::AddIntInputWME(char const* pID, char const* pAttribute, int64_t v
 
 bool AgentSML::AddDoubleInputWME(char const* pID, char const* pAttribute, double value, int64_t clientTimeTag)
 {
-    // Creating a wme with an int constant value
+    // Creating a wme with a double constant value
     Symbol* pValueSymbol = get_io_float_constant(m_agent, value) ;
 
     if (CaptureQuery())
@@ -1025,8 +1026,8 @@ bool AgentSML::AddDoubleInputWME(char const* pID, char const* pAttribute, double
         ca.CreateAdd();
         ca.Add()->id = pID;
         ca.Add()->attr = pAttribute;
-        std::stringstream valueString;
-        valueString << value;
+        std::ostringstream valueString;
+        valueString << std::setprecision(std::numeric_limits<double>::max_digits10) << std::fixed << value;
         ca.Add()->value = valueString.str();
         ca.Add()->type = sml_Names::kTypeDouble;
         CaptureInputWME(ca);
@@ -1184,7 +1185,7 @@ bool AgentSML::RemoveInputWME(int64_t clientTimeTag)
     //if (kDebugInput)
     //{
     //    std::string printInput1 = this->ExecuteCommandLine("print --internal --depth 2 I2") ;
-    //  PrintDebugFormat("%s\nLooking for %ld", printInput1.c_str(), timetag) ;
+    //  PrintDebugFormat("%s\nLooking for %" SCNu64, printInput1.c_str(), timetag) ;
     //}
 
     // The wme is already gone so no work to do
@@ -1580,7 +1581,7 @@ void AgentSML::ReplayInputWMEs()
         {
             // add-wme
             char timetagString[25];
-            SNPRINTF(timetagString, 25, "%ld", static_cast<long int>(ca.clientTimeTag));
+            SNPRINTF(timetagString, 25, "%" SCNd64, ca.clientTimeTag);
 
             if (!AddInputWME(ca.Add()->id.c_str(), ca.Add()->attr.c_str(), ca.Add()->value.c_str(), ca.Add()->type, timetagString))
             {

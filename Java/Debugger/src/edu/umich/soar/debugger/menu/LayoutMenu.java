@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * LayoutMenu.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Apr 12, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.menu;
@@ -17,51 +17,56 @@ import edu.umich.soar.debugger.MainFrame;
 import edu.umich.soar.debugger.doc.Document;
 
 /************************************************************************
- * 
+ *
  * The layout menu
- * 
+ *
  ************************************************************************/
 public class LayoutMenu
 {
     private MainFrame m_Frame = null;
 
-    private AbstractAction m_UseDefaultLayout = new AbstractAction(
+    private final AbstractAction m_UseDefaultLayout = new AbstractAction(
             "Use &default window layout")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             useDefaultPerformed(e);
         }
     };
 
-    private AbstractAction m_UseTreeLayout = new AbstractAction(
+    private final AbstractAction m_UseTreeLayout = new AbstractAction(
             "Use &tree view layout")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             useDefaultPerformed(e);
         }
     };
 
-    private AbstractAction m_UseTextLayout = new AbstractAction(
+    private final AbstractAction m_UseTextLayout = new AbstractAction(
             "Use te&xt view layout")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             useTextLayout(e);
         }
     };
 
-    private AbstractAction m_Load = new AbstractAction("&Load window layout...")
+    private final AbstractAction m_Load = new AbstractAction("&Load window layout...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             load(e);
         }
     };
 
-    private AbstractAction m_Save = new AbstractAction("&Save window layout...")
+    private final AbstractAction m_Save = new AbstractAction("&Save window layout...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             save(e);

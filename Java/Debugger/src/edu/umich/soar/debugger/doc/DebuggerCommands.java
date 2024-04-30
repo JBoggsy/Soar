@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * DebuggerCommands.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Apr 6, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.doc;
@@ -15,18 +15,18 @@ import edu.umich.soar.debugger.MainFrame;
 import edu.umich.soar.debugger.modules.AbstractView;
 
 /************************************************************************
- * 
+ *
  * A set of commands that extend the Soar command set.
- * 
+ *
  * I'm not sure if these should include the script commands or not so for now
  * I'm handling these separately.
- * 
+ *
  ************************************************************************/
 public class DebuggerCommands
 {
-    protected MainFrame m_Frame;
+    protected final MainFrame m_Frame;
 
-    protected Document m_Document;
+    protected final Document m_Document;
 
     public final static String kClear = "clear";
 
@@ -36,7 +36,7 @@ public class DebuggerCommands
 
     public final static String kEditProduction = "edit-production";
 
-    protected String[] kCommands = new String[] { kClear, kQuit, kExit,
+    protected final String[] kCommands = new String[] { kClear, kQuit, kExit,
             kEditProduction };
 
     public DebuggerCommands(MainFrame frame, Document doc)
@@ -55,9 +55,8 @@ public class DebuggerCommands
 
     public boolean isCommand(String commandLine)
     {
-        for (int i = 0; i < kCommands.length; i++)
-        {
-            if (commandLine.toLowerCase().startsWith(kCommands[i]))
+        for (String kCommand : kCommands) {
+            if (commandLine.toLowerCase().startsWith(kCommand))
                 return true;
         }
 

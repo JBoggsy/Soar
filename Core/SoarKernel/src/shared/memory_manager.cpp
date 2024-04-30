@@ -39,6 +39,8 @@
    number, must be prime */
 #define DEFAULT_BLOCK_SIZE 0x7FF0   /* about 32K bytes per block */
 
+#define POOL_NAME_ERR_MSG_LENGTH = 64 + 2 * MAX_POOL_NAME_LENGTH
+
 Memory_Manager::Memory_Manager()
 {
     memory_for_usage_overhead = memory_for_usage + STATS_OVERHEAD_MEM_USAGE;
@@ -93,9 +95,10 @@ void Memory_Manager::init_memory_pool_by_ptr(memory_pool* pThisPool, size_t item
     memory_pools_in_use = pThisPool;
     if (strlen(name) > MAX_POOL_NAME_LENGTH)
     {
-        char msg[2 * MAX_POOL_NAME_LENGTH];
-        SNPRINTF(msg, 2 * MAX_POOL_NAME_LENGTH, "mem.c: Internal error: memory pool name too long: %s\n", name);
-        msg[2 * MAX_POOL_NAME_LENGTH - 1] = 0; /* ensure null termination */
+        const unsigned int msg_size = 64 + 2 * MAX_POOL_NAME_LENGTH;
+        char msg[msg_size];
+        SNPRINTF(msg, msg_size, "memory_manager.cpp: Internal error: memory pool name too long: %s\n", name);
+        msg[msg_size - 1] = 0; /* ensure null termination */
         abort_with_fatal_error_noagent(msg);
     }
     strncpy(pThisPool->name, name, MAX_POOL_NAME_LENGTH);
@@ -268,14 +271,14 @@ void* Memory_Manager::allocate_memory(size_t size, int usage_code)
     if (p == NULL)
     {
         char msg[BUFFER_MSG_SIZE];
-        SNPRINTF(msg, BUFFER_MSG_SIZE, "\nmem.c: Error:  Tried but failed to allocate %llu bytes of memory.\n", static_cast<long long unsigned>(size));
+        SNPRINTF(msg, BUFFER_MSG_SIZE, "\nmemory_manager.cpp: Error:  Tried but failed to allocate %zu bytes of memory.\n", size);
         msg[BUFFER_MSG_SIZE - 1] = 0; /* ensure null termination */
         abort_with_fatal_error_noagent(msg);
     }
     if (reinterpret_cast<uintptr_t>(p) & 3)
     {
         char msg[BUFFER_MSG_SIZE];
-        strncpy(msg, "\nmem.c: Error:  Memory allocator returned an address that's not a multiple of 4.\n", BUFFER_MSG_SIZE);
+        strncpy(msg, "\nmemory_manager.cpp: Error:  Memory allocator returned an address that's not a multiple of 4.\n", BUFFER_MSG_SIZE);
         msg[BUFFER_MSG_SIZE - 1] = 0; /* ensure null termination */
         abort_with_fatal_error_noagent(msg);
     }
@@ -355,7 +358,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
                           + thisAgent->timers_monitors_cpu_time[PREFERENCE_PHASE].get_sec()
                           + thisAgent->timers_monitors_cpu_time[WM_PHASE].get_sec()
                           + thisAgent->timers_monitors_cpu_time[OUTPUT_PHASE].get_sec()
-                          + thisAgent->timers_monitors_cpu_time[DECISION_PHASE].get_sec();
+                          + thisAgent->timers_monitors_cpu_time[DECIDE_PHASE].get_sec();
 
     double derived_kernel_time = get_derived_kernel_time_usec(thisAgent) / 1000000.0;
     double derived_total_cpu_time = derived_kernel_time + monitors_sum + input_function_time + output_function_time;
@@ -378,9 +381,9 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
                                      + thisAgent->timers_monitors_cpu_time[OUTPUT_PHASE].get_sec()
                                      + thisAgent->timers_output_function_cpu_time.get_sec();
 
-    /* Total time spent in the decision phase */
-    double decision_phase_total_time = thisAgent->timers_decision_cycle_phase[DECISION_PHASE].get_sec()
-                                       + thisAgent->timers_monitors_cpu_time[DECISION_PHASE].get_sec();
+    /* Total time spent in the decide phase */
+    double decide_phase_total_time = thisAgent->timers_decision_cycle_phase[DECIDE_PHASE].get_sec()
+                                       + thisAgent->timers_monitors_cpu_time[DECIDE_PHASE].get_sec();
 #endif // NO_TIMING_STUFF
 
     /* The sum of these phase timers is exactly equal to the
@@ -414,7 +417,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
     std::cout << "Kernel:   "
              << std::setw(8)  << thisAgent->timers_decision_cycle_phase[INPUT_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_decision_cycle_phase[PROPOSE_PHASE].get_sec() << " "
-             << std::setw(8)  << thisAgent->timers_decision_cycle_phase[DECISION_PHASE].get_sec() << " "
+             << std::setw(8)  << thisAgent->timers_decision_cycle_phase[DECIDE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_decision_cycle_phase[APPLY_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_decision_cycle_phase[OUTPUT_PHASE].get_sec() << "  | "
              << std::setw(10) << derived_kernel_time << "\n";
@@ -435,7 +438,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
     std::cout << "Callbcks: "
              << std::setw(8) << thisAgent->timers_monitors_cpu_time[INPUT_PHASE].get_sec() << " "
              << std::setw(8) << thisAgent->timers_monitors_cpu_time[PROPOSE_PHASE].get_sec() << " "
-             << std::setw(8) << thisAgent->timers_monitors_cpu_time[DECISION_PHASE].get_sec() << " "
+             << std::setw(8) << thisAgent->timers_monitors_cpu_time[DECIDE_PHASE].get_sec() << " "
              << std::setw(8) << thisAgent->timers_monitors_cpu_time[APPLY_PHASE].get_sec() << " "
              << std::setw(8) << thisAgent->timers_monitors_cpu_time[OUTPUT_PHASE].get_sec() << "  | "
              << std::setw(10) << monitors_sum << "\n";
@@ -445,7 +448,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
     std::cout << "Totals:   "
              << std::setw(8) << input_phase_total_time << " "
              << std::setw(8) << propose_phase_total_time << " "
-             << std::setw(8) << decision_phase_total_time << " "
+             << std::setw(8) << decide_phase_total_time << " "
              << std::setw(8) << apply_phase_total_time << " "
              << std::setw(8) << output_phase_total_time << "  | "
              << std::setw(10) << derived_total_cpu_time << "\n\n";
@@ -457,28 +460,28 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
                        + thisAgent->timers_match_cpu_time[PREFERENCE_PHASE].get_sec()
                        + thisAgent->timers_match_cpu_time[WM_PHASE].get_sec()
                        + thisAgent->timers_match_cpu_time[OUTPUT_PHASE].get_sec()
-                       + thisAgent->timers_match_cpu_time[DECISION_PHASE].get_sec();
+                       + thisAgent->timers_match_cpu_time[DECIDE_PHASE].get_sec();
     double own_sum = thisAgent->timers_ownership_cpu_time[INPUT_PHASE].get_sec()
                      + thisAgent->timers_ownership_cpu_time[PROPOSE_PHASE].get_sec()
                      + thisAgent->timers_ownership_cpu_time[APPLY_PHASE].get_sec()
                      + thisAgent->timers_ownership_cpu_time[PREFERENCE_PHASE].get_sec()
                      + thisAgent->timers_ownership_cpu_time[WM_PHASE].get_sec()
                      + thisAgent->timers_ownership_cpu_time[OUTPUT_PHASE].get_sec()
-                     + thisAgent->timers_ownership_cpu_time[DECISION_PHASE].get_sec();
+                     + thisAgent->timers_ownership_cpu_time[DECIDE_PHASE].get_sec();
     double chunk_sum = thisAgent->timers_chunking_cpu_time[INPUT_PHASE].get_sec()
                        + thisAgent->timers_chunking_cpu_time[PROPOSE_PHASE].get_sec()
                        + thisAgent->timers_chunking_cpu_time[APPLY_PHASE].get_sec()
                        + thisAgent->timers_chunking_cpu_time[PREFERENCE_PHASE].get_sec()
                        + thisAgent->timers_chunking_cpu_time[WM_PHASE].get_sec()
                        + thisAgent->timers_chunking_cpu_time[OUTPUT_PHASE].get_sec()
-                       + thisAgent->timers_chunking_cpu_time[DECISION_PHASE].get_sec();
+                       + thisAgent->timers_chunking_cpu_time[DECIDE_PHASE].get_sec();
     double gds_sum = thisAgent->timers_gds_cpu_time[INPUT_PHASE].get_sec()
                      + thisAgent->timers_gds_cpu_time[PROPOSE_PHASE].get_sec()
                      + thisAgent->timers_gds_cpu_time[APPLY_PHASE].get_sec()
                      + thisAgent->timers_gds_cpu_time[PREFERENCE_PHASE].get_sec()
                      + thisAgent->timers_gds_cpu_time[WM_PHASE].get_sec()
                      + thisAgent->timers_gds_cpu_time[OUTPUT_PHASE].get_sec()
-                     + thisAgent->timers_gds_cpu_time[DECISION_PHASE].get_sec();
+                     + thisAgent->timers_gds_cpu_time[DECIDE_PHASE].get_sec();
 
     std::cout << "Detailed Timing Stats:   " << "\n\n";
     std::cout << "=============================================================================|===========\n";
@@ -487,7 +490,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
     std::cout << "Match:      "
              << std::setw(8)  << thisAgent->timers_match_cpu_time[INPUT_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_match_cpu_time[PROPOSE_PHASE].get_sec() << " "
-             << std::setw(8)  << thisAgent->timers_match_cpu_time[DECISION_PHASE].get_sec() << " "
+             << std::setw(8)  << thisAgent->timers_match_cpu_time[DECIDE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_match_cpu_time[APPLY_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_match_cpu_time[OUTPUT_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_match_cpu_time[PREFERENCE_PHASE].get_sec() << " "
@@ -496,7 +499,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
     std::cout << "Ownership:  "
              << std::setw(8)  << thisAgent->timers_ownership_cpu_time[INPUT_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_ownership_cpu_time[PROPOSE_PHASE].get_sec() << " "
-             << std::setw(8)  << thisAgent->timers_ownership_cpu_time[DECISION_PHASE].get_sec() << " "
+             << std::setw(8)  << thisAgent->timers_ownership_cpu_time[DECIDE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_ownership_cpu_time[APPLY_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_ownership_cpu_time[PREFERENCE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_ownership_cpu_time[WM_PHASE].get_sec() << " "
@@ -505,7 +508,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
     std::cout << "Chunking:   "
              << std::setw(8)  << thisAgent->timers_chunking_cpu_time[INPUT_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_chunking_cpu_time[PROPOSE_PHASE].get_sec() << " "
-             << std::setw(8)  << thisAgent->timers_chunking_cpu_time[DECISION_PHASE].get_sec() << " "
+             << std::setw(8)  << thisAgent->timers_chunking_cpu_time[DECIDE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_chunking_cpu_time[APPLY_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_chunking_cpu_time[PREFERENCE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_chunking_cpu_time[WM_PHASE].get_sec() << " "
@@ -514,7 +517,7 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
     std::cout << "GDS:        "
              << std::setw(8)  << thisAgent->timers_gds_cpu_time[INPUT_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_gds_cpu_time[PROPOSE_PHASE].get_sec() << " "
-             << std::setw(8)  << thisAgent->timers_gds_cpu_time[DECISION_PHASE].get_sec() << " "
+             << std::setw(8)  << thisAgent->timers_gds_cpu_time[DECIDE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_gds_cpu_time[APPLY_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_gds_cpu_time[PREFERENCE_PHASE].get_sec() << " "
              << std::setw(8)  << thisAgent->timers_gds_cpu_time[WM_PHASE].get_sec() << " "
@@ -532,18 +535,18 @@ void Memory_Manager::debug_print_memory_stats(agent* thisAgent)
 
     ///* v8.6.2: print out decisions executed, not # full cycles */
 
-    std::cout << thisAgent->decision_phases_count << " decisions ("
-             << (thisAgent->decision_phases_count ? total_kernel_msec / thisAgent->decision_phases_count : 0.0)
+    std::cout << thisAgent->decide_phases_count << " decisions ("
+             << (thisAgent->decide_phases_count ? total_kernel_msec / thisAgent->decide_phases_count : 0.0)
              << " msec/decision)\n";
     std::cout << thisAgent->e_cycle_count << " elaboration cycles ("
-             << (thisAgent->decision_phases_count ? static_cast<double>(thisAgent->e_cycle_count) / thisAgent->decision_phases_count : 0)
+             << (thisAgent->decide_phases_count ? static_cast<double>(thisAgent->e_cycle_count) / thisAgent->decide_phases_count : 0)
              << " ec's per dc, "
              << (thisAgent->e_cycle_count ? total_kernel_msec / thisAgent->e_cycle_count : 0)
              << " msec/ec)\n";
     std::cout << thisAgent->inner_e_cycle_count << " inner elaboration cycles\n";
 
     std::cout << thisAgent->pe_cycle_count << " p-elaboration cycles ("
-             << (thisAgent->decision_phases_count ? static_cast<double>(thisAgent->pe_cycle_count) / thisAgent->decision_phases_count : 0)
+             << (thisAgent->decide_phases_count ? static_cast<double>(thisAgent->pe_cycle_count) / thisAgent->decide_phases_count : 0)
              << " pe's per dc, "
              << (thisAgent->pe_cycle_count ? total_kernel_msec / thisAgent->pe_cycle_count : 0)
              << " msec/pe)\n";

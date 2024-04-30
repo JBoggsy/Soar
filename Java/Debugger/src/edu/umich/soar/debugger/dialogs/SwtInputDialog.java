@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * SwtInputDialog.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Feb 16, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.dialogs;
@@ -24,23 +24,21 @@ import org.eclipse.swt.widgets.Text;
 import edu.umich.soar.debugger.helpers.FormDataHelper;
 
 /*****************************************************************************************
- * 
+ *
  * Create a simple dialog for getting input (to match Swing's
  * JOptionPane.showInputDialog)
- * 
+ *
  *****************************************************************************************/
 public class SwtInputDialog extends BaseDialog
 {
     private String m_Result;
 
-    private Text m_EntryField;
-
-    private boolean m_MultiLine;
+    private final Text m_EntryField;
 
     /********************************************************************************************
-     * 
+     *
      * Create a simple dialog asking the user for input (a single string).
-     * 
+     *
      * @param parent
      *            The parent for this dialog (we'll center the dialog within
      *            this window)
@@ -70,9 +68,9 @@ public class SwtInputDialog extends BaseDialog
     }
 
     /********************************************************************************************
-     * 
+     *
      * Create a simple dialog asking the user for input (a single string).
-     * 
+     *
      * @param parent
      *            The parent for this dialog (we'll center the dialog within
      *            this window)
@@ -102,10 +100,10 @@ public class SwtInputDialog extends BaseDialog
     }
 
     /********************************************************************************************
-     * 
+     *
      * Create the dialog -- the constructor is private because we use a static
      * method to build this.
-     * 
+     *
      ********************************************************************************************/
     private SwtInputDialog(Composite parent, String title, String prompt,
             String initialValue, boolean multiLine)
@@ -114,7 +112,6 @@ public class SwtInputDialog extends BaseDialog
         super(parent, title, true);
 
         int margin = 10;
-        m_MultiLine = multiLine;
 
         getOpenArea().setLayout(new FormLayout());
 
@@ -124,7 +121,7 @@ public class SwtInputDialog extends BaseDialog
         promptLabel.setLayoutData(FormDataHelper.anchorTopLeft(margin));
 
         // The field where the user types their response
-        Text entryField = new Text(getOpenArea(), m_MultiLine ? SWT.MULTI
+        Text entryField = new Text(getOpenArea(), multiLine ? SWT.MULTI
                 : SWT.NULL);
         entryField.setText(initialValue);
         entryField.setFocus();
@@ -134,6 +131,7 @@ public class SwtInputDialog extends BaseDialog
         if (!multiLine)
             entryField.addKeyListener(new KeyAdapter()
             {
+                @Override
                 public void keyPressed(KeyEvent e)
                 {
                     if (e.character == '\r')
@@ -154,10 +152,11 @@ public class SwtInputDialog extends BaseDialog
     }
 
     /********************************************************************************************
-     * 
+     *
      * Close the dialog -- either successfully or cancelled.
-     * 
+     *
      ********************************************************************************************/
+    @Override
     protected void endDialog(boolean ok)
     {
         if (!ok)

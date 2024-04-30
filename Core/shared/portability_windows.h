@@ -5,6 +5,9 @@
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400		// This is required since our target is NT4+
 
+// disable min/max macros -- fixes an issue where some RHS functions use a struct that has fields by these names, so the initializer gets interpreted as a macro call
+#define NOMINMAX
+
 #ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h> // Check for memory leaks
@@ -147,6 +150,19 @@ inline double get_raw_time_per_usec() {
 		return 10.0;
 	}
 }
+
+inline bool stdout_supports_ansi_colors()
+{
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode = 0;
+    if (!GetConsoleMode(h, &mode))
+    {
+        fprintf(stderr, "Error determining console mode: %d. Assuming ansi colors not supported.\n", GetLastError());
+        return false;
+    }
+    return mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+}
+
 
 #endif // PORTABILITY_WINDOWS_H
 

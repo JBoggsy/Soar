@@ -10,7 +10,8 @@
 
 #include "portability.h"
 
-#include <assert.h>
+#include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -49,31 +50,13 @@ class StatsTracker
         double GetHigh(std::vector<double> numbers)
         {
             assert(numbers.size() > 0 && "GetHigh: Size of set must be non-zero");
-
-            double high = numbers[0];
-            for (unsigned int i = 0; i < numbers.size(); i++)
-            {
-                if (numbers[i] > high)
-                {
-                    high = numbers[i];
-                }
-            }
-            return high;
+            return *std::max_element(numbers.begin(), numbers.end());
         }
 
         double GetLow(std::vector<double> numbers)
         {
             assert(numbers.size() > 0 && "GetLow: Size of set must be non-zero");
-
-            double low = numbers[0];
-            for (unsigned int i = 0; i < numbers.size(); i++)
-            {
-                if (numbers[i] < low)
-                {
-                    low = numbers[i];
-                }
-            }
-            return low;
+            return *std::min_element(numbers.begin(), numbers.end());
         }
 
         void PrintResults(const char* testName)
@@ -108,7 +91,7 @@ class StatsTracker
             summary_string << std::resetiosflags(std::ios::left);
             PrintResultsHelper(summary_string, testName, 40, GetAverage(kerneltimes), GetLow(kerneltimes), GetHigh(kerneltimes));
 
-            std::ofstream resultFile("/Users/mazzin/Soar/SoarSandbox/PerformanceTestResults.txt", std::ofstream::out | std::ofstream::app);
+            std::ofstream resultFile("PerformanceTestResults.txt", std::ofstream::out | std::ofstream::app);
             resultFile << summary_string.str();
             resultFile.close();
 
@@ -118,12 +101,12 @@ class StatsTracker
         void PrintResultsHelper(std::ostream &outStream, std::string label, int label_width, double avg, double low, double high, bool useColors = false)
         {
             outStream.precision(4);
-            if (useColors) outStream << "\e[1;34m";
+            if (useColors) outStream << "\033[1;34m";
             outStream << std::resetiosflags(std::ios::right) << std::setiosflags(std::ios::left);
             outStream << std::setw(label_width) << label;
-            if (useColors) outStream << "\e[0;37m";
+            if (useColors) outStream << "\033[0;37m";
             outStream << ":";
-            if (useColors) outStream << "\e[0;93m";
+            if (useColors) outStream << "\033[0;93m";
             outStream << std::resetiosflags(std::ios::left);
             outStream << std::setiosflags(std::ios::right);
             outStream << std::setw(10) << std::setiosflags(std::ios::fixed) << std::setprecision(4) << avg;
@@ -132,7 +115,7 @@ class StatsTracker
             outStream << std::setw(10) << std::setiosflags(std::ios::fixed) << std::setprecision(4) << high;
 #endif
             outStream << std::setw(9) << std::setiosflags(std::ios::fixed) << std::setprecision(1) << (high ? ((high - low)/high)*100 : 0) << "%";
-            if (useColors) outStream << "\e[0;37m";
+            if (useColors) outStream << "\033[0;37m";
             outStream << std::endl;
         }
 };

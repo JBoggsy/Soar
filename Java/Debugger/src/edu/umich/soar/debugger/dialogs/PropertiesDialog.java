@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * PropertiesDialog.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Mar 23, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.dialogs;
@@ -20,9 +20,7 @@ import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -34,15 +32,15 @@ import edu.umich.soar.debugger.helpers.FormDataHelper;
 import edu.umich.soar.debugger.modules.AbstractView;
 
 /************************************************************************
- * 
+ *
  * The base dialog used to show properties for a view
- * 
+ *
  ************************************************************************/
 public class PropertiesDialog extends BaseDialog
 {
     public abstract static class Property
     {
-        protected String m_PropertyName;
+        protected final String m_PropertyName;
 
         public Property(String propertyName)
         {
@@ -69,9 +67,9 @@ public class PropertiesDialog extends BaseDialog
     {
         protected int m_Value;
 
-        protected int m_MinValue;
+        protected final int m_MinValue;
 
-        protected int m_MaxValue;
+        protected final int m_MaxValue;
 
         protected Text m_Text;
 
@@ -95,6 +93,7 @@ public class PropertiesDialog extends BaseDialog
             return m_Value;
         }
 
+        @Override
         public TableItem addTableItem(final Table table)
         {
             TableItem item = new TableItem(table, SWT.NULL);
@@ -110,6 +109,7 @@ public class PropertiesDialog extends BaseDialog
             return item;
         }
 
+        @Override
         public boolean update()
         {
             try
@@ -160,6 +160,7 @@ public class PropertiesDialog extends BaseDialog
             return m_Value;
         }
 
+        @Override
         public TableItem addTableItem(final Table table)
         {
             TableItem item = new TableItem(table, SWT.NULL);
@@ -177,10 +178,10 @@ public class PropertiesDialog extends BaseDialog
 
         // Copy the value from the control to the property
         // Return false if its not valid for some reason.
+        @Override
         public boolean update()
         {
-            String value = m_Text.getText();
-            m_Value = value;
+            m_Value = m_Text.getText();
 
             return true;
         }
@@ -212,8 +213,7 @@ public class PropertiesDialog extends BaseDialog
 
         public String[] getLines()
         {
-            String[] lines = m_Value.split(AbstractView.kLineSeparator);
-            return lines;
+            return m_Value.split(AbstractView.kLineSeparator);
         }
 
         private void updateButtonLabel()
@@ -224,6 +224,7 @@ public class PropertiesDialog extends BaseDialog
             m_Button.setText(first);
         }
 
+        @Override
         public TableItem addTableItem(final Table table)
         {
             TableItem item = new TableItem(table, SWT.NULL);
@@ -237,23 +238,19 @@ public class PropertiesDialog extends BaseDialog
 
             // For some reason using the selectionAdapter doesn't work here, but
             // a generic listener does.
-            m_Button.addListener(SWT.Selection, new Listener()
-            {
-                public void handleEvent(Event e)
-                {
-                    String newValue = SwtInputDialog.showMultiLineDialog(table,
-                            "Enter button actions", "Actions", m_Value);
+            m_Button.addListener(SWT.Selection, e -> {
+                String newValue = SwtInputDialog.showMultiLineDialog(table,
+                        "Enter button actions", "Actions", m_Value);
 
-                    if (newValue != null)
-                    {
-                        // We store our commands separated with \n since that's
-                        // what Soar uses (not \r\n which is what Windows uses,
-                        // sometimes)
-                        m_Value = newValue.replaceAll(
-                                AbstractView.kSystemLineSeparator,
-                                AbstractView.kLineSeparator);
-                        updateButtonLabel();
-                    }
+                if (newValue != null)
+                {
+                    // We store our commands separated with \n since that's
+                    // what Soar uses (not \r\n which is what Windows uses,
+                    // sometimes)
+                    m_Value = newValue.replaceAll(
+                            AbstractView.kSystemLineSeparator,
+                            AbstractView.kLineSeparator);
+                    updateButtonLabel();
                 }
             });
 
@@ -266,6 +263,7 @@ public class PropertiesDialog extends BaseDialog
 
         // Copy the value from the control to the property
         // Return false if its not valid for some reason.
+        @Override
         public boolean update()
         {
             // String value = m_Text.getText() ;
@@ -292,6 +290,7 @@ public class PropertiesDialog extends BaseDialog
             return m_Value;
         }
 
+        @Override
         public TableItem addTableItem(Table table)
         {
             TableItem item = new TableItem(table, SWT.NULL);
@@ -315,6 +314,7 @@ public class PropertiesDialog extends BaseDialog
 
         // Copy the value from the control to the property
         // Return false if its not valid for some reason.
+        @Override
         public boolean update()
         {
             int selection = m_Combo.getSelectionIndex();
@@ -367,6 +367,7 @@ public class PropertiesDialog extends BaseDialog
             return (m_Index >= 0) ? m_SetValues[m_Index] : null;
         }
 
+        @Override
         public TableItem addTableItem(Table table)
         {
             TableItem item = new TableItem(table, SWT.NULL);
@@ -387,6 +388,7 @@ public class PropertiesDialog extends BaseDialog
 
         // Copy the value from the control to the property
         // Return false if its not valid for some reason.
+        @Override
         public boolean update()
         {
             m_Index = m_Combo.getSelectionIndex();
@@ -394,9 +396,9 @@ public class PropertiesDialog extends BaseDialog
         }
     }
 
-    protected Property[] m_BaseProperties;
+    protected final Property[] m_BaseProperties;
 
-    protected Composite m_Container;
+    protected final Composite m_Container;
 
     public PropertiesDialog(MainFrame frame, String title, boolean modal,
             Property[] baseProperties)
@@ -416,15 +418,12 @@ public class PropertiesDialog extends BaseDialog
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
         String[] titles = { "Property Name", "Property Value" };
-        for (int i = 0; i < titles.length; i++)
-        {
+        for (String s : titles) {
             TableColumn column = new TableColumn(table, SWT.NULL);
-            column.setText(titles[i]);
+            column.setText(s);
         }
 
-        for (int i = 0; i < baseProperties.length; i++)
-        {
-            Property property = baseProperties[i];
+        for (Property property : baseProperties) {
             property.addTableItem(table);
         }
 
@@ -435,9 +434,9 @@ public class PropertiesDialog extends BaseDialog
     }
 
     /********************************************************************************************
-     * 
+     *
      * Create a simple dialog asking the user for input (a single string).
-     * 
+     *
      * @param parent
      *            The parent for this dialog (we'll center the dialog within
      *            this window)
@@ -467,10 +466,11 @@ public class PropertiesDialog extends BaseDialog
     }
 
     /********************************************************************************************
-     * 
+     *
      * Close the dialog -- either successfully or cancelled.
-     * 
+     *
      ********************************************************************************************/
+    @Override
     protected void endDialog(boolean ok)
     {
         if (ok)

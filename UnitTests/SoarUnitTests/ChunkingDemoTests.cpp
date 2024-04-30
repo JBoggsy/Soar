@@ -18,7 +18,7 @@
 void ChunkingDemoTests::Demo_Arithmetic()                                 { check_chunk("Demo_Arithmetic", 2810, 29, false); }
 void ChunkingDemoTests::Demo_Blocks_World_Hierarchical_Look_Ahead()       { check_chunk("Demo_Blocks_World_Hierarchical_Look_Ahead", 47, 1, false); }
 void ChunkingDemoTests::Demo_Blocks_World_Hierarchical()                  { check_chunk("Demo_Blocks_World_Hierarchical", 24, 20, false); }
-void ChunkingDemoTests::Demo_Blocks_World_Look_Ahead_State_Evaluation()   { check_chunk("Demo_Blocks_World_Look_Ahead_State_Evaluation", 61, 40, false); }
+void ChunkingDemoTests::Demo_Blocks_World_Look_Ahead_State_Evaluation()   { check_chunk("Demo_Blocks_World_Look_Ahead_State_Evaluation", 61, 24, false); }
 void ChunkingDemoTests::Demo_Blocks_World_Look_Ahead()                    { check_chunk("Demo_Blocks_World_Look_Ahead", 64, 8, false); }
 void ChunkingDemoTests::Demo_Blocks_World_Operator_Subgoaling()           { check_chunk("Demo_Blocks_World_Operator_Subgoaling", 6, 1, false); }
 void ChunkingDemoTests::Demo_Eight_Puzzle()                               { check_chunk("Demo_Eight_Puzzle", 20, 7, false); }
@@ -108,7 +108,7 @@ void ChunkingDemoTests::check_chunk(const char* pTestName, int64_t decisions, in
     //        SoarHelper::agent_command(agent,"trace -CbL 2");
     //    }
     SoarHelper::check_learning_override(agent);
-    agent->RunSelf(decisions, sml::sml_DECISION);
+    agent->RunSelf(decisions, sml::sml_DECIDE);
     assertTrue_msg(agent->GetLastErrorDescription(), agent->GetLastCommandLineResult());
 
     verify_chunk(pTestName, expected_chunks, directSourceChunks);

@@ -37,12 +37,11 @@
 
 
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 #include <fstream>
 
 using namespace cli;
 using namespace sml;
-using namespace std;
 
 bool CommandLineInterface::DoLoad(std::vector<std::string>& argv, const std::string& pCmd)
 {
@@ -213,6 +212,9 @@ bool CommandLineInterface::DoSave(std::vector<std::string>& argv, const std::str
             if (thisAgent->SMem->connected() && (thisAgent->SMem->statistics->nodes->get_value() > 0))
             {
                 result = thisAgent->SMem->export_smem(0, export_text, &(err));
+                if (!result) {
+                    SetError(*err);
+                }
                 AddSaveText("# Semantic Memory\n");
                 if (!DoCLog(LOG_ADD, 0, &export_text, true)) return false;
             } else {
@@ -870,7 +872,6 @@ bool CommandLineInterface::DoSource(std::string path, SourceBitset* pOptions)
         {
             this->UnregisterWithKernel(smlEVENT_BEFORE_PRODUCTION_REMOVED);
         }
-        agent* thisAgent = m_pAgentSML->GetSoarAgent();
         if (m_pSourceOptions && !m_pSourceOptions->test(SOURCE_DISABLE))
         {
             PrintSourceSummary(m_NumTotalProductionsSourced, m_TotalExcisedDuringSource, m_NumTotalProductionsIgnored);

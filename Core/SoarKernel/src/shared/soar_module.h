@@ -25,7 +25,7 @@
 #include <set>
 #include <list>
 #include <functional>
-#include <assert.h>
+#include <cassert>
 #include <cmath>
 #include "symbol_manager.h"
 
@@ -47,7 +47,7 @@ namespace soar_module
 
     // a functor for validating parameter values
     template <typename T>
-    class predicate: public std::unary_function<T, bool>
+    class predicate
     {
         public:
             virtual ~predicate() {}
@@ -166,7 +166,7 @@ namespace soar_module
 
 
     template <typename T>
-    class accumulator: public std::unary_function<T, void>
+    class accumulator
     {
         public:
             virtual ~accumulator() {}
@@ -212,7 +212,7 @@ namespace soar_module
                 T* matched_object = NULL , *current_object = NULL;
                 std::list<std::string> matched_name_list;
                 std::string current_name;
-                size_t match_pos, match_length, longest_match = 0;
+                size_t match_pos = 0;
 
                 typename std::map<std::string, T*>::iterator p;
 

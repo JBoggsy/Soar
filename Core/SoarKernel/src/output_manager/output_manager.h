@@ -93,7 +93,7 @@ class Output_Manager
         char* m_pre_string, *m_post_string;
         int  m_column_indent[MAX_COLUMNS];
 
-        /* -- The following tracks column of the next character to print if Soar is writing to cout --*/
+        /* -- The following tracks column of the next character to print if Soar is writing to std::cout --*/
         int     global_printer_output_column;
         void    update_printer_columns(agent* pSoarAgent, const char* msg);
 
@@ -237,7 +237,7 @@ class Output_Manager
         /* A single function to print all pre-formatted Soar error messages.  Added
          * to make other code cleaner and easier to parse */
         void display_soar_feedback(agent* thisAgent, SoarCannedMessageType pErrorType, bool shouldPrint = true);
-        void display_ebc_error(agent* thisAgent, EBCFailureType pErrorType, const char* pString1 = NULL, const char* pString2 = NULL);
+        void display_reorder_error(agent* thisAgent, ProdReorderFailureType pErrorType, const char* pString1 = NULL, const char* pString2 = NULL);
         void display_ambiguous_command_error(agent* thisAgent, std::list< std::string > matched_objects_str);
 
         /* -- Should be moved elsewhere -- */
@@ -269,7 +269,8 @@ inline const char* field_to_string(WME_Field f)
 }
 
 /* ------------------------------------
- *    Format strings for Soar printing:
+ *    Format strings for Soar printing; note that some of these do
+ *    not match their meaning in printf, etc.:
  *
  *       %c   character
  *       %d   int64_t

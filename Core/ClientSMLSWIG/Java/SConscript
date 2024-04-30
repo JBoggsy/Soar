@@ -16,8 +16,8 @@ def ConfigureJNI(env):
     base = os.environ.get('JAVA_HOME')
     if not base:
         if sys.platform == 'darwin':
-            # Apple's OS X has its own special java base directory, which has 
-            # /urs/libexec/java_home will give us 
+            # Apple's OS X has its own special java base directory, which has
+            # /urs/libexec/java_home will give us
             try:
                 p = subprocess.Popen(['/usr/libexec/java_home'], stdout = subprocess.PIPE)
                 base = p.stdout.readline().split()[-1].decode()
@@ -77,7 +77,9 @@ clone.Append(
     CPPPATH = config[0],
     LIBPATH = config[1],
 )
+java_sml_alias = clone['SML_JAVA_ALIAS']
 
+# TODO: why?
 if compiler == 'g++':
     if clone['VISHIDDEN']:
         clone['CPPFLAGS'].remove('-fvisibility=hidden')
@@ -91,7 +93,7 @@ srcdir = clone.Dir('src')
 smldir = srcdir.Dir('sml')
 classdir = clone.Dir('classes')
 jar = clone.File('sml.jar')
-java_target = 'sml_java'
+java_target = java_sml_alias
 fake_java_target = '#fake_java_target'
 
 if sys.platform == 'darwin':
@@ -142,4 +144,4 @@ clone.LateJavaBuilder(fake_java_target, None)
 jar_install = clone.Install(os.path.join(env['OUT_DIR'], 'java'), jar)
 clone.Clean(jar, [wrapper, srcdir, classdir])
 
-env.Alias('sml_java', [lib_install, jar_install])
+env.Alias(java_sml_alias, [lib_install, jar_install])

@@ -56,7 +56,7 @@
 #include "svs_interface.h"
 #endif
 
-#include <assert.h>
+#include <cassert>
 #include <algorithm>
 #include <cmath>
 #include <list>
@@ -71,7 +71,7 @@ void print_candidates(agent* thisAgent, preference* candidates)
     for (cand = candidates; cand != NIL; cand = cand->next_candidate)
     {
         max_count++;
-        thisAgent->outputManager->printa_sf(thisAgent, "\n Candidate %d", cand);
+        thisAgent->outputManager->printa_sf(thisAgent, "\n Candidate %p", cand);
         thisAgent->outputManager->printa_sf(thisAgent, "\n    %y %y %y", cand->id, cand->attr, cand->value);
         if (max_count > 10)
         {
@@ -95,7 +95,7 @@ void print_candidates(agent* thisAgent, preference* candidates)
    Highest_goal_whose_context_changed points to the identifier of the highest
    goal for which some context slot has changed preferences.  If no context
    slot has changed preferences, this variable is NIL.  This is used by
-   the decider during decision phase to avoid scanning down the whole
+   the decider during decide phase to avoid scanning down the whole
    goal stack when (as is the usual case) it really only needs to look at
    the lowest context.
 
@@ -2979,7 +2979,7 @@ void decide_context_slots(agent* thisAgent, bool predict = false)
    Do_buffered_wm_and_ownership_changes() does the end-of-phase processing
    of WM changes, ownership calculations, garbage collection, etc.
 
-   Do_working_memory_phase() and do_decision_phase() are called from
+   Do_working_memory_phase() and do_decide_phase() are called from
    the top level to run those phases.
 
    Create_top_goal() creates the top goal in the goal stack.
@@ -3431,7 +3431,7 @@ void do_working_memory_phase(agent* thisAgent)
     do_buffered_wm_and_ownership_changes(thisAgent);
 }
 
-void do_decision_phase(agent* thisAgent, bool predict)
+void do_decide_phase(agent* thisAgent, bool predict)
 {
     predict_srand_restore_snapshot(thisAgent, !predict);
 

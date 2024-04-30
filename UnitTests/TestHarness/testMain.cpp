@@ -22,10 +22,12 @@
 #include "AgentTest.hpp"
 #include "AliasTest.hpp"
 #include "BasicTests.hpp"
+#include "BuiltinRHSTests.hpp"
 #include "ChunkingTests.hpp"
 #include "ChunkingDemoTests.hpp"
 #include "ElementXMLTest.hpp"
 #include "EpMemFunctionalTests.hpp"
+#include "ExternalLibraryTest.hpp"
 #include "FullTests.hpp"
 #include "FullTestsClientThread.hpp"
 #include "FullTestsClientThreadFullyOptimized.hpp"
@@ -42,19 +44,8 @@
 #include "TestRunner.hpp"
 
 #if defined(_WIN32) || defined(WIN32)
-
-#   if (_MSC_VER == 1900)
-std::string OS = "Windows VS2015";
-#   elif (_MSC_VER == 1800)
-std::string OS = "Windows VS2013";
-#   elif (_MSC_VER == 1700)
-std::string OS = "Windows VS2012";
-#   elif (_MSC_VER == 1600)
-std::string OS = "Windows VS2010";
-#   else
-std::string OS = "Windows Prior to VS2010";
-#endif
-
+#include <sstream>
+std::string OS = static_cast<std::ostringstream&>(std::ostringstream() << "Microsoft C/C++ " << _MSC_FULL_VER).str();
 #elif defined(__APPLE__)
 std::string OS = "OS X";
 #elif defined(__linux__)
@@ -95,6 +86,11 @@ int main(int argc, char** argv)
     std::vector<std::string> expectedFailureCategories;
     std::vector<std::string> expectedFailureTests;
     bool silent = false;
+
+    #if defined(_WIN32) || defined(WIN32)
+    // Allows printing emoji ✅
+    SetConsoleOutputCP(CP_UTF8);
+    #endif
 
     for (int index = 1; index < argc; ++index)
     {
@@ -191,10 +187,12 @@ int main(int argc, char** argv)
     TEST_DECLARATION(AgentTest);
     TEST_DECLARATION(AliasTest);
     TEST_DECLARATION(BasicTests);
+    TEST_DECLARATION(BuiltinRHSTests);
     TEST_DECLARATION(ChunkingDemoTests);
     TEST_DECLARATION(ChunkingTests);
     TEST_DECLARATION(EpMemFunctionalTests);
     TEST_DECLARATION(ElementXMLTest);
+    TEST_DECLARATION(ExternalLibraryTest);
     TEST_DECLARATION(FullTests);
     TEST_DECLARATION(FullTestsClientThreadFullyOptimized);
     TEST_DECLARATION(FullTestsClientThread);
@@ -295,13 +293,8 @@ int main(int argc, char** argv)
             }
             else if (!runner->failed)
             {
-#ifndef _WIN32
                 std::cout << "✅" << std::endl;
-#else
-                std::cout << "Passed." << std::endl;
-#endif
                 std::cout.flush();
-
                 xml << " />" << std::endl;
             }
             else if (runner->failed && (std::find(expectedFailureCategories.begin(), expectedFailureCategories.end(), category->getCategoryName()) != expectedFailureCategories.end() || std::find(expectedFailureTests.begin(), expectedFailureTests.end(), std::get<2>(test)) != expectedFailureTests.end()))
@@ -310,9 +303,11 @@ int main(int argc, char** argv)
                 std::cout.flush();
                 ++expectedFailureCount;
 
-                xml << " >" << std::endl
-                    << "\t\t" << "<failure type=\"Test Failure\">" << runner->failureMessage << "</failure>" << std::endl
-                    << "\t</testcase>" << std::endl;
+                // status="ignored" with the failure message would be more correct,
+                //but our reporting tool can't currently handle this.
+                xml << " status=\"disabled\" />" << std::endl;
+                // << "\t\t" << "<failure type=\"Test Failure\">" << runner->failureMessage << "</failure>" << std::endl
+                // << "\t</testcase>" << std::endl;
             }
             else if (runner->failed)
             {

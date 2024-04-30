@@ -15,7 +15,10 @@
 #include "SoarHelper.hpp"
 
 #include "sml_AgentSML.h"
+#include "sml_ClientKernel.h"
 #include "soar_instance.h"
+
+#include <functional>
 
 bool g_Cancel = false;
 
@@ -30,7 +33,9 @@ BOOL WINAPI handle_ctrlc(DWORD dwCtrlType)
 
     return FALSE;
 }
-#endif // _WIN32
+#else // _WIN32
+#include <spawn.h>
+#endif // not _WIN32
 
 const std::string FullTests_Parent::kAgentName("full-tests-agent");
 
@@ -246,9 +251,6 @@ int FullTests_Parent::spawnListener()
 
     int targetPid = -1;
 
-    // Hoping this will clear up some port errors during automated tests.
-    sml::Sleep(1, 0);
-
 #ifdef _WIN32
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
@@ -278,20 +280,11 @@ int FullTests_Parent::spawnListener()
 #else // _WIN32
     std::string executable = SoarHelper::GetResource("Prototype-UnitTesting");
 
-    pid = vfork();
-    no_agent_assertTrue_msg("fork error", pid >= 0);
-    if (pid == 0)
-    {
-        // child
-        execlp(executable.c_str(), "Prototype-UnitTesting", "--listener", nullptr);
-
-        // does not return on success
-        no_agent_assertTrue_msg("execlp failed", false);
-    }
-    else
-    {
-        targetPid = pid;
-    }
+    char arg1[22] = {"Prototype-UnitTesting"};
+    char arg2[11] = {"--listener"};
+    char* argv[] = {arg1, arg2, NULL};
+    int error = posix_spawn(&targetPid, executable.c_str(), NULL, NULL, argv, NULL);
+    no_agent_assertTrue_msg("posix_spawn error", error == 0);
 
 #endif // _WIN32
 
@@ -375,6 +368,52 @@ void FullTests_Parent::testProductions()
     SoarHelper::init_check_to_find_refcount_leaks(agent);
 }
 
+void FullTests_Parent::testUngroundedLHS()
+{
+    // We're testing warnings here, so turn them on
+    agent->ExecuteCommandLine("output warnings on");
+
+    // This is the standard way to match the state
+    std::string result = agent->ExecuteCommandLine("sp { ok*standard (state <s> ^superstate nil) -->}");
+    no_agent_assertTrue(agent->GetLastCommandLineResult());
+
+    // Explicit ID test is not required on state
+    result = agent->ExecuteCommandLine("sp { ok*no*explicit*id*test (state ^superstate nil) -->}");
+    no_agent_assertTrue(agent->GetLastCommandLineResult());
+
+    // Wildcard matches are also fine
+    result = agent->ExecuteCommandLine("sp { ok*wildcard (state ^<any1> <any2>) -->}");
+    no_agent_assertTrue(agent->GetLastCommandLineResult());
+
+    // Matches on just <s> will add the attr-val tests automatically
+    result = agent->ExecuteCommandLine("sp { ok*lone*s (state <s> ^superstate nil) (<s>) -->}");
+    no_agent_assertTrue(agent->GetLastCommandLineResult());
+
+    // TODO: this warns but should also fail, as there's no state test
+    result = agent->ExecuteCommandLine("sp {warns*no*state*test (<s> ^results <any>)-->}");
+    no_agent_assertTrue(agent->GetLastCommandLineResult());
+    const char* expected_message = "Warning: On the LHS of production warns*no*state*test, identifier <s> is not connected to any goal or impasse.";
+    no_agent_assertTrue_msg("Expected1 warning message not found in '" + result + "'", result.find(expected_message) != std::string::npos);
+
+    // at least one attr/val test is required with state test
+    result = agent->ExecuteCommandLine("sp { fails*no*attr*val*test (state <s>) -->}");
+    no_agent_assertFalse(agent->GetLastCommandLineResult());
+    expected_message = "Error: Expected attribute-value test after state/impasse test. Did you forget to add \"^type state\" or \"^superstate nil\"?";
+    no_agent_assertTrue_msg("Expected2 error message not found in '" + result + "'", result.find(expected_message) != std::string::npos);
+
+    // We require the attr/val test to be in the same condition as the state test
+    result = agent->ExecuteCommandLine("sp { fails*missing*attr*val*test (state <s>) (<s> ^superstate nil) -->}");
+    no_agent_assertFalse(agent->GetLastCommandLineResult());
+    expected_message = "Error: Expected attribute-value test after state/impasse test. Did you forget to add \"^type state\" or \"^superstate nil\"?";
+    no_agent_assertTrue_msg("Expected3 error message not found in '" + result + "'", result.find(expected_message) != std::string::npos);
+
+    // negative conditions do not serve to ground the state
+    result = agent->ExecuteCommandLine("sp { fails*negative*doesnt*ground (state -^result <any>) -->}");
+    no_agent_assertFalse(agent->GetLastCommandLineResult());
+    expected_message = "Error: production fails*negative*doesnt*ground has no positive conditions that reference a goal state.\nDid you forget to add \"^type state\" or \"^superstate nil\"?";
+    no_agent_assertTrue_msg("Expected4 error message not found in '" + result + "'", result.find(expected_message) != std::string::npos);
+}
+
 void FullTests_Parent::testRHSHandler()
 {
     loadProductions(SoarHelper::GetResource("testsml.soar"));
@@ -385,8 +424,10 @@ void FullTests_Parent::testRHSHandler()
     int callback_rhs1 = m_pKernel->AddRhsFunction("test-rhs", Handlers::MyRhsFunctionHandler, &rhsFunctionHandlerReceived) ;
     int callback_rhs_dup = m_pKernel->AddRhsFunction("test-rhs", Handlers::MyRhsFunctionHandler, &rhsFunctionHandlerReceived) ;
     //agent->RegisterForPrintEvent( sml::smlEVENT_PRINT, Handlers::DebugPrintEventHandler, 0) ;
-
     no_agent_assertTrue_msg("Duplicate RHS function registration should be detected and be ignored", callback_rhs_dup == callback_rhs1);
+
+    bool cppRhsHandlerReceived(false);
+    int callback_rhs_cpp = m_pKernel->AddRhsFunction("test-rhs-cpp", Handlers::GetRhsFunctionHandlerCpp(&cppRhsHandlerReceived)) ;
 
     // need this to fire production that calls test-rhs
     sml::Identifier* pSquare = agent->GetInputLink()->CreateIdWME("square") ;
@@ -405,8 +446,10 @@ void FullTests_Parent::testRHSHandler()
     //std::cout << agent->ExecuteCommandLine("p i2 --depth 4") << std::endl;
 
     no_agent_assertTrue(rhsFunctionHandlerReceived);
+    no_agent_assertTrue(cppRhsHandlerReceived);
 
     no_agent_assertTrue(m_pKernel->RemoveRhsFunction(callback_rhs1));
+    no_agent_assertTrue(m_pKernel->RemoveRhsFunction(callback_rhs_cpp));
 
     // Re-add it without the bool that is getting popped off the stack
     no_agent_assertTrue(m_pKernel->AddRhsFunction("test-rhs", Handlers::MyRhsFunctionHandler, 0));
@@ -422,13 +465,23 @@ void FullTests_Parent::testClientMessageHandler()
     bool clientHandlerReceived(false);
     int clientCallback = m_pKernel->RegisterForClientMessageEvent("test-client", Handlers::MyClientMessageHandler, &clientHandlerReceived) ;
 
+    bool clientHandlerReceivedCpp(false);
+    int clientCallbackCpp = m_pKernel->RegisterForClientMessageEvent("test-client-cpp", Handlers::GetClientMessageHandlerCpp(&clientHandlerReceivedCpp)) ;
+
     // This is a bit dopey--but we'll send a message to ourselves for this test
-    std::string response = m_pKernel->SendClientMessage(agent, "test-client", "test-message");
+    std::string message("foo-bar-baz-qux");
+    std::string response = m_pKernel->SendClientMessage(agent, "test-client", message.c_str());
     no_agent_assertTrue(clientHandlerReceived);
-    clientHandlerReceived = false;
-    no_agent_assertTrue(response == "handler-messagetest-message");
+    std::string expected = "handler-message" + message;
+    no_agent_assertTrue(response == expected);
+
+    response = m_pKernel->SendClientMessage(agent, "test-client-cpp", message.c_str());
+    no_agent_assertTrue(clientHandlerReceivedCpp);
+    expected = "handler-message-cpp" + message;
+    no_agent_assertTrue(response == expected);
 
     no_agent_assertTrue(m_pKernel->UnregisterForClientMessageEvent(clientCallback));
+    no_agent_assertTrue(m_pKernel->UnregisterForClientMessageEvent(clientCallbackCpp));
 }
 
 void FullTests_Parent::testFilterHandler()
@@ -540,8 +593,8 @@ void FullTests_Parent::testWMEs()
     /*
 	 printWMEs(agent->GetInputLink()) ;
 	 std::string printInput1 = agent->ExecuteCommandLine("print --depth 2 I2") ;
-	 cout << printInput1 << endl ;
-	 cout << endl << "Now work with the input link" << endl ;
+	 std::cout << printInput1 << std::endl ;
+	 std::cout << std::endl << "Now work with the input link" << std::endl ;
      */
 
     // Delete one of the shared WMEs to make sure that's ok
@@ -672,7 +725,7 @@ void FullTests_Parent::testAgent()
     /* Not true now we support stopping before/after phases when running by decision.
 	 if (phaseCount != 20)
 	 {
-	 cout << "Error receiving phase events" << endl ;
+	 std::cout << "Error receiving phase events" << std::endl ;
 	 return false ;
 	 }
      */
@@ -713,7 +766,7 @@ void FullTests_Parent::testAgent()
     /*
 	 printWMEs(agent->GetInputLink()) ;
 	 std::string printInput = agent->ExecuteCommandLine("print --depth 2 I2") ;
-	 cout << printInput << endl ;
+	 std::cout << printInput << std::endl ;
      */
 
     // Then add some tic tac toe stuff which should trigger output
@@ -786,7 +839,7 @@ void FullTests_Parent::testAgent()
     no_agent_assertTrue(m_pKernel->UnregisterForUpdateEvent(callback_g));
     no_agent_assertTrue(agent->UnregisterForPrintEvent(callbackp1));
 
-    //cout << "Time to dump output link" << endl ;
+    //cout << "Time to dump output link" << std::endl ;
 
     no_agent_assertTrue(agent->GetOutputLink());
     //printWMEs(agent->GetOutputLink()) ;
@@ -867,19 +920,19 @@ void FullTests_Parent::testAgent()
     /*
 	 if (pos == std::string.npos)
 	 {
-	 cout << "*** ERROR: Failed to interrupt Soar during a run." << endl ;
+	 std::cout << "*** ERROR: Failed to interrupt Soar during a run." << std::endl ;
 	 return false ;
 	 }
      */
     no_agent_assertTrue(agent->UnregisterForRunEvent(callback3));
 
     /* These comments haven't kept up with the test -- does a lot more now
-	 cout << endl << "If this test worked should see something like this (above here):" << endl ;
-	 cout << "Top Identifier I3" << endl << "(I3 ^move M1)" << endl << "(M1 ^row 1)" << endl ;
-	 cout << "(M1 ^col 1)" << endl << "(I3 ^alternative M1)" << endl ;
-	 cout << "And then after the command is marked as completed (during the test):" << endl ;
-	 cout << "Top Identifier I3" << endl ;
-	 cout << "Together with about 6 received events" << endl ;
+	 std::cout << std::endl << "If this test worked should see something like this (above here):" << std::endl ;
+	 std::cout << "Top Identifier I3" << std::endl << "(I3 ^move M1)" << std::endl << "(M1 ^row 1)" << std::endl ;
+	 std::cout << "(M1 ^col 1)" << std::endl << "(I3 ^alternative M1)" << std::endl ;
+	 std::cout << "And then after the command is marked as completed (during the test):" << std::endl ;
+	 std::cout << "Top Identifier I3" << std::endl ;
+	 std::cout << "Together with about 6 received events" << std::endl ;
      */
 
     no_agent_assertTrue(agent->UnregisterForRunEvent(callback1));
@@ -952,8 +1005,8 @@ void FullTests_Parent::testSimpleCopy()
 
     std::string result = agent->RunSelf(1) ;
 
-    //cout << result << endl ;
-    //cout << trace << endl ;
+    //cout << result << std::endl ;
+    //cout << trace << std::endl ;
 
     // TODO: check this output
     //std::cout << agent->ExecuteCommandLine("print --depth 5 s1 --tree") << std::endl;
@@ -998,7 +1051,7 @@ void FullTests_Parent::testSimpleCopy()
 
     /*
 	 Output:
-	 
+
 	 (28: I3 ^text-output S4)
 	 (14: S4 ^newest yes)
 	 (15: S4 ^num-words 3)
@@ -1042,7 +1095,7 @@ void FullTests_Parent::testSimpleReteNetLoader()
 
     // Get the latest id from the input link
     sml::Identifier* pID = agent->GetInputLink() ;
-    //cout << "Input link id is " << pID->GetValueAsString() << endl ;
+    //cout << "Input link id is " << pID->GetValueAsString() << std::endl ;
 
     no_agent_assertTrue(pID);
     SoarHelper::init_check_to_find_refcount_leaks(agent);
@@ -1055,7 +1108,7 @@ void FullTests_Parent::test64BitReteNet()
 
     // Get the latest id from the input link
     sml::Identifier* pID = agent->GetInputLink() ;
-    //cout << "Input link id is " << pID->GetValueAsString() << endl ;
+    //cout << "Input link id is " << pID->GetValueAsString() << std::endl ;
 
     no_agent_assertTrue(pID);
     SoarHelper::init_check_to_find_refcount_leaks(agent);
@@ -1592,6 +1645,9 @@ void FullTests_Parent::testNegatedConjunctiveTestUnbound()
     SoarHelper::init_check_to_find_refcount_leaks(agent);
 }
 
+// Maintainer note: this test fails if the WORKING_DIRECTORY env var is not set, and
+// the current working directory is not the same as the one that the UnitTests exe is in.
+// If you noticed it failing, try `cd out` and run UnitTests again.
 void FullTests_Parent::testCommandToFile()
 {
     loadProductions(SoarHelper::GetResource("water-jug-rl.soar"));
@@ -1604,7 +1660,7 @@ void FullTests_Parent::testCommandToFile()
     if (workingDirectory)
         resourceDirectory = workingDirectory;
 
-    agent->ExecuteCommandLine(("command-to-file \"" + resourceDirectory + "/" + "testCommandToFile-output.soar\" print --rl --full").c_str());
+    agent->ExecuteCommandLine(("command-to-file \"" + resourceDirectory + "testCommandToFile-output.soar\" print --rl --full").c_str());
     no_agent_assertTrue(agent->GetLastCommandLineResult());
     const char* result = agent->ExecuteCommandLine(("source \"" + resourceDirectory + "/" + "testCommandToFile-output.soar\"").c_str());
     no_agent_assertTrue(result);

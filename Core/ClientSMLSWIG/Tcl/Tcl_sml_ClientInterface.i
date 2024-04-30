@@ -68,7 +68,6 @@
 	static int ThreadEventProc(Tcl_Event *evPtr, int mask)
 	{
 		ThreadEvent *threadEventPtr = (ThreadEvent *)evPtr;
-		ThreadEventResult *resultPtr = threadEventPtr->resultPtr;
 		Tcl_Interp *interp = dispinterp;
 		int code;
 		char const* result;
@@ -77,8 +76,6 @@
 
 		// Check which thread we're on.
 		// I hope this is the thread I asked to be part of.
-		Tcl_ThreadId currentThread = Tcl_GetCurrentThread() ;
-
 		if (interp == NULL) {
 			code = TCL_ERROR;
 			result = "no target interp!";
@@ -110,7 +107,6 @@
 	int tcl_thread_send(Tcl_Interp* interp, Tcl_ThreadId id, Tcl_Obj* script)
 	{
 		ThreadEvent *threadEventPtr;
-		ThreadEventResult *resultPtr;
 		Tcl_ThreadId threadId = (Tcl_ThreadId) id;
 
 		// Cache the interpreter so we can find it again later
@@ -122,7 +118,7 @@
 
 		threadEventPtr = (ThreadEvent *) ckalloc(sizeof(ThreadEvent));
 		threadEventPtr->script = script;
-		resultPtr = threadEventPtr->resultPtr = NULL;
+		threadEventPtr->resultPtr = NULL;
 
 		/*
 		* Queue the event and poke the other thread's notifier.
@@ -134,7 +130,7 @@
 		Tcl_ThreadAlert(threadId);
 
 		// Pump the event queue so the event is handled synchronously
-		// Without this the call because asynchronous which is trouble.
+		// Without this the call becomes asynchronous which is trouble.
 		// BUGBUG? Should this be while (DoOneEvent() == 1) { } - i.e. clear the queue.
 		Tcl_DoOneEvent(TCL_DONT_WAIT) ;
 
@@ -161,7 +157,8 @@
 //		tcl_thread_send(tud->interp, tud->threadId, script) ;
 	}
 
-	std::string TclRhsEventCallback(sml::smlRhsEventId, void* pUserData, sml::Agent* pAgent, char const* pFunctionName,
+    // RHS function used to exec Tcl code from Soar
+	static std::string TclRhsEventCallback(sml::smlRhsEventId, void* pUserData, sml::Agent* pAgent, char const* pFunctionName,
 	                    char const* pArgument)
 	{
 	    TclUserData* tud = static_cast<TclUserData*>(pUserData);
@@ -184,33 +181,8 @@
 
 		Tcl_Obj* res = Tcl_GetObjResult(tud->interp);
 
-		return Tcl_GetString(res);
-	}
-
-	std::string TclClientMessageEventCallback(sml::smlRhsEventId, void* pUserData, sml::Agent* pAgent, char const* pClientName,
-	                    char const* pMessage)
-	{
-	    TclUserData* tud = static_cast<TclUserData*>(pUserData);
-	    // this beginning part of the script will never change, but the parts we add will, so we make a copy of the beginning part so we can reuse it next time
-	    Tcl_Obj* script = Tcl_DuplicateObj(tud->script);
-	    Tcl_AppendObjToObj(script, SWIG_Tcl_NewInstanceObj(tud->interp, (void *) pAgent, SWIGTYPE_p_sml__Agent,0));
-
-	    // the message could have embedded quotes, so we need to escape them
-	    std::string message = pMessage;
-	    EscapeSpecial(&message);
-
-	    Tcl_AppendStringsToObj(script, " ", pClientName, " \"", message.c_str(), "\"", NULL);
-	    // since we're returning a value, we need to clear out any old values
-		Tcl_ResetResult(tud->interp);
-		// since this script will never be executed again, we use TCL_EVAL_DIRECT, which skips the compilation step
-	    Tcl_EvalObjEx(tud->interp, script, TCL_EVAL_DIRECT);
-
-		// Send the event to the given interpreter using the given thread
-//		tcl_thread_send(tud->interp, tud->threadId, script) ;
-
-		Tcl_Obj* res = Tcl_GetObjResult(tud->interp);
-
-		return Tcl_GetString(res);
+		std::string sres = Tcl_GetString(res);
+        return sres;
 	}
 
 	void TclAgentEventCallback(sml::smlAgentEventId id, void* pUserData, sml::Agent* agent)
@@ -605,13 +577,13 @@
     // to have different names in Tcl (and they are both strings -- in C++ they're not the same type; hence the separation there)
     intptr_t AddRhsFunction(Tcl_Interp* interp, char const* pRhsFunctionName, char* userData, bool addToBack = true) {
 	    TclUserData* tud = CreateTclUserData(sml::smlEVENT_RHS_USER_FUNCTION, pRhsFunctionName, userData, interp);
-	    tud->callbackid = self->AddRhsFunction(pRhsFunctionName, TclRhsEventCallback, (void*)tud, addToBack);
+	    tud->callbackid = self->AddRhsFunction(pRhsFunctionName, &TclRhsEventCallback, (void*)tud, addToBack);
 		return (intptr_t)tud;
     }
 
     intptr_t RegisterForClientMessageEvent(Tcl_Interp* interp, char const* pClientName, char const* pMessageHandler, char* userData, bool addToBack = true) {
 	    TclUserData* tud = CreateTclUserData(sml::smlEVENT_RHS_USER_FUNCTION, pMessageHandler, userData, interp);
-	    tud->callbackid = self->RegisterForClientMessageEvent(pClientName, TclClientMessageEventCallback, (void*)tud, addToBack);
+	    tud->callbackid = self->RegisterForClientMessageEvent(pClientName, &TclRhsEventCallback, (void*)tud, addToBack);
 		return (intptr_t)tud;
     }
 

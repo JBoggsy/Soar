@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * SearchDialog.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Apr 14, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.dialogs;
@@ -18,7 +18,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
@@ -27,24 +26,20 @@ import edu.umich.soar.debugger.MainFrame;
 import edu.umich.soar.debugger.modules.AbstractView;
 
 /************************************************************************
- * 
+ *
  * Search dialog for finding text in a window
- * 
+ *
  ************************************************************************/
 public class SearchDialog extends BaseDialog
 {
-    // The find and replace buttons
-    private Button m_DoFind;
 
-    private AbstractView m_View;
+    private final AbstractView m_View;
 
-    private MainFrame m_Frame;
+    private final MainFrame m_Frame;
 
     private Text m_FindText;
 
     private Button m_Down;
-
-    private Button m_Up;
 
     private Button m_Match;
 
@@ -57,9 +52,9 @@ public class SearchDialog extends BaseDialog
     private Listener m_ControlF;
 
     /********************************************************************************************
-     * 
+     *
      * Create a simple dialog asking the user for input (a single string).
-     * 
+     *
      * @param parent
      *            The parent for this dialog (we'll center the dialog within
      *            this window)
@@ -88,7 +83,7 @@ public class SearchDialog extends BaseDialog
 
     /**
      * FindReplaceDialog constructor
-     * 
+     *
      * @param shell
      *            the parent shell
      * @param document
@@ -107,7 +102,7 @@ public class SearchDialog extends BaseDialog
 
     /**
      * Creates the dialog's contents
-     * 
+     *
      * @param window
      */
     protected void createContents(final Composite window)
@@ -162,7 +157,7 @@ public class SearchDialog extends BaseDialog
         m_Down = new Button(options, SWT.RADIO);
         m_Down.setText("D&own");
 
-        m_Up = new Button(options, SWT.RADIO);
+        Button m_Up = new Button(options, SWT.RADIO);
         m_Up.setText("&Up");
 
         // Add the keep window checkbox
@@ -186,26 +181,23 @@ public class SearchDialog extends BaseDialog
         buttons.setLayout(new GridLayout());
 
         // Create the Find button
-        m_DoFind = new Button(buttons, SWT.PUSH);
+        // The find and replace buttons
+        Button m_DoFind = new Button(buttons, SWT.PUSH);
         m_DoFind.setText("&Find   Ctrl-F");
         m_DoFind.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         // Listen for Ctrl-F within the dialog and issue a find immediately.
         // This allows users to hit Ctrl-F to bring up find and then do it again
         // to search.
-        m_ControlF = new Listener()
-        {
-            public void handleEvent(Event e)
+        m_ControlF = e -> {
+            if (e.type == SWT.KeyDown)
             {
-                if (e.type == SWT.KeyDown)
-                {
-                    int key = e.keyCode;
-                    int mask = e.stateMask;
+                int key = e.keyCode;
+                int mask = e.stateMask;
 
-                    if (key == 'f' && (mask & SWT.CTRL) > 0
-                            && !getDialog().isDisposed())
-                        find();
-                }
+                if (key == 'f' && (mask & SWT.CTRL) > 0
+                        && !getDialog().isDisposed())
+                    find();
             }
         };
 
@@ -223,6 +215,7 @@ public class SearchDialog extends BaseDialog
         close.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         close.addSelectionListener(new SelectionAdapter()
         {
+            @Override
             public void widgetSelected(SelectionEvent event)
             {
                 close();
@@ -232,6 +225,7 @@ public class SearchDialog extends BaseDialog
         // Do a find
         m_DoFind.addSelectionListener(new SelectionAdapter()
         {
+            @Override
             public void widgetSelected(SelectionEvent event)
             {
                 find();
@@ -261,12 +255,12 @@ public class SearchDialog extends BaseDialog
     }
 
     /********************************************************************************************
-     * 
+     *
      * Trigger the dialog to start a find.
-     * 
+     *
      * This is exposed publicly so we can programmatically trigger a find once
      * the dialog is up (based on user key presses etc.)
-     * 
+     *
      ********************************************************************************************/
     public void find()
     {

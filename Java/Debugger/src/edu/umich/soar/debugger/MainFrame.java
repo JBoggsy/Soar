@@ -1,20 +1,18 @@
-/** 
+/**
  * MainFrame.java
  *
  * Title:			Soar Debugger
- * Description:	
+ * Description:
  * @author			Doug
- * @version			
+ * @version
  */
 
 package edu.umich.soar.debugger;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 
@@ -27,16 +25,12 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTError;
-import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FontDialog;
@@ -70,46 +64,47 @@ import edu.umich.soar.debugger.menu.PrintMenu;
 import edu.umich.soar.debugger.modules.AbstractView;
 
 /*******************************************************************************
- * 
+ *
  * The frame manages a top level window in the debugger and includes a menu bar.
- * 
+ *
  * There may be multiple MainFrames within a single debugger, sharing an
  * instance of Soar (a kernel). Soar can be running locally (within the
  * debugger) or remotely (inside another process--usually an environment).
- * 
+ *
  * If a user wishes to use multiple kernels at once they will need to start
  * multiple debugger processes (which they are free to do).
- * 
+ *
  * The most likely use of multiple MainFrames will be when there are multiple
  * agents with each agent having a separate window.
- * 
+ *
  * Each MainFrame is connected to a single "Document" which is shared by all
  * frames and which manages the Soar process itself.
- * 
+ *
  * The current design associates a default agent with a MainFrame window so it's
  * possible for children of that frame to inherit their choice of agent from the
  * MainFrame and have all windows working with a single agent. However, I would
  * that to just be a default and to support multiple windows within a single
  * MainFrame working with different agents if that proved useful (by having
  * module windows override that default choice).
- * 
+ *
  ******************************************************************************/
 public class MainFrame
 {
     public static final FontData kDefaultFontData = new FontData("Courier New",
             8, SWT.NORMAL);
 
+
     private static final String kNoAgent = "<no agent>";
 
     private static final String kWindowLayoutFile = "SoarDebuggerWindows.dlf";
 
-    private Composite m_Parent = null;
+    private final Composite m_Parent;
 
     /* The main window that contains everything else */
-    private MainWindow m_MainWindow = null;
+    private final MainWindow m_MainWindow;
 
     /** The menu bar */
-    private Menu m_MenuBar = null;
+    private final Menu m_MenuBar;
 
     /** The menus in the menu bar */
     private FileMenu m_FileMenu = null;
@@ -129,25 +124,25 @@ public class MainFrame
      * The main document object -- represents the Soar process. There is only
      * one of these ever in the debugger.
      */
-    private Document m_Document = null;
+    private final Document m_Document;
 
     /** Used to script the debugger itself */
-    private ScriptCommands m_ScriptCommands = null;
+    private final ScriptCommands m_ScriptCommands;
 
     /**
      * Extended commands set that the user could type at the command line (might
      * fold this into scripts or vice versa one day--not sure)
      */
-    private DebuggerCommands m_DebuggerCommands = null;
+    private final DebuggerCommands m_DebuggerCommands;
 
     /** Map of module names that are currently in use in this frame */
-    private NameRegister m_NameMap = new NameRegister();
+    private final NameRegister m_NameMap = new NameRegister();
 
     /**
      * Each frame has a unique name within the debugger (for the life of one
      * running of the app)
      */
-    private String m_Name;
+    private final String m_Name;
 
     /**
      * We associate a default agent with a MainFrame, so that windows within
@@ -182,12 +177,10 @@ public class MainFrame
      * Windows can register with the frame to learn when it switches focus to a
      * different agent
      */
-    private AgentFocusGenerator m_AgentFocusGenerator = new AgentFocusGenerator();
+    private final AgentFocusGenerator m_AgentFocusGenerator = new AgentFocusGenerator();
 
     /** The agent this window is currently focused on -- can be null */
     private Agent m_AgentFocus;
-
-    private SoarChangeListener m_SoarChangeListener = null;
 
     private boolean m_bClosing = false;
 
@@ -198,10 +191,10 @@ public class MainFrame
      * We'll keep a list of colors here that we wish to use elsewhere. When the
      * frame is disposed we should dispose them
      */
-    public Color m_White;
+    public final Color m_White;
 
     // List of all color objects we own and should dispose of when frame closes
-    private ArrayList<Color> m_Colors = new ArrayList<Color>();
+    private final ArrayList<Color> m_Colors = new ArrayList<>();
 
     public MainFrame(Composite parent, Document doc)
     {
@@ -211,9 +204,8 @@ public class MainFrame
 
         // Add ourselves to the list of frames in use and
         // get back a unique name to use
-        String name = doc.addFrame(this);
 
-        m_Name = name;
+        m_Name = doc.addFrame(this);
 
         m_ScriptCommands = new ScriptCommands(this, doc);
         m_DebuggerCommands = new DebuggerCommands(this, doc);
@@ -229,44 +221,33 @@ public class MainFrame
 
         // Listen for changes to the state of Soar and update our menus
         // accordingly
-        m_SoarChangeListener = new SoarChangeListener()
-        {
-            public void soarConnectionChanged(SoarConnectionEvent e)
-            {
+        SoarChangeListener m_SoarChangeListener = new SoarChangeListener() {
+            @Override
+            public void soarConnectionChanged(SoarConnectionEvent e) {
                 // If the connection has changed reset the focus to null
                 clearAgentFocus(false);
 
                 updateMenus();
-            };
+            }
 
-            public void soarAgentListChanged(SoarAgentEvent e)
-            {
+            @Override
+            public void soarAgentListChanged(SoarAgentEvent e) {
                 // If we're removing the current focus agent then
                 // set the focus to null for this window.
                 if (e.isAgentRemoved()
-                        && Document.isSameAgent(e.getAgent(), m_AgentFocus))
-                {
+                    && Document.isSameAgent(e.getAgent(), m_AgentFocus)) {
                     // If this agent is being closed down then decide if we
-                    // should
-                    // destroy the window or not.
+                    // should destroy the window or not.
                     boolean destroyOnClose = m_Document
-                            .isCloseWindowWhenDestroyAgent();
+                        .isCloseWindowWhenDestroyAgent();
 
-                    if (destroyOnClose)
-                    {
+                    if (destroyOnClose) {
+
                         // We need to switch out of this thread because we're in
-                        // a handler for
-                        // the before_agent_destroyed() event and calling
-                        // close() should shutdown the
-                        // kernel if this is the last window. So we thread
-                        // switch.
-                        getDisplay().asyncExec(new Runnable()
-                        {
-                            public void run()
-                            {
-                                close();
-                            }
-                        });
+                        // a handler for the before_agent_destroyed() event and
+                        // calling close() should shutdown the kernel if this is
+                        // the last window. So we thread-switch.
+                        getDisplay().asyncExec(() -> close());
                         return;
                     }
 
@@ -276,7 +257,7 @@ public class MainFrame
                 }
 
                 updateMenus();
-            };
+            }
         };
 
         getDocument().addSoarChangeListener(m_SoarChangeListener);
@@ -327,9 +308,8 @@ public class MainFrame
         MessageBox msg = new MessageBox(shell, style);
         msg.setText(title);
         msg.setMessage(text);
-        int result = msg.open();
 
-        return result;
+        return msg.open();
     }
 
     public void ShowMessageBox(String title, String text)
@@ -345,9 +325,9 @@ public class MainFrame
     }
 
     /***************************************************************************
-     * 
+     *
      * Show a message box with a particular icon or set of buttons
-     * 
+     *
      * @param title
      *            The title
      * @param text
@@ -389,18 +369,13 @@ public class MainFrame
         if (m_TextFont != null)
             dialog.setFontList(m_TextFont.getFontData());
 
-        FontData data = dialog.open();
-
-        return data;
+        return dialog.open();
     }
 
     /***************************************************************************
-     * 
+     *
      * Close the window when the close box is clicked.
-     * 
-     * @param e
-     *            Window closing event
-     * 
+     *
      **************************************************************************/
     private void thisWindowClosing()
     {
@@ -408,20 +383,14 @@ public class MainFrame
         m_bClosing = true;
 
         // Need to explicitly release the focus which in turn will cause any
-        // listeners to unregister from this agent (is its still alive).
+        // listeners to unregister from this agent (if it's still alive).
         // Otherwise our listeners will
         // still be registered and will try to display output in windows that
         // are disposed.
         // This has the potential to deadlock (waiting to issue unregister calls
         // while we're running) so we put
         // it in a separate thread to avoid that.
-        Thread clearFocus = new Thread()
-        {
-            public void run()
-            {
-                clearAgentFocus(false);
-            }
-        };
+        Thread clearFocus = new Thread(() -> clearAgentFocus(true));
         clearFocus.start();
 
         // DJP: Experiment
@@ -429,7 +398,7 @@ public class MainFrame
         // this.setAgentFocus(null);
 
         // Record the current window positions as properties,
-        // which we can then save.
+        // which we can then save. Technically this is only needed for the last closed window.
         RecordWindowPositions();
 
         // Save current layout file
@@ -450,9 +419,8 @@ public class MainFrame
         this.getDocument().removeFrame(this);
 
         // Dispose of all of the colors we created
-        for (int i = 0; i < m_Colors.size(); i++)
-        {
-            Color color = (Color) m_Colors.get(i);
+        for (Color mColor : m_Colors) {
+            Color color = mColor;
             color.dispose();
         }
 
@@ -478,9 +446,8 @@ public class MainFrame
         if (initialValue == null)
             initialValue = "";
 
-        String name = SwtInputDialog.showDialog(this.getShell(), title, prompt,
+        return SwtInputDialog.showDialog(this.getShell(), title, prompt,
                 initialValue);
-        return name;
     }
 
     public void clearAgentFocus(boolean canUnregisterEvents)
@@ -505,19 +472,8 @@ public class MainFrame
                     + m_AgentFocus.GetAgentName());
             mbs.registerMBean(commandLineMXBean, mbeanName);
         }
-        catch (MalformedObjectNameException e)
-        {
-            e.printStackTrace();
-        }
-        catch (NotCompliantMBeanException e)
-        {
-            e.printStackTrace();
-        }
-        catch (MBeanRegistrationException e)
-        {
-            e.printStackTrace();
-        }
-        catch (InstanceAlreadyExistsException e)
+        catch (MalformedObjectNameException | NotCompliantMBeanException | MBeanRegistrationException |
+               InstanceAlreadyExistsException e)
         {
             e.printStackTrace();
         }
@@ -533,15 +489,7 @@ public class MainFrame
                     + m_AgentFocus.GetAgentName());
             mbs.unregisterMBean(mbeanName);
         }
-        catch (MalformedObjectNameException e)
-        {
-            e.printStackTrace();
-        }
-        catch (InstanceNotFoundException e)
-        {
-            e.printStackTrace();
-        }
-        catch (MBeanRegistrationException e)
+        catch (MalformedObjectNameException | InstanceNotFoundException | MBeanRegistrationException e)
         {
             e.printStackTrace();
         }
@@ -621,14 +569,8 @@ public class MainFrame
         // Need to make sure we make this change in the SWT thread as the event
         // may come to us
         // in a different thread
-        Display.getDefault().asyncExec(new Runnable()
-        {
-            public void run()
-            {
-                getShell().setText(
-                        "Soar Debugger in Java - " + remoteString + agentName);
-            }
-        });
+        Display.getDefault().asyncExec(() -> getShell().setText(
+                "Soar Debugger in Java - " + remoteString + agentName));
     }
 
     /**
@@ -642,10 +584,10 @@ public class MainFrame
     }
 
     /***************************************************************************
-     * 
+     *
      * Save the current layout so when we next launch the app next we'll go back
      * to this layout.
-     * 
+     *
      * @return True if save file successfully
      **************************************************************************/
     public boolean saveCurrentLayoutFile()
@@ -659,9 +601,9 @@ public class MainFrame
     }
 
     /***************************************************************************
-     * 
+     *
      * Load a layout (window positions, types of windows etc.) from a file.
-     * 
+     *
      * @param filename
      *            The file to load
      * @param showErrors
@@ -687,7 +629,7 @@ public class MainFrame
             return false;
 
         file = AppProperties.GetSettingsFilePath(filename);
-        return file.exists() ? loadLayoutFile(file.toString(), true) : false;
+        return file.exists() && loadLayoutFile(file.toString(), true);
     }
 
     public boolean saveLayoutFile(String filename)
@@ -706,12 +648,12 @@ public class MainFrame
     }
 
     /***************************************************************************
-     * 
+     *
      * Generates a unique name from a base name (e.g. from "trace" might create
      * "trace3"). The name is unique within the frame so we can use it to
      * cross-reference windows within a layout. It may not be unique within the
      * entire debugger.
-     * 
+     *
      * @param baseName
      *            Cannot contain digits
      * @return The generated name (which has been registered as in use)
@@ -740,8 +682,7 @@ public class MainFrame
         if (viewName == null)
             return null;
 
-        AbstractView view = m_NameMap.getView(viewName);
-        return view;
+        return m_NameMap.getView(viewName);
     }
 
     public void registerViewName(String name, AbstractView view)
@@ -799,17 +740,16 @@ public class MainFrame
         }
 
         // If we have an existing window layout stored, try to load it.
-        boolean loaded = layoutFile.exists() ? loadLayoutFile(layoutFile
-                .toString(), true) : false;
-        return loaded;
+        return layoutFile.exists() && loadLayoutFile(layoutFile
+            .toString(), true);
     }
 
     /***************************************************************************
-     * 
+     *
      * Initializes the frame and all of its children.
-     * 
+     *
      * Called by Application after the frame is constructed.
-     * 
+     *
      **************************************************************************/
     public void initComponents(String alternateLayout)
     {
@@ -817,6 +757,8 @@ public class MainFrame
         m_FileMenu = FileMenu.createMenu(this, getDocument(), "&File");
         /* m_EditMenu = */edu.umich.soar.debugger.menu.EditMenu.createMenu(
                 this, getDocument(), "&Edit");
+        /* m_ViewMenu = */edu.umich.soar.debugger.menu.ViewMenu.createMenu(
+        this, "&View");
         /* m_PrintMenu = */PrintMenu.createMenu(this, getDocument(), "&Print");
         /* m_CommandsMenu = */CommandsMenu.createMenu(this, getDocument(),
                 "&Commands");
@@ -831,8 +773,7 @@ public class MainFrame
         getShell().setMenuBar(m_MenuBar);
 
         // Load the alternate layout file first,.
-        boolean loaded = (alternateLayout != null) ? loadLayoutFileSpecial(alternateLayout)
-                : false;
+        boolean loaded = alternateLayout != null && loadLayoutFileSpecial(alternateLayout);
 
         // If that failed, load the last known layout
         loaded = loaded || loadUserLayoutFile();
@@ -851,6 +792,7 @@ public class MainFrame
         getShell().addShellListener(new ShellAdapter()
         {
 
+            @Override
             public void shellClosed(ShellEvent e)
             {
                 thisWindowClosing();
@@ -872,17 +814,10 @@ public class MainFrame
             int xPos = this.getAppIntegerProperty("Window.x");
             int yPos = this.getAppIntegerProperty("Window.y");
 
-            // Can't see why we'd ever not want this so I'm turning it on at all
-            // times now.
-            boolean cascade = this
-                    .getAppBooleanProperty("Window.Cascade", true);
-            cascade = true;
-            if (cascade)
-            {
-                int offset = (m_Document.getNumberFrames() - 1) * 20;
-                xPos += offset;
-                yPos += offset;
-            }
+            // "cascade" effect for multiple windows
+            int offset = (m_Document.getNumberFrames() - 1) * 20;
+            xPos += offset;
+            yPos += offset;
 
             if (width > 0 && width < Integer.MAX_VALUE && height > 0
                     && height < Integer.MAX_VALUE)
@@ -939,7 +874,7 @@ public class MainFrame
                 FileOutputStream os = new FileOutputStream(resourceFile);
 
                 // Copy the file onto disk
-                byte bytes[] = new byte[2048];
+                byte[] bytes = new byte[2048];
                 int read;
                 while (true)
                 {
@@ -1076,24 +1011,24 @@ public class MainFrame
     }
 
     /***************************************************************************
-     * 
+     *
      * Execute a command and return the XML form of the output.
-     * 
+     *
      * This is used to evaluate a command which we wish to parse within the
      * debugger e.g. "set-library-location" (with no args) returns the path to
      * the library. We ask for the XML form and parse that, making us robust
      * against changes to the string form shown to the user.
-     * 
+     *
      * NOTE: You should do explicit clean up of the 'response' object we can
      * check for memory leaks when the debugger exits. If we don't do this
      * explicitly, the memory will eventually get cleaned up, but only once the
      * gc runs...could be a while and may not happen before we exit (not
      * required by Java to do so) so it looks like a leak.
-     * 
+     *
      * So the caller should follow this pattern: AnalyzeXML response = new
      * AnalyzeXML() ; bool ok = executeCommandXML(commandLine, response) ; ...
      * process response ... response.delete() ;
-     * 
+     *
      * @param commandLine
      *            The command to execute (e.g. "watch")
      * @param response
@@ -1157,10 +1092,10 @@ public class MainFrame
     }
 
     /***************************************************************************
-     * 
+     *
      * Debugger commands are like scripting commands, but they could potentially
      * be typed by the user at the command line.
-     * 
+     *
      * @param commandLine
      * @return True if is a command we recognize
      **************************************************************************/
@@ -1182,12 +1117,12 @@ public class MainFrame
     }
 
     /***************************************************************************
-     * 
+     *
      * Display the given text in this view (if possible).
-     * 
+     *
      * This method is used to programmatically insert text that Soar doesn't
      * generate into the output window.
-     * 
+     *
      **************************************************************************/
     public void displayTextInPrimeView(String text)
     {
@@ -1223,17 +1158,17 @@ public class MainFrame
      * ; String filename = null ; for (int i = 0 ; i < 50 ; i++) { filename =
      * baseFile + Integer.toString(i) + ".jpg" ; File file = new File(filename)
      * ;
-     * 
+     *
      * if (!file.exists()) break ; }
-     * 
+     *
      * String imageFile = filename ;
-     * 
+     *
      * int maxX = 500 ; int maxY = 500 ; int width = 100 ; int height = 100 ;
-     * 
+     *
      * JComponent component = null ;
-     * 
+     *
      * width = maxX ; height = maxY ;
-     * 
+     *
      * try { FileOutputStream out = new FileOutputStream(imageFile);
      * java.awt.image.BufferedImage bi = null ; bi =
      * (java.awt.image.BufferedImage)createImage(width, height); Graphics g =
@@ -1242,13 +1177,13 @@ public class MainFrame
      * com.sun.image.codec.jpeg.JPEGCodec.createJPEGEncoder(out);
      * encoder.encode(bi); out.flush(); out.close(); } catch (IOException ioe)
      * {} catch(java.awt.image.RasterFormatException except) {} }
-     * 
+     *
      * public void jMenuFilePrintActionPerformed(java.awt.event.ActionEvent e) {
      * java.awt.print.PrinterJob printerJob =
      * java.awt.print.PrinterJob.getPrinterJob() ;
-     * 
+     *
      * boolean doPrint = printerJob.printDialog();
-     * 
+     *
      * if (doPrint) { // Indicate which view we want to print
      * java.awt.print.Book book = new java.awt.print.Book();
      * //book.append(jWorkspacePanel, m_PageFormat);
@@ -1256,11 +1191,11 @@ public class MainFrame
      * } catch (java.awt.print.PrinterException exception) {
      * JOptionPane.showMessageDialog(this, "Printing error: " + exception); } }
      * }
-     * 
+     *
      * public void jMenuFilePageSetupActionPerformed(java.awt.event.ActionEvent
      * e) { java.awt.print.PrinterJob printerJob =
      * java.awt.print.PrinterJob.getPrinterJob() ;
-     * 
+     *
      * m_PageFormat = printerJob.pageDialog(m_PageFormat) ; // Store the new
      * setting for landscape/portrait. // BADBAD: Should store more really (e.g.
      * paper choice). boolean landscape = (m_PageFormat.getOrientation() ==
@@ -1272,6 +1207,7 @@ public class MainFrame
 
     private final SoarCommandLineMXBean commandLineMXBean = new SoarCommandLineMXBean()
     {
+        @Override
         public String getName()
         {
             if (m_AgentFocus == null)
@@ -1279,16 +1215,11 @@ public class MainFrame
             return m_AgentFocus.GetAgentName();
         }
 
+        @Override
         public String executeCommandLine(final String line)
         {
             m_CommandLineResult = null;
-            getDisplay().syncExec(new Runnable()
-            {
-                public void run()
-                {
-                    m_CommandLineResult = executeCommandPrimeView(line, true);
-                }
-            });
+            getDisplay().syncExec(() -> m_CommandLineResult = executeCommandPrimeView(line, true));
             return m_CommandLineResult;
         }
 

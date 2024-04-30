@@ -37,6 +37,7 @@
 #include "xml.h"
 
 #include <ctype.h>
+#include <cinttypes>
 #include <stdlib.h>
 
 using namespace soar_TraceNames;
@@ -752,7 +753,7 @@ void print_trace_format_list(agent* thisAgent, trace_format* tf)
                 {
                     thisAgent->outputManager->printa(thisAgent, "%right[");
                 }
-                thisAgent->outputManager->printa_sf(thisAgent,  "%d,", tf->num);
+                thisAgent->outputManager->printa_sf(thisAgent,  "%d,", static_cast<int64_t>(tf->num));
                 print_trace_format_list(thisAgent, tf->data.subformat);
                 thisAgent->outputManager->printa(thisAgent, "]");
                 break;
@@ -1456,7 +1457,7 @@ growable_string trace_format_list_to_string(agent* thisAgent, trace_format* tf, 
             case DECISION_CYCLE_COUNT_TFT:
                 if (tparams.allow_cycle_counts)
                 {
-                    SNPRINTF(buf, GROWABLE_STRING_TRACE_FORMAT_LIST_TO_STRING_BUFFER_SIZE, "%lu", static_cast<long unsigned int>(thisAgent->d_cycle_count));
+                    SNPRINTF(buf, GROWABLE_STRING_TRACE_FORMAT_LIST_TO_STRING_BUFFER_SIZE, "%" SCNu64, thisAgent->d_cycle_count);
                     buf[GROWABLE_STRING_TRACE_FORMAT_LIST_TO_STRING_BUFFER_SIZE - 1] = 0; /* ensure null termination */
                     add_to_growable_string(thisAgent, &result, buf);
                 }
@@ -1468,7 +1469,7 @@ growable_string trace_format_list_to_string(agent* thisAgent, trace_format* tf, 
             case ELABORATION_CYCLE_COUNT_TFT:
                 if (tparams.allow_cycle_counts)
                 {
-                    SNPRINTF(buf, GROWABLE_STRING_TRACE_FORMAT_LIST_TO_STRING_BUFFER_SIZE, "%lu", static_cast<long unsigned int>(thisAgent->e_cycle_count));
+                    SNPRINTF(buf, GROWABLE_STRING_TRACE_FORMAT_LIST_TO_STRING_BUFFER_SIZE, "%" SCNu64, thisAgent->e_cycle_count);
                     buf[GROWABLE_STRING_TRACE_FORMAT_LIST_TO_STRING_BUFFER_SIZE - 1] = 0; /* ensure null termination */
                     add_to_growable_string(thisAgent, &result, buf);
                 }

@@ -100,12 +100,12 @@ namespace sml
     class RhsEventHandlerPlusData : public EventHandlerPlusData
     {
         public:
-            RhsEventHandler m_Handler ;
+            RhsEventHandlerCpp m_Handler ;
             std::string     m_FunctionName ;
 
             RhsEventHandlerPlusData() {}
 
-            RhsEventHandlerPlusData(int eventID, char const* pFunctionName, RhsEventHandler handler, void* userData, int callbackID) : EventHandlerPlusData(eventID, userData, callbackID)
+            RhsEventHandlerPlusData(int eventID, char const* pFunctionName, RhsEventHandlerCpp handler, int callbackID) : EventHandlerPlusData(eventID, nullptr, callbackID)
             {
                 m_Handler = handler ;
 
@@ -279,7 +279,7 @@ namespace sml
             /***
             ***   RHS functions and message event handlers use the same internal logic, although they look rather different to the user
             ***/
-            int InternalAddRhsFunction(smlRhsEventId id, char const* pRhsFunctionName, RhsEventHandler handler, void* pUserData, bool addToBack) ;
+            int InternalAddRhsFunction(smlRhsEventId id, char const* pRhsFunctionName, RhsEventHandlerCpp handler, bool addToBack) ;
             bool InternalRemoveRhsFunction(smlRhsEventId id, int callbackID) ;
 
             /*************************************************************
@@ -531,7 +531,7 @@ namespace sml
             * @returns The result of executing the run command.
             *          The output from during the run is sent to a different callback.
             *************************************************************/
-            char const* RunAllAgents(int numberSteps, smlRunStepSize stepSize = sml_DECISION, smlRunStepSize interleaveStepSize = sml_PHASE) ;
+            char const* RunAllAgents(int numberSteps, smlRunStepSize stepSize = sml_DECIDE, smlRunStepSize interleaveStepSize = sml_PHASE) ;
             char const* RunAllAgentsForever(smlRunStepSize interleaveStepSize = sml_PHASE) ;
 
             /*************************************************************
@@ -780,6 +780,15 @@ namespace sml
             *************************************************************/
             int AddRhsFunction(char const* pRhsFunctionName, RhsEventHandler handler, void* pUserData, bool addToBack = true) ;
 
+            /*****************************************************
+             * @brief Register a handler for an RHS (right hand side) function. This is functionally the
+             * same as the method with the same name that takes a function pointer, but it uses
+             * std::function instead, which is more ergonomic C++.
+             *
+             * @see sml::Kernel::AddRhsFunction(char const* pClientName, RhsEventHandler handler, void* pUserData, bool addToBack)
+            */
+            int AddRhsFunction(char const* pRhsFunctionName, RhsEventHandlerCpp handler, bool addToBack = true) ;
+
             /*************************************************************
             * @brief Unregister for a particular rhs function callback
             *        using the ID passed back from AddRhsFunction().
@@ -814,6 +823,14 @@ namespace sml
             * @returns Unique ID for this callback.  Required when unregistering this callback.
             *************************************************************/
             int RegisterForClientMessageEvent(char const* pClientName, ClientMessageHandler handler, void* pUserData, bool addToBack = true) ;
+            /*****************************************************
+             * @brief Register a handler for receiving generic messages sent from another client. This is
+             * functionally the same as the method with the same name that takes a function pointer, but it
+             * uses std::function instead, which is more ergonomic C++.
+             *
+             * @see sml::Kernel::RegisterForClientMessageEvent(char const* pClientName, ClientMessageHandler handler, void* pUserData, bool addToBack)
+            */
+            int RegisterForClientMessageEvent(char const* pClientName, ClientMessageHandlerCpp handler, bool addToBack = true) ;
 
             /*************************************************************
             * @brief Unregister for a particular client message

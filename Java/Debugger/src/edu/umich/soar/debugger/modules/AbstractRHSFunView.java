@@ -23,10 +23,11 @@ public abstract class AbstractRHSFunView extends AbstractUpdateView implements
         super.init(frame, doc, parentPane);
     }
 
-    protected String rhsFunName = new String();
+    protected String rhsFunName = "";
 
     protected boolean debugMessages = true;
 
+    @Override
     protected void registerForAgentEvents(Agent agent)
     {
         super.registerForAgentEvents(agent);
@@ -46,6 +47,7 @@ public abstract class AbstractRHSFunView extends AbstractUpdateView implements
         }
     }
 
+    @Override
     protected void unregisterForAgentEvents(Agent agent)
     {
         super.unregisterForAgentEvents(agent);
@@ -113,6 +115,7 @@ public abstract class AbstractRHSFunView extends AbstractUpdateView implements
 
     private String tempRHSFunName;
 
+    @Override
     protected void initProperties(
             ArrayList<PropertiesDialog.Property> properties)
     {
@@ -127,6 +130,7 @@ public abstract class AbstractRHSFunView extends AbstractUpdateView implements
                 debugMessages));
     }
 
+    @Override
     protected void processProperties(
             ArrayList<PropertiesDialog.Property> properties)
     {

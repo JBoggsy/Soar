@@ -2,6 +2,7 @@ package edu.umich.soar.debugger.modules;
 
 public class RHSNumberAccumulatorView extends RHSFunTextView
 {
+    @Override
     public String getModuleBaseName()
     {
         return "rhs_number_accumulator";
@@ -32,7 +33,7 @@ public class RHSNumberAccumulatorView extends RHSFunTextView
                     + ": set to clear" : "";
         }
 
-        double value = 0;
+        double value;
         try
         {
             value = Double.parseDouble(argument);

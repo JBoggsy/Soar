@@ -2,7 +2,9 @@
 #
 # SCons - a Software Constructor
 #
-# Copyright (c) 2001 - 2020 The SCons Foundation
+# MIT License
+#
+# Copyright The SCons Foundation
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -30,15 +32,15 @@ The files are split into directories named by the first few
 digits of the signature. The prefix length used for directory
 names can be changed by this script.
 """
-__revision__ = "scripts/scons-configure-cache.py c289977f8b34786ab6c334311e232886da7e8df1 2020-07-17 01:50:03 bdbaddog"
+__revision__ = "scripts/scons-configure-cache.py e353c45d68cf4144d396a66ecef58be064ef439f Tue, 01 Nov 2022 14:22:18 -0400 bdbaddog"
 
-__version__ = "4.0.1"
+__version__ = "4.4.0"
 
-__build__ = "c289977f8b34786ab6c334311e232886da7e8df1"
+__build__ = "e353c45d68cf4144d396a66ecef58be064ef439f"
 
-__buildsys__ = "ProDog2020"
+__buildsys__ = "M1DOG2021"
 
-__date__ = "2020-07-17 01:50:03"
+__date__ = "Tue, 01 Nov 2022 14:22:18 -0400"
 
 __developer__ = "bdbaddog"
 
@@ -47,7 +49,7 @@ import os
 import sys
 
 # python compatibility check
-if sys.version_info < (3, 5, 0):
+if sys.version_info < (3, 6, 0):
     msg = "scons: *** SCons version %s does not run under Python version %s.\n\
 Python >= 3.5 is required.\n"
     sys.stderr.write(msg % (__version__, sys.version.split()[0]))

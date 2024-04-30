@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * MainDoc.java
- * 
+ *
  * Created on 	Nov 10, 2003
  *
  * @author 		Doug
  * @version
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.doc;
@@ -25,7 +25,6 @@ import sml.smlSystemEventId;
 import sml.smlUpdateEventId;
 import sml.sml_Names;
 import sml.Kernel.RhsFunctionInterface;
-import sml.Kernel.UpdateEventInterface;
 import edu.umich.soar.debugger.FrameList;
 import edu.umich.soar.debugger.MainFrame;
 import edu.umich.soar.debugger.doc.DocumentThread2.CommandExecCommandLine;
@@ -38,12 +37,12 @@ import edu.umich.soar.debugger.general.AppProperties;
 import edu.umich.soar.debugger.modules.FoldingTextView;
 
 /********************************************************************************************
- * 
+ *
  * This class represents the soar process.
- * 
+ *
  * Debugger windows register here for interesting events sent to/from the soar
  * process.
- * 
+ *
  ********************************************************************************************/
 public class Document implements Kernel.AgentEventInterface,
         Kernel.SystemEventInterface
@@ -71,7 +70,7 @@ public class Document implements Kernel.AgentEventInterface,
      * This object is used to get strings for Soar commands in a version
      * independent way
      */
-    private SoarCommands m_SoarCommands = new SoarCommands();
+    private final SoarCommands m_SoarCommands = new SoarCommands();
 
     /**
      * The properties for this application (holds user preferences). Version
@@ -84,9 +83,9 @@ public class Document implements Kernel.AgentEventInterface,
      * The list of all modules (types of debugger windows) that exist. This is a
      * list of types, not a list of window instances.
      */
-    private ModuleList m_ModuleList = new ModuleList();
+    private final ModuleList m_ModuleList = new ModuleList();
 
-    private SoarChangeGenerator m_SoarChangeGenerator = new SoarChangeGenerator();
+    private final SoarChangeGenerator m_SoarChangeGenerator = new SoarChangeGenerator();
 
     /**
      * Stores the pointer to the Soar kernel we are currently interacting with
@@ -107,7 +106,7 @@ public class Document implements Kernel.AgentEventInterface,
      * The list of all main frames in the application -- each frame has a menu
      * bar
      */
-    private FrameList m_FrameList = new FrameList();
+    private final FrameList m_FrameList = new FrameList();
 
     /** We have to pump messages on this display to keep the app alive */
     private Display m_Display = null;
@@ -142,14 +141,14 @@ public class Document implements Kernel.AgentEventInterface,
      * simpler, but it means if the user does something like pull down a menu
      * (or do some other blocking action in the UI) it will cause Soar to pause
      * because it's blocked in our thread.
-     * 
+     *
      * At this point I don't think either method clearly dominates so I'm
      * keeping both around while I play with them. We can certainly reverse this
      * choice later if we wish.
      */
     public static final boolean kDocInOwnThread = true;
 
-    private DocumentThread2 m_DocumentThread = null;
+    private final DocumentThread2 m_DocumentThread;
 
     public static final boolean kShutdownInSeparateThread = true;
 
@@ -319,15 +318,15 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Note: This method is NOT currently going to return the same Agent object
      * on repeated calls for the same agent name. This means you cannot test
      * equality with "agent1 == agent2" or "agent1.equals(agent2)" So for now
      * I'm including the isSameAgent method below.
-     * 
+     *
      * BADBAD: Later we may wish to cache the agent objects locally and always
      * return the same java object here (and from getAgentByIndex()).
-     * 
+     *
      * @param name
      * @return
      ********************************************************************************************/
@@ -356,22 +355,23 @@ public class Document implements Kernel.AgentEventInterface,
 
         DocumentThread2.Command command = new DocumentThread2.Command(agent)
         {
+            @Override
             protected void execute()
             {
                 boolean res = m_Agent.IsProductionLoaded(productionName);
-                recordResult(Boolean.valueOf(res));
-            };
+                recordResult(res);
+            }
         };
 
         Boolean result = (Boolean) this.sendAgentCommandGeneral(command);
-        return result.booleanValue();
+        return result;
     }
 
     /********************************************************************************************
-     * 
+     *
      * We maintain a list of MainFrames in the debugger. A MainFrame has a menu
      * bar and children.
-     * 
+     *
      ********************************************************************************************/
     public String addFrame(MainFrame frame)
     {
@@ -410,10 +410,10 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Shutdown. We generally only call this when we're about to terminate the
      * debugger.
-     * 
+     *
      ********************************************************************************************/
     public void close(boolean closingApp)
     {
@@ -459,27 +459,22 @@ public class Document implements Kernel.AgentEventInterface,
         // in case the agent touches the output link
         m_Kernel.RegisterForUpdateEvent(
                 smlUpdateEventId.smlEVENT_AFTER_ALL_OUTPUT_PHASES,
-                new UpdateEventInterface()
+            (eventID, data, kernel, runFlags) -> {
+                for (int i = 0; i < m_Kernel.GetNumberAgents(); ++i)
                 {
-                    public void updateEventHandler(int eventID, Object data,
-                            Kernel kernel, int runFlags)
-                    {
-                        for (int i = 0; i < m_Kernel.GetNumberAgents(); ++i)
-                        {
-                            m_Kernel.GetAgentByIndex(i)
-                                    .ClearOutputLinkChanges();
-                        }
-                    }
-                }, null);
+                    m_Kernel.GetAgentByIndex(i)
+                            .ClearOutputLinkChanges();
+                }
+            }, null);
 
     }
 
     /********************************************************************************************
-     * 
+     *
      * Start an instance of Soar running in the debugger and create a first
      * agent. This version uses all default settings. You can also call the
      * version below directly which offers more control.
-     * 
+     *
      * @return Returns the newly created agent.
      ********************************************************************************************/
     public Agent startLocalKernel()
@@ -488,10 +483,10 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Start an instance of Soar running in the debugger and create a first
      * agent.
-     * 
+     *
      * @param portToListenOn
      *            This port can be used by other external clients to send
      *            commands to the kernel running inside this debugger. (Probably
@@ -570,21 +565,20 @@ public class Document implements Kernel.AgentEventInterface,
         }
 
         // Start with an agent...without this a kernel's not much use.
-        Agent agent = createAgentNoNewWindow(agentName);
 
-        return agent;
+        return createAgentNoNewWindow(agentName);
     }
 
     /********************************************************************************************
-     * 
+     *
      * There are times when we'd like to execute a command but do so after the
      * agent has been created AND the window to show its output has been
      * created.
-     * 
+     *
      * Waiting for both of these to occur requires listening for the right event
      * and placing a request into the command queue in the right way. This
      * method shows how to do that.
-     * 
+     *
      * @param agentName
      * @param frame
      * @param sourcePath
@@ -608,6 +602,7 @@ public class Document implements Kernel.AgentEventInterface,
             // so instead we use a flag to ensure it only executes one time.
             boolean m_Executed = false;
 
+            @Override
             public void soarAgentListChanged(SoarAgentEvent e)
             {
                 if (m_Executed)
@@ -627,22 +622,19 @@ public class Document implements Kernel.AgentEventInterface,
                     // agent would still execute the command).
                     m_Executed = true;
                     Display display = frame.getDisplay();
-                    display.asyncExec(new Runnable()
-                    {
-                        public void run()
-                        {
-                            frame.executeCommandPrimeView(command, true);
+                    display.asyncExec(() -> {
+                        frame.executeCommandPrimeView(command, true);
 
-                            // This generally only makes sense if we're sourcing
-                            // a file that includes a "run" command
-                            // (i.e. to actually do useful work)
-                            if (quitOnFinish)
-                                frame.executeCommandPrimeView("quit", true);
-                        }
+                        // This generally only makes sense if we're sourcing
+                        // a file that includes a "run" command
+                        // (i.e. to actually do useful work)
+                        if (quitOnFinish)
+                            frame.executeCommandPrimeView("quit", true);
                     });
                 }
             }
 
+            @Override
             public void soarConnectionChanged(SoarConnectionEvent e)
             {
             }
@@ -689,18 +681,18 @@ public class Document implements Kernel.AgentEventInterface,
      * death if it we're shutting down and the document thread won't // stop in
      * a reasonable ammount of time. if (this.m_Kernel.GetNumberAgents() > 0 &&
      * kDocInOwnThread) { m_DocumentThread.askToStop() ;
-     * 
+     *
      * int count = 5 ; while (m_DocumentThread.isAlive()) { try {
      * Thread.sleep(100) ; } catch (InterruptedException e) { }
-     * 
+     *
      * count-- ; if (count == 0) { System.err.println("Forced system shutdown")
      * ; System.exit(0) ; } } } }
      */
 
     /********************************************************************************************
-     * 
+     *
      * Shutdown our local Soar instance, deleting any agents etc.
-     * 
+     *
      ********************************************************************************************/
     public boolean stopLocalKernel(final boolean closingApp,
             final boolean preserveWindows)
@@ -714,76 +706,72 @@ public class Document implements Kernel.AgentEventInterface,
 
         // Experimental shutdown code where we try to stop soar
         // before we delete the kernel.
-        Thread shutdown = new Thread()
-        {
-            public void run()
+        Thread shutdown = new Thread(() -> {
+            if (m_Kernel.GetNumberAgents() > 0)
             {
-                if (m_Kernel.GetNumberAgents() > 0)
+                // We don't currently support sending commands without an
+                // agent so
+                // choose the first agent
+                Agent first = m_Kernel.GetAgentByIndex(0);
+
+                // System.err.println("About to call stop-soar") ;
+                sendAgentCommand(first, getSoarCommands().getStopCommand());
+
+                while (m_DocumentThread.isBusy())
                 {
-                    // We don't currently support sending commands without an
-                    // agent so
-                    // choose the first agent
-                    Agent first = m_Kernel.GetAgentByIndex(0);
-
-                    // System.err.println("About to call stop-soar") ;
-                    sendAgentCommand(first, getSoarCommands().getStopCommand());
-
-                    while (m_DocumentThread.isBusy())
+                    // System.err.println("Waiting for Soar to stop") ;
+                    try
                     {
-                        // System.err.println("Waiting for Soar to stop") ;
-                        try
-                        {
-                            Thread.sleep(100);
-                        }
-                        catch (InterruptedException e)
-                        {
-                        }
+                        Thread.sleep(100);
+                    }
+                    catch (InterruptedException e)
+                    {
                     }
                 }
-
-                if (closingApp)
-                {
-                    m_DocumentThread.askToStop();
-
-                    while (m_DocumentThread.isAlive())
-                    {
-                        // System.err.println("Waiting for doc thread to stop")
-                        // ;
-                        try
-                        {
-                            Thread.sleep(100);
-                        }
-                        catch (InterruptedException e)
-                        {
-                        }
-                    }
-                }
-
-                // If we want to keep our windows open suppress
-                // the "close on destroy" logic
-                if (preserveWindows)
-                    setSuppressCloseWindow(true);
-
-                // Deletes all agents and sends appropriate events
-                kernelToStop.Shutdown();
-
-                // Actually deletes the kernel
-                kernelToStop.delete();
-
-                m_Kernel = null;
-                m_IsStopping = false;
-
-                // Let our listeners know we killed the kernel
-                fireSoarConnectionChanged();
-
-                // Turn off suppression of this event.
-                // (This returns this to the user's control)
-                if (preserveWindows)
-                    setSuppressCloseWindow(false);
-
-                // System.err.println("Exiting shutdown thread") ;
             }
-        };
+
+            if (closingApp)
+            {
+                m_DocumentThread.askToStop();
+
+                while (m_DocumentThread.isAlive())
+                {
+                    // System.err.println("Waiting for doc thread to stop")
+                    // ;
+                    try
+                    {
+                        Thread.sleep(100);
+                    }
+                    catch (InterruptedException e)
+                    {
+                    }
+                }
+            }
+
+            // If we want to keep our windows open suppress
+            // the "close on destroy" logic
+            if (preserveWindows)
+                setSuppressCloseWindow(true);
+
+            // Deletes all agents and sends appropriate events
+            kernelToStop.Shutdown();
+
+            // Actually deletes the kernel
+            kernelToStop.delete();
+
+            m_Kernel = null;
+            m_IsStopping = false;
+
+            // Let our listeners know we killed the kernel
+            fireSoarConnectionChanged();
+
+            // Turn off suppression of this event.
+            // (This returns this to the user's control)
+            if (preserveWindows)
+                setSuppressCloseWindow(false);
+
+            // System.err.println("Exiting shutdown thread") ;
+        });
 
         // To do a truly clean shutdown we need to stop soar
         // if it's running. That may be safest from another thread.
@@ -797,9 +785,9 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Connect to a remote instance of Soar that is already running.
-     * 
+     *
      * @param ipAddress
      *            The ip address (e.g. "205.233.102.121" to connect to. null =>
      *            local ip)
@@ -895,16 +883,16 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Disconnect from the remote kernel we were working with. This does not
      * shutdown that kernel just stops us sending commands to and from it.
-     * 
+     *
      ********************************************************************************************/
     public boolean remoteDisconnect()
     {
         if (!m_IsRemote)
             return false;
-        
+
         if (m_Kernel == null)
             return false;
 
@@ -934,22 +922,18 @@ public class Document implements Kernel.AgentEventInterface,
         // when it had finished will all commands...but that's pretty
         // complicated so I'm going with a timer.
         final Kernel kernelToDelete = m_Kernel;
-        Thread delayedDelete = new Thread()
-        {
-            public void run()
+        Thread delayedDelete = new Thread(() -> {
+            try
             {
-                try
-                {
-                    sleep(1000);
-                }
-                catch (Exception e)
-                {
-                }
-                System.out
-                        .println("Delayed deletion of remote connection to kernel object");
-                kernelToDelete.delete();
+                Thread.sleep(1000);
             }
-        };
+            catch (Exception e)
+            {
+            }
+            System.out
+                    .println("Delayed deletion of remote connection to kernel object");
+            kernelToDelete.delete();
+        });
         delayedDelete.start();
 
         m_Kernel = null;
@@ -962,10 +946,10 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Returns true if we have some form of Soar instance running (local or
      * remote).
-     * 
+     *
      ********************************************************************************************/
     public boolean isConnected()
     {
@@ -973,9 +957,9 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Returns true if the current connection is a remote connection.
-     * 
+     *
      ********************************************************************************************/
     public boolean isRemote()
     {
@@ -983,16 +967,17 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /********************************************************************************************
-     * 
+     *
      * Returns true we're in the process of stopping the current connection and
      * closing it.
-     * 
+     *
      ********************************************************************************************/
     public boolean isStopping()
     {
         return m_IsStopping;
     }
 
+    @Override
     public void systemEventHandler(int eventID, Object data, Kernel kernel)
     {
         if (eventID == smlSystemEventId.smlEVENT_INTERRUPT_CHECK.swigValue())
@@ -1015,10 +1000,10 @@ public class Document implements Kernel.AgentEventInterface,
                     m_DocumentThread.executePending("Interrupt check");
             }
 
-            return;
         }
     }
 
+    @Override
     public void agentEventHandler(int eventID, Object data, String agentName)
     {
         final Agent agent = getAgent(agentName);
@@ -1044,23 +1029,19 @@ public class Document implements Kernel.AgentEventInterface,
                 Display display = getFirstFrame().getDisplay();
                 final Document doc = this;
 
-                display.asyncExec(new Runnable()
-                {
-                    public void run()
-                    {
-                        MainFrame frame = MainFrame.createNewFrame(
-                                getFirstFrame().getDisplay(), doc);
-                        frame.setAgentFocus(agent);
-                        doc.fireAgentAdded(agent);
+                display.asyncExec(() -> {
+                    MainFrame frame = MainFrame.createNewFrame(
+                            getFirstFrame().getDisplay(), doc);
+                    frame.setAgentFocus(agent);
+                    doc.fireAgentAdded(agent);
 
-                        // Let the rest of the world know that the debugger is
-                        // up and ready now for this agent
-                        m_Kernel
-                                .SetConnectionInfo(kConnectionName, sml_Names
-                                        .getKStatusReady(), sml_Names
-                                        .getKStatusReady());
+                    // Let the rest of the world know that the debugger is
+                    // up and ready now for this agent
+                    m_Kernel
+                            .SetConnectionInfo(kConnectionName, sml_Names
+                                    .getKStatusReady(), sml_Names
+                                    .getKStatusReady());
 
-                    }
                 });
             }
             else
@@ -1108,7 +1089,7 @@ public class Document implements Kernel.AgentEventInterface,
             }
             catch (Throwable t)
             {
-                System.out.println(t.toString());
+                System.err.println(t);
                 t.printStackTrace();
             }
         }
@@ -1182,8 +1163,7 @@ public class Document implements Kernel.AgentEventInterface,
                 commandLine, response);
         String result = (String) sendAgentCommandGeneral(command);
 
-        boolean res = (result != null && result.equals("true"));
-        return res;
+        return (result != null && result.equals("true"));
     }
 
     /*
@@ -1194,16 +1174,16 @@ public class Document implements Kernel.AgentEventInterface,
      */
 
     /*******************************************************************************************
-     * 
+     *
      * If response is null we execute the command and return the string form. If
      * response is provided we execute the command and return the XML (and the
      * string return value is either "true" or "false")
-     * 
+     *
      * @param agent
      * @param commandLine
      * @param response
      * @return
-     ******************************************************************************************* 
+     *******************************************************************************************
      */
     protected Object sendAgentCommandGeneral(DocumentThread2.Command command)
     {
@@ -1246,11 +1226,10 @@ public class Document implements Kernel.AgentEventInterface,
         if (!m_DocumentThread.isAlive())
             return "System shutdown";
 
-        Object result = m_DocumentThread.getExecutedCommandResult(command);
-        return result;
+        return m_DocumentThread.getExecutedCommandResult(command);
     }
 
-    HashMap<String, Long> m_RHSFunctions = new HashMap<String, Long>();
+    final HashMap<String, Long> m_RHSFunctions = new HashMap<>();
 
     public boolean isRHSFunctionRegistered(String functionName)
     {
@@ -1258,12 +1237,12 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /*******************************************************************************************
-     * 
+     *
      * Wrapper for RHS function registration to avoid registration of multiple
      * handlers.
-     * 
+     *
      * @return true if the function was successfully registered
-     ******************************************************************************************* 
+     *******************************************************************************************
      */
     public boolean registerRHSFunction(String functionName,
             RhsFunctionInterface handlerObject, Object callbackData)
@@ -1274,7 +1253,7 @@ public class Document implements Kernel.AgentEventInterface,
         Long callbackID = this.m_Kernel.AddRhsFunction(functionName,
                 handlerObject, callbackData);
 
-        if (callbackID.equals(-1))
+        if (callbackID.equals(-1L))
             return false;
 
         this.m_RHSFunctions.put(functionName, callbackID);
@@ -1282,12 +1261,12 @@ public class Document implements Kernel.AgentEventInterface,
     }
 
     /*******************************************************************************************
-     * 
+     *
      * Wrapper for RHS function un-registration to keep state to avoid
      * registration of multiple handlers.
-     * 
+     *
      * @return true if the function was successfully unregistered
-     ******************************************************************************************* 
+     *******************************************************************************************
      */
     public boolean unregisterRHSFunction(String functionName)
     {

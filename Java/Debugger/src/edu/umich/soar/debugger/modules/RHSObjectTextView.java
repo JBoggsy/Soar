@@ -10,6 +10,7 @@ import sml.Kernel;
 public class RHSObjectTextView extends RHSFunTextView implements
         Kernel.RhsFunctionInterface
 {
+    @Override
     public String getModuleBaseName()
     {
         return "rhs_object_text";
@@ -101,7 +102,7 @@ public class RHSObjectTextView extends RHSFunTextView implements
         setTextSafely(output.toString());
     }
 
-    public class OrderedIdentifier implements Comparable<OrderedIdentifier>
+    public static class OrderedIdentifier implements Comparable<OrderedIdentifier>
     {
 
         public OrderedIdentifier(String id)
@@ -114,11 +115,11 @@ public class RHSObjectTextView extends RHSFunTextView implements
             return this.id;
         }
 
-        protected String id;
+        protected final String id;
 
         protected int order = 0;
 
-        protected String attributes = new String();
+        protected String attributes = "";
 
         protected double doubleOrder = 0;
 
@@ -128,6 +129,7 @@ public class RHSObjectTextView extends RHSFunTextView implements
             doubleOrder = 0;
         }
 
+        @Override
         public int compareTo(OrderedIdentifier other)
         {
             if (this.order == other.order)
@@ -205,10 +207,10 @@ public class RHSObjectTextView extends RHSFunTextView implements
     }
 
     // Identifier to metadata map
-    HashMap<String, OrderedIdentifier> idToOrdered = new HashMap<String, OrderedIdentifier>();
+    final HashMap<String, OrderedIdentifier> idToOrdered = new HashMap<>();
 
     // The sorted objects
-    TreeSet<OrderedIdentifier> sortedIdentifiers = new TreeSet<OrderedIdentifier>();
+    final TreeSet<OrderedIdentifier> sortedIdentifiers = new TreeSet<>();
 
     @Override
     public String rhsFunctionHandler(int eventID, Object data,
@@ -241,7 +243,7 @@ public class RHSObjectTextView extends RHSFunTextView implements
                         + ": --order requires an argument";
             }
 
-            int value = 0;
+            int value;
             try
             {
                 value = Integer.parseInt(commandLine[2]);

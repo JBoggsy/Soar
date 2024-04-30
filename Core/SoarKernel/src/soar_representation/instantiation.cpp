@@ -32,7 +32,7 @@
 #include "working_memory.h"
 #include "xml.h"
 
-#include <assert.h>
+#include <cassert>
 #include <list>
 #include <stdlib.h>
 #include <string>
@@ -920,7 +920,6 @@ void add_deep_copy_prefs_to_inst(agent* thisAgent, preference* pref, instantiati
 
     deep_copy_wme* lNewDC_WME;
     goal_stack_level glbDeepCopyWMELevel = 0;
-    condition* prev_cond = NULL;
     preference* lPref;
 
     glbDeepCopyWMELevel = pref->id->id->level;

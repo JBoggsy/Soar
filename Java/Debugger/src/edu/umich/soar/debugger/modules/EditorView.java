@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * EditorView.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Apr 30, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.modules;
@@ -37,9 +37,9 @@ import edu.umich.soar.debugger.helpers.FormDataHelper;
 import edu.umich.soar.debugger.manager.Pane;
 
 /************************************************************************
- * 
+ *
  * Provides a window where a production can be edited and then loaded into Soar.
- * 
+ *
  ************************************************************************/
 public class EditorView extends AbstractView
 {
@@ -58,7 +58,7 @@ public class EditorView extends AbstractView
     protected boolean m_ComboAtTop = true;
 
     /** The history of commands for this window */
-    protected CommandHistory m_CommandHistory = new CommandHistory();
+    protected final CommandHistory m_CommandHistory = new CommandHistory();
 
     // The constructor must take no arguments so it can be called
     // from the loading code and the new window dialog
@@ -66,49 +66,55 @@ public class EditorView extends AbstractView
     {
     }
 
+    @Override
     public String getModuleBaseName()
     {
         return "editor";
     }
 
+    @Override
     public boolean isFixedSizeView()
     {
         return false;
     }
 
     /************************************************************************
-     * 
+     *
      * Returns true if this window can display output from commands executed
      * through the "executeAgentCommand" method.
-     * 
+     *
      *************************************************************************/
+    @Override
     public boolean canDisplayOutput()
     {
         return false;
     }
 
     /********************************************************************************************
-     * 
+     *
      * Copy current selection to the clipboard.
-     * 
+     *
      ********************************************************************************************/
+    @Override
     public void copy()
     {
         m_Text.copy();
     }
 
     /********************************************************************************************
-     * 
+     *
      * Execute whatever is on the clipboard as a command. Overriding the default
      * behavior to produce a simple paste into the window. (Usually we intercept
      * this and execute what's on the command line)
-     * 
+     *
      ********************************************************************************************/
+    @Override
     public void paste()
     {
         m_Text.paste();
     }
 
+    @Override
     public void setTextFont(Font f)
     {
         m_Text.setFont(f);
@@ -187,9 +193,9 @@ public class EditorView extends AbstractView
     }
 
     /********************************************************************************************
-     * 
+     *
      * Create the window that will display the production being edited
-     * 
+     *
      ********************************************************************************************/
     protected void createDisplayControl(Composite parent)
     {
@@ -200,6 +206,7 @@ public class EditorView extends AbstractView
         // Listen for Ctrl-Return to load the production immediately
         m_Text.addKeyListener(new KeyAdapter()
         {
+            @Override
             public void keyPressed(KeyEvent e)
             {
                 textKeyPressed(e);
@@ -212,6 +219,7 @@ public class EditorView extends AbstractView
         m_LoadButton.setText("Load production [Ctrl-Return]");
         m_LoadButton.addSelectionListener(new SelectionAdapter()
         {
+            @Override
             public void widgetSelected(SelectionEvent e)
             {
                 loadProduction();
@@ -235,7 +243,7 @@ public class EditorView extends AbstractView
     {
         String production = getProduction();
 
-        if (production != null && production != "")
+        if (production != null && !production.isEmpty())
         {
             m_Frame.getPrimeView().executeAgentCommand(production, true);
         }
@@ -245,11 +253,12 @@ public class EditorView extends AbstractView
      * @param frame
      * @param doc
      * @param parentPane
-     * 
+     *
      * @see edu.umich.soar.debugger.modules.AbstractView#init(edu.umich.soar.debugger.MainFrame,
      *      edu.umich.soar.debugger.doc.Document,
      *      edu.umich.soar.debugger.manager.Pane)
      ********************************************************************************************/
+    @Override
     public void init(MainFrame frame, Document doc, Pane parentPane)
     {
         setValues(frame, doc, parentPane);
@@ -266,6 +275,7 @@ public class EditorView extends AbstractView
         // presses return
         m_CommandCombo.addKeyListener(new KeyAdapter()
         {
+            @Override
             public void keyPressed(KeyEvent e)
             {
                 comboKeyPressed(e);
@@ -274,8 +284,7 @@ public class EditorView extends AbstractView
 
         // Decide how many rows to show in the combo list
         m_CommandCombo
-                .setVisibleItemCount(CommandHistory.kMaxHistorySize > 10 ? 10
-                        : CommandHistory.kMaxHistorySize);
+                .setVisibleItemCount(Math.min(CommandHistory.kMaxHistorySize, 10));
 
         // Create the control that will display output from the commands
         createDisplayControl(m_Container);
@@ -350,10 +359,11 @@ public class EditorView extends AbstractView
         String result = m_Document.sendAgentCommand(getAgentFocus(),
                 commandLine);
 
-        if (result != null && result != "")
+        if (result != null && !result.isEmpty())
             m_Text.setText(result);
     }
 
+    @Override
     public JavaElementXML convertToXML(String tagName, boolean storeContent)
     {
         JavaElementXML element = new JavaElementXML(tagName);
@@ -383,8 +393,9 @@ public class EditorView extends AbstractView
         return element;
     }
 
+    @Override
     public void loadFromXML(MainFrame frame, Document doc, Pane parent,
-            JavaElementXML element) throws Exception
+                            JavaElementXML element) throws Exception
     {
         setValues(frame, doc, parent);
 
@@ -405,55 +416,66 @@ public class EditorView extends AbstractView
         makeComboBoxMatchHistory(true);
     }
 
+    @Override
     public String executeAgentCommand(String command, boolean echoCommand)
     {
         return null;
     }
 
+    @Override
     public void displayText(String text)
     {
     }
 
+    @Override
     public boolean setFocus()
     {
         return false;
     }
 
+    @Override
     public boolean hasFocus()
     {
         return false;
     }
 
+    @Override
     protected void fillInContextMenu(Menu contextMenu, Control control,
-            int mouseX, int mouseY)
+                                     int mouseX, int mouseY)
     {
         fillWindowMenu(contextMenu, false, true);
     }
 
+    @Override
     public boolean find(String text, boolean searchDown, boolean matchCase,
-            boolean wrap, boolean searchHiddenText)
+                        boolean wrap, boolean searchHiddenText)
     {
         return false;
     }
 
+    @Override
     protected void registerForAgentEvents(Agent agent)
     {
     }
 
+    @Override
     protected void unregisterForAgentEvents(Agent agent)
     {
     }
 
+    @Override
     protected void clearAgentEvents()
     {
     }
 
+    @Override
     public void showProperties()
     {
         m_Frame.ShowMessageBox("Properties",
                 "There are currently no properties for this view");
     }
 
+    @Override
     public void clearDisplay()
     {
         m_Text.setText("");

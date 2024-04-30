@@ -27,6 +27,8 @@
 #include "run_soar.h"
 #include "symbol_manager.h"
 
+#include <sstream>
+
 /* -----------------------------------------------------------------
                        First Letter From Symbol
 
@@ -79,7 +81,6 @@ bool make_string_rereadable(std::string &pStr)
 {
     bool possible_id, possible_var, possible_sc, possible_ic, possible_fc;
     bool is_rereadable;
-    bool has_angle_bracket;
 
     const char* pCStr = pStr.c_str();
     short pLength = pStr.size();
@@ -87,7 +88,7 @@ bool make_string_rereadable(std::string &pStr)
     soar::Lexer::determine_possible_symbol_types_for_string(pCStr, pLength,
             &possible_id, &possible_var, &possible_sc, &possible_ic, &possible_fc, &is_rereadable);
 
-//    has_angle_bracket = pCStr[0] == '<' || pCStr[pLength - 1] == '>';
+    // bool has_angle_bracket = pCStr[0] == '<' || pCStr[pLength - 1] == '>';
 
     if ((!possible_sc)   || possible_var || possible_ic || possible_fc || possible_id || (!is_rereadable))
     {
@@ -131,14 +132,12 @@ void Symbol::update_cached_lti_print_str(bool force_creation)
     }
 }
 
-char* Symbol::to_string(bool rereadable, bool showLTILink, char* dest, size_t dest_size)
+char* Symbol::to_string(bool rereadable, bool showLTILink, char* dest, size_t dest_size, const int decimal_precision)
 {
-
-    bool possible_id, possible_var, possible_sc, possible_ic, possible_fc;
-    bool is_rereadable;
-    bool has_angle_bracket;
     bool wasModified;
     std::string lStr;
+    char *allocated;
+    std::ostringstream string_stream;
 
     switch (symbol_type)
     {
@@ -214,7 +213,8 @@ char* Symbol::to_string(bool rereadable, bool showLTILink, char* dest, size_t de
             }
 
         case FLOAT_CONSTANT_SYMBOL_TYPE:
-            if (fc->cached_print_str)
+            // we cache the string rendered using default precision, which is used by most of the codebase
+            if (decimal_precision == DEFAULT_DECIMAL_PRECISION && fc->cached_print_str)
              {
                 if (!dest)
                  {
@@ -225,13 +225,19 @@ char* Symbol::to_string(bool rereadable, bool showLTILink, char* dest, size_t de
                      return dest;
                  }
              }
-            lStr = std::to_string(fc->value);
-            fc->cached_print_str =  make_memory_block_for_string(fc->thisAgent, lStr.c_str());
+
+            string_stream << std::setprecision(decimal_precision) <<  std::fixed << fc->value;
+            allocated = make_memory_block_for_string(fc->thisAgent, string_stream.str().c_str());
+
+            if (decimal_precision == DEFAULT_DECIMAL_PRECISION)
+            {
+                fc->cached_print_str = allocated;
+            }
             if (!dest)
             {
-                return fc->cached_print_str;
+                return allocated;
             } else {
-                strcpy(dest, fc->cached_print_str);
+                strcpy(dest, allocated);
                 dest[dest_size - 1] = 0; /* ensure null termination */
                 return dest;
             }

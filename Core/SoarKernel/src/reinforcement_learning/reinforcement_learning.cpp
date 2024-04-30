@@ -20,6 +20,7 @@
 
 #include <cstdlib>
 #include <cmath>
+#include <cinttypes>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -573,7 +574,6 @@ Symbol* rl_build_template_instantiation(agent* thisAgent, instantiation* my_temp
     }
 
         production* my_template = my_template_instance->prod;
-        char first_letter;
         double init_value = 0;
         condition* cond_top, *cond_bottom;
 
@@ -601,7 +601,7 @@ Symbol* rl_build_template_instantiation(agent* thisAgent, instantiation* my_temp
 
         // make new production
         thisAgent->name_of_production_being_reordered = new_name_symbol->sc->name;
-        if (new_action && reorder_and_validate_lhs_and_rhs(thisAgent, &cond_top, &new_action, false))
+        if (new_action && reorder_and_validate_lhs_and_rhs(thisAgent, &cond_top, &new_action, false) == reorder_success)
         {
             production* new_production = make_production(thisAgent, USER_PRODUCTION_TYPE, new_name_symbol, my_template->name->sc->name, &cond_top, &new_action, false, NULL);
 
@@ -765,7 +765,7 @@ void rl_store_data(agent* thisAgent, Symbol* goal, preference* cand)
                 (data->gap_age == 0) && !data->prev_op_rl_rules->empty())
         {
             char buf[256];
-            SNPRINTF(buf, 254, "gap started (%c%llu)", goal->id->name_letter, static_cast<long long unsigned>(goal->id->name_number));
+            SNPRINTF(buf, 254, "gap started (%c%" SCNu64 ")", goal->id->name_letter, goal->id->name_number);
 
             thisAgent->outputManager->printa(thisAgent,  buf);
             xml_generate_warning(thisAgent, buf);
@@ -823,7 +823,7 @@ void rl_perform_update(agent* thisAgent, double op_value, bool op_rl, Symbol* go
             if (data->gap_age && using_gaps && thisAgent->trace_settings[ TRACE_RL_SYSPARAM ])
             {
                 char buf[256];
-                SNPRINTF(buf, 254, "gap ended (%c%llu)", goal->id->name_letter, static_cast<long long unsigned>(goal->id->name_number));
+                SNPRINTF(buf, 254, "gap ended (%c%" SCNu64 ")", goal->id->name_letter, goal->id->name_number);
 
                 thisAgent->outputManager->printa(thisAgent,  buf);
                 xml_generate_warning(thisAgent, buf);
@@ -987,7 +987,6 @@ void rl_perform_update(agent* thisAgent, double op_value, bool op_rl, Symbol* go
                     }
 
                     // Change value of rule
-                    Symbol* lSym = rhs_value_to_symbol(prod->action_list->referent);
                     deallocate_rhs_value(thisAgent, prod->action_list->referent);
                     prod->action_list->referent = allocate_rhs_value_for_symbol_no_refcount(thisAgent, thisAgent->symbolManager->make_float_constant(new_combined), 0, 0);
 

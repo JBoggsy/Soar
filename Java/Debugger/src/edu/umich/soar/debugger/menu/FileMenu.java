@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * FileMenu.java
- * 
+ *
  * Created on 	Nov 20, 2003
  *
  * @author 		Doug
  * @version
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.menu;
@@ -20,9 +20,9 @@ import edu.umich.soar.debugger.doc.Document;
 import edu.umich.soar.debugger.general.SaveLoad;
 
 /********************************************************************************************
- * 
+ *
  * The file menu
- * 
+ *
  ********************************************************************************************/
 public class FileMenu
 {
@@ -30,45 +30,50 @@ public class FileMenu
 
     private Document m_Document = null;
 
-    private AbstractAction m_LoadSource = new AbstractAction(
+    private final AbstractAction m_LoadSource = new AbstractAction(
             "Load &source file...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             loadSource();
         }
     };
 
-    private AbstractAction m_ChangeDirectory = new AbstractAction(
+    private final AbstractAction m_ChangeDirectory = new AbstractAction(
             "&Change current folder...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             changeDirectory();
         }
     };
 
-    private AbstractAction m_LoadRete = new AbstractAction(
+    private final AbstractAction m_LoadRete = new AbstractAction(
             "&Load production memory (rete)...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             loadRete(e);
         }
     };
 
-    private AbstractAction m_SaveRete = new AbstractAction(
+    private final AbstractAction m_SaveRete = new AbstractAction(
             "Save production memory (&rete)...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             saveRete(e);
         }
     };
 
-    private AbstractAction m_LogNewFile = new AbstractAction(
+    private final AbstractAction m_LogNewFile = new AbstractAction(
             "Log &output to file...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             logNewFile(e);
@@ -84,24 +89,27 @@ public class FileMenu
     // private AbstractAction m_LogStatus = new
     // AbstractAction("Logging &status") { public void
     // actionPerformed(ActionEvent e) { logStatus(e) ; } } ;
-    private AbstractAction m_Load = new AbstractAction("Load &window layout...")
+    private final AbstractAction m_Load = new AbstractAction("Load &window layout...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             loadPerformed(e);
         }
     };
 
-    private AbstractAction m_Save = new AbstractAction("Save w&indow layout...")
+    private final AbstractAction m_Save = new AbstractAction("Save w&indow layout...")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             savePerformed(e);
         }
     };
 
-    private AbstractAction m_Exit = new AbstractAction("E&xit")
+    private final AbstractAction m_Exit = new AbstractAction("E&xit")
     {
+        @Override
         public void actionPerformed(ActionEvent e)
         {
             exitPerformed(e);
@@ -265,7 +273,7 @@ public class FileMenu
          * String filename = SaveLoad.SaveFileDialog(m_Frame.getWindow(), new
          * String[] { "*.txt" }, new String[] { "Log file (*.txt)" } ,
          * m_Frame.getAppProperties(), "LogSave", "LogLoad") ;
-         * 
+         *
          * if (filename != null) { String sourceLine =
          * m_Document.getSoarCommands().getLogNewCommand(filename) ;
          * m_Frame.executeCommandPrimeView(sourceLine, true) ; }
@@ -280,7 +288,7 @@ public class FileMenu
     // String filename = SaveLoad.LoadFileDialog(m_Frame.getWindow(), new
     // String[] { "*.txt" }, new String[] { "Log file (*.txt)" } ,
     // m_Frame.getAppProperties(), "LogSave", "LogLoad") ;
-    //		
+    //
     // if (filename != null)
     // {
     // String sourceLine =

@@ -1,12 +1,12 @@
 /********************************************************************************************
  *
  * ParseText.java
- * 
- * Description:	
- * 
+ *
+ * Description:
+ *
  * Created on 	Mar 18, 2005
  * @author 		Douglas Pearson
- * 
+ *
  * Developed by ThreePenny Software <a href="http://www.threepenny.net">www.threepenny.net</a>
  ********************************************************************************************/
 package edu.umich.soar.debugger.menu;
@@ -22,11 +22,11 @@ import edu.umich.soar.debugger.doc.Document;
 import edu.umich.soar.debugger.modules.AbstractView;
 
 /************************************************************************
- * 
+ *
  * This class can be used to parse a user's text selection into a more logical
  * construct. It only parses the text immediately around a given selection
  * point. (We use this for the context menu)
- * 
+ *
  ************************************************************************/
 public class ParseSelectedText
 {
@@ -34,7 +34,7 @@ public class ParseSelectedText
     {
         /********************************************************************************************
          * Fills in menu items that are appropriate for this type of object
-         * 
+         *
          * @param doc
          *            The main document
          * @param owningView
@@ -59,6 +59,7 @@ public class ParseSelectedText
 
             item.addSelectionListener(new SelectionAdapter()
             {
+                @Override
                 public void widgetSelected(SelectionEvent e)
                 {
                     view.executeAgentCommand(command, true);
@@ -81,7 +82,7 @@ public class ParseSelectedText
 
     public static class SelectedProduction extends SelectedObject
     {
-        private String m_Name;
+        private final String m_Name;
 
         public SelectedProduction(String name)
         {
@@ -94,8 +95,9 @@ public class ParseSelectedText
         }
 
         /** Fills in menu items that are appropriate for this type of object */
+        @Override
         public void fillMenu(Document doc, AbstractView owningView,
-                AbstractView outputView, Menu menu, boolean simple)
+                             AbstractView outputView, Menu menu, boolean simple)
         {
             addItem(outputView, menu, doc.getSoarCommands().getPrintCommand(
                     m_Name));
@@ -114,7 +116,7 @@ public class ParseSelectedText
 
     public static class SelectedID extends SelectedObject
     {
-        private String m_Name;
+        private final String m_Name;
 
         public SelectedID(String id)
         {
@@ -127,8 +129,9 @@ public class ParseSelectedText
         }
 
         /** Fills in menu items that are appropriate for this type of object */
+        @Override
         public void fillMenu(Document doc, AbstractView owningView,
-                AbstractView outputView, Menu menu, boolean simple)
+                             AbstractView outputView, Menu menu, boolean simple)
         {
             addItem(outputView, menu, doc.getSoarCommands().getPrintCommand(
                     m_Name));
@@ -151,11 +154,11 @@ public class ParseSelectedText
     public static class SelectedWme extends SelectedObject
     {
         // Some may be null
-        private String m_ID;
+        private final String m_ID;
 
-        private String m_Att;
+        private final String m_Att;
 
-        private String m_Value;
+        private final String m_Value;
 
         public SelectedWme(String id, String att, String value)
         {
@@ -165,8 +168,9 @@ public class ParseSelectedText
         }
 
         /** Fills in menu items that are appropriate for this type of object */
+        @Override
         public void fillMenu(Document doc, AbstractView owningView,
-                AbstractView outputView, Menu menu, boolean simple)
+                             AbstractView outputView, Menu menu, boolean simple)
         {
             addItem(outputView, menu, doc.getSoarCommands()
                     .getPreferencesCommand(m_ID + " " + m_Att));
@@ -192,7 +196,7 @@ public class ParseSelectedText
 
     public static class SelectedUnknown extends SelectedObject
     {
-        private String m_Name;
+        private final String m_Name;
 
         public SelectedUnknown(String token)
         {
@@ -200,8 +204,9 @@ public class ParseSelectedText
         }
 
         /** Fills in menu items that are appropriate for this type of object */
+        @Override
         public void fillMenu(Document doc, AbstractView owningView,
-                AbstractView outputView, Menu menu, boolean simple)
+                             AbstractView outputView, Menu menu, boolean simple)
         {
             owningView.fillWindowMenu(menu, false, true);
         }
@@ -220,13 +225,13 @@ public class ParseSelectedText
 
     protected final static int kNextToken = 2;
 
-    protected String[] m_Tokens = new String[3];
+    protected final String[] m_Tokens = new String[3];
 
     protected final char[] kWhiteSpaceChars = new char[] { ' ', '\n', '\r',
             ')', '(', '{', '}' };
 
     // The raw values
-    protected String m_FullText;
+    protected final String m_FullText;
 
     protected int m_SelectionStart;
 
@@ -241,10 +246,10 @@ public class ParseSelectedText
 
     public String toString()
     {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < 3; i++)
         {
-            buffer.append("Token " + i + " is |" + m_Tokens[i] + "| ");
+            buffer.append("Token ").append(i).append(" is |").append(m_Tokens[i]).append("| ");
         }
 
         return buffer.toString();
@@ -259,9 +264,8 @@ public class ParseSelectedText
     protected int indexOfSet(String string, char[] chars, int startPos)
     {
         int min = -1;
-        for (int i = 0; i < chars.length; i++)
-        {
-            int index = string.indexOf(chars[i], startPos);
+        for (char aChar : chars) {
+            int index = string.indexOf(aChar, startPos);
             if (index != -1 && (min == -1 || index < min))
                 min = index;
         }
@@ -272,9 +276,8 @@ public class ParseSelectedText
     protected int lastIndexOfSet(String string, char[] chars, int startPos)
     {
         int max = -1;
-        for (int i = 0; i < chars.length; i++)
-        {
-            int index = string.lastIndexOf(chars[i], startPos);
+        for (char aChar : chars) {
+            int index = string.lastIndexOf(aChar, startPos);
             if (index > max)
                 max = index;
         }
@@ -345,14 +348,14 @@ public class ParseSelectedText
     }
 
     /********************************************************************************************
-     * 
+     *
      * Returns an object representing the parsed text. This object has some Soar
      * structure and the process of deciding which Soar object was clicked on is
      * heuristic in nature. We make an educated guess based on detailed
      * knowledge of how the output trace is displayed. Hopefully, this is one of
      * only a few places where this will happen in the debugger with the new XML
      * representations.
-     * 
+     *
      **********************************************************************************************/
     public SelectedObject getParsedObject(Document doc, Agent agent)
     {
@@ -422,8 +425,8 @@ public class ParseSelectedText
 
     protected boolean isWhiteSpace(char ch)
     {
-        for (int i = 0; i < kWhiteSpaceChars.length; i++)
-            if (kWhiteSpaceChars[i] == ch)
+        for (char kWhiteSpaceChar : kWhiteSpaceChars)
+            if (kWhiteSpaceChar == ch)
                 return true;
 
         return false;
