@@ -49,6 +49,7 @@ print("   Build Type:        --dbg, --opt*, --static")
 print("   Custom Paths:      --out, --build, --tcl, --tcl-suffix")
 print("   Compilation time:  --no-svs, --scu*, --no-scu, --no-scu-kernel, --no-scu-cli")
 print("   Customizations:    --cc, --cxx, --cflags, --lnflags, --no-default-flags, --verbose,")
+print("   Dependencies:      --use-ros")
 print("Supported platforms are 64-bit Windows, Linux, and macOS (Intel and ARM)")
 print("================================================================================")
 
