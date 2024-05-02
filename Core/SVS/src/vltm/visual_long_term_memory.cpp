@@ -41,8 +41,13 @@ void visual_long_term_memory<img_T, atype_T>::recall(std::string entity_id, img_
     target_archetype->reconstruct(output);
 }
 
+// template <typename img_T, template<typename T> class atype_T>
+// void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match* output) {
+//     throw "Not implemented yet";
+// }
+
 template <typename img_T, template<typename T> class atype_T>
-void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match* output) {
+void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, double (*match_func)(img_T*, img_T*), vmem_match* output) {
     throw "Not implemented yet";
 }
 
@@ -52,34 +57,33 @@ void visual_long_term_memory<img_T, atype_T>::search(img_T* percept, float thres
 }
 
 // Explicit definition of visual_memory::match and ::search methods
-template <>
-void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, vmem_match* output) {
-    std::string best_match_name;
-    float best_similarity = 0.0;
+// template <>
+// void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, vmem_match* output) {
+//     std::string best_match_name;
+//     float best_similarity = 0.0;
 
-    std::string current_id;
-    float current_similarity;
+//     std::string current_id;
+//     float current_similarity;
 
-    std::vector<exact_visual_archetype<opencv_image>*>::iterator atype_iterator;
-    for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
-        exact_visual_archetype<opencv_image>* archetype = *atype_iterator;
-        opencv_image vmem_percept = archetype->get_raw_percept();
+//     std::vector<exact_visual_archetype<opencv_image>*>::iterator atype_iterator;
+//     for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
+//         exact_visual_archetype<opencv_image>* archetype = *atype_iterator;
+//         opencv_image vmem_percept = archetype->get_raw_percept();
         
-        archetype->get_id(current_id);
-        current_similarity = percept->compare(&vmem_percept); 
-        printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
+//         archetype->get_id(current_id);
+//         current_similarity = percept->compare(&vmem_percept); 
+//         printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
 
-        if (current_similarity > best_similarity) { 
-            best_similarity = current_similarity;
-            best_match_name.assign(current_id);
-        }
-    }
+//         if (current_similarity > best_similarity) { 
+//             best_similarity = current_similarity;
+//             best_match_name.assign(current_id);
+//         }
+//     }
 
-    output->entity_id = best_match_name;
-    output->confidence = best_similarity;
-}
+//     output->entity_id = best_match_name;
+//     output->confidence = best_similarity;
+// }
 
-// Explicit definition of visual_memory::match and ::search methods
 template <>
 void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, double (*match_func)(opencv_image*, opencv_image*), vmem_match* output) {
     std::string best_match_name;

@@ -24,6 +24,8 @@
 #include "image.h"
 #include "exact_visual_archetype.h"
 #include "visual_long_term_memory.h"
+#include "visual_working_memory.h"
+#include "visual_sensory_memory.h"
 
 #include "symbol.h"
 typedef std::map<std::string, command*>::iterator cmd_iter;

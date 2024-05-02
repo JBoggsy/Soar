@@ -18,7 +18,7 @@ command_table& get_command_table()
     return inst;
 }
 
-// SCENE GRAPH COMMANDS
+// SPATIAL SCENE COMMANDS
 ///////////////////////
 
 command_table_entry* extract_command_entry();
