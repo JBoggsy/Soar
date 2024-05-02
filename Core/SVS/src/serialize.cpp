@@ -84,7 +84,7 @@ void serialize(double v, std::ostream& os)
     static const size_t buf_len = 100;
     static char buf[buf_len];
 
-    int res = SNPRINTF(buf, buf_len, "%a", v);
+    int res = snprintf(buf, buf_len, "%a", v);
     if (res >= buf_len)
     {
         std::cerr << "buffer overflow when serializing a double" << std::endl;
