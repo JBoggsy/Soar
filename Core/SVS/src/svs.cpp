@@ -413,8 +413,8 @@ void svs::state_creation_callback(Symbol* state)
 {
     std::string type, msg;
     svs_state* s;
-    
-    // The first SVS state gets VSM and VTLM
+
+    // The first SVS state gets the VIB manager and VTLM
     if (state_stack.empty())
     {
         common_syms& cs = si->get_common_syms();
@@ -425,9 +425,9 @@ void svs::state_creation_callback(Symbol* state)
         s = new svs_state(this, state, si, scn_cache);
         scn_cache = NULL;
 
-        vltm_link_ = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vltm));
-        vsm_link_ = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vsm));
-        vsm = new visual_sensory_memory(this, si, vsm_link_);
+        vltm_link = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vltm));
+        vib_link = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vib));
+        vib_manager = new visual_input_buffer_manager();
     }
     else
     {
@@ -529,7 +529,7 @@ void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_
 void svs::image_callback(const cv::Mat& new_img)
 {
     if (!enabled) return;
-    vsm->update_visual_buffer(new_img);
+    vib_manager->update_visual_buffer(new_img);
 }
 #endif
 
@@ -575,7 +575,7 @@ void svs::proxy_get_children(std::map<std::string, cliproxy*>& c)
     c["ros"] = ri;
 #endif
 #ifdef ENABLE_OPENCV
-    c["vsm"] = vsm;
+    c["vib"] = vib_manager;
 
     for (size_t j = 0, jend = state_stack.size(); j < jend; ++j)
     {

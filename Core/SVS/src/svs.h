@@ -245,8 +245,9 @@ public:
     void image_callback(const cv::Mat& new_img);
     typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
     exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
-    visual_sensory_memory* get_vsm() { return vsm; }
+    visual_input_buffer_manager* get_vib_manager() { return vib_manager; }
 #endif
+
 #ifdef ENABLE_ROS
     void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
     ros_interface* get_ros_interface() { return ri; }
@@ -304,19 +305,19 @@ private:
 #endif
 
 #ifdef ENABLE_OPENCV
-    exact_opencv_mem*         v_mem_opencv;
-    visual_sensory_memory*    vsm;
+    exact_opencv_mem*               v_mem_opencv;
+    visual_input_buffer_manager*    vib_manager;
+    Symbol*                         vib_link;
+    Symbol*                         vltm_link;
 #endif
 
-    Symbol*                   vsm_link_;
-    Symbol*                   vltm_link_;
     soar_interface*           si;
     std::vector<svs_state*>   state_stack;
     std::vector<std::string>  env_inputs;
     std::string               env_output;
     mutable drawer*           draw;
     scene*                    scn_cache;      // temporarily holds top-state scene during init
-    
+
     bool enabled;
 
     static bool filter_dirty_bit;
