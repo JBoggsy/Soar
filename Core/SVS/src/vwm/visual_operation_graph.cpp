@@ -6,7 +6,7 @@
 ///////////////////////////
 // VISUAL OPERATION NODE //
 ///////////////////////////
-visual_operation_node::visual_operation_node(std::string op_type, data_dict* params, 
+visual_operation_node::visual_operation_node(std::string op_type, data_dict* params,
                                              visual_operation_graph* vog, soar_interface* si, Symbol* node_link) {
     op_type_     = op_type;
     op_metadata_ = visual_ops::vops_param_table[op_type];
@@ -73,7 +73,7 @@ visual_operation_node::~visual_operation_node() {
 
 /**
  * @brief Edit the value of a parameter used as an arguments for the VOp in this node.
- * 
+ *
  * @param param_name The name of the parameter to edit
  * @param new_value The new value to give the parameter
  * @return true If the parameter is successfully edited
@@ -100,7 +100,7 @@ bool visual_operation_node::edit_parameter(std::string param_name, int new_value
 }
 /**
  * @brief Edit the value of a parameter used as an arguments for the VOp in this node.
- * 
+ *
  * @param param_name The name of the parameter to edit
  * @param new_value The new value to give the parameter
  * @return true If the parameter is successfully edited
@@ -126,7 +126,7 @@ bool visual_operation_node::edit_parameter(std::string param_name, double new_va
 }
 /**
  * @brief Edit the value of a parameter used as an arguments for the VOp in this node.
- * 
+ *
  * @param param_name The name of the parameter to edit
  * @param new_value The new value to give the parameter
  * @return true If the parameter is successfully edited
@@ -153,14 +153,14 @@ bool visual_operation_node::edit_parameter(std::string param_name, std::string n
 
 /**
  * @brief Evaluate the visual operation node
- * 
+ *
  * @invariant `NODE_ID_ARG` type params will be NULL when evaluate is called,
  *            meaning this method doesn't need to `delete` old `opencv_image`
  *            instances.
  * @invariant the creation of new `opencv_image` instances for `NODE_ID_ARG` type
  *            params is handled by the `vog_->get_node_image` call, meaning
  *            this method doesn't need to `new` any opencv_image instances.
- * 
+ *
  * @returns true iff evaluation succeeded
  */
 bool visual_operation_node::evaluate() {
@@ -210,7 +210,7 @@ bool visual_operation_node::evaluate() {
         }
         param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
     }
-    
+
     vog_->mark_node_evaluated(id_);
     printf("Done with node %d\n", id_);
 
@@ -219,7 +219,7 @@ bool visual_operation_node::evaluate() {
         snprintf(debug_save_filename, 64, "node-%d.json", id_);
         ((opencv_image*)parameters_["source"])->save_image_data(debug_save_filename);
     }
-    
+
     return true;
 }
 
@@ -231,15 +231,15 @@ opencv_image* visual_operation_node::get_node_image() {
 // VISUAL OPERATION GRAPH //
 ////////////////////////////
 
-visual_operation_graph::visual_operation_graph(visual_sensory_memory* vsm, soar_interface* si, Symbol* vsm_link) {
-    vsm_ = vsm;
+visual_operation_graph::visual_operation_graph(visual_working_memory* vwm, soar_interface* si, Symbol* vwm_link) {
+    vwm_ = vwm;
     si_ = si;
-    
+
     num_operations_ = 0;
     next_node_id_ = 0;
 
-    vog_link_ = si_->get_wme_val(si_->make_id_wme(vsm_link, "vog"));
-    num_ops_sym_ = si_->get_wme_val(si->make_wme(vsm_link, "size", num_operations_));
+    vog_link_ = si_->get_wme_val(si_->make_id_wme(vwm_link, "vog"));
+    num_ops_sym_ = si_->get_wme_val(si->make_wme(vwm_link, "size", num_operations_));
 }
 
 visual_operation_graph::~visual_operation_graph() {
@@ -248,12 +248,12 @@ visual_operation_graph::~visual_operation_graph() {
 
 /**
  * @brief Insert a new operation into the graph as a child of the nodes
- * with the specified ids. 
+ * with the specified ids.
  * @param `op_type`: The name of the operation of the new node. This should
  *        correspond with a valid key in `visual_ops::vops_param_table`.
- * @param `params`: A newly allocated `data_dict` containing the 
+ * @param `params`: A newly allocated `data_dict` containing the
  *        parameters for the visual operation
- * 
+ *
  * @returns The ID of the new visual operations in the graph. If insertion
  * fails, will return -1.
  */
@@ -270,7 +270,7 @@ int visual_operation_graph::insert(std::string op_type, data_dict* params, std::
             return -1;
         }
     }
-    
+
     Symbol* new_node_link = si_->get_wme_val(si_->make_id_wme(vog_link_, std::string("node")));
     visual_operation_node* new_node = new visual_operation_node(op_type, params, this, si_, new_node_link);
     nodes_[new_node->get_id()] = new_node;
@@ -283,9 +283,9 @@ int visual_operation_graph::insert(std::string op_type, data_dict* params, std::
 /**
  * @brief Add the given child node to the given parent node, and ensure the parent
  * node is no longer marked as a leaf node.
- * 
- * @param child_id 
- * @param parent_id 
+ *
+ * @param child_id
+ * @param parent_id
  * @return true The child node id was successfully added to the parent node.
  * @return false The child node id couldn't be added to the parent node.
  */
@@ -301,9 +301,9 @@ bool visual_operation_graph::add_child_to_node(int child_id, int parent_id) {
 }
 
 /**
- * @brief Remove the operation with the specified id. 
+ * @brief Remove the operation with the specified id.
  * ALL CHILDREN ARE DESTROYED. The root node cannot be removed.
- * 
+ *
  * @returns The new number of visual operations in the graph. If removal
  * fails, the number will be the same as it was prior to the operation.
  */
@@ -333,7 +333,7 @@ int visual_operation_graph::remove(int source_id) {
                 add_leaf_node(parents_itr->second);
             }
         }
-    
+
     delete &source_node;
     num_operations_--;
     return num_operations_;
@@ -343,10 +343,10 @@ int visual_operation_graph::remove(int source_id) {
  * @brief Designate the node with the specified ID as a leaf node(i.e.,
  * a node with no other nodes using it as a `source`.) This method does
  * NOT check that the given node is, in fact, a leaf node.
- * 
+ *
  * @param node_id The node id of the node to be designated a leaf node.
  */
-void visual_operation_graph::add_leaf_node(int node_id) { 
+void visual_operation_graph::add_leaf_node(int node_id) {
     leaf_nodes_.insert(node_id);
 }
 
@@ -354,11 +354,11 @@ void visual_operation_graph::add_leaf_node(int node_id) {
  * @brief Undesignate the node with the specified ID as a leaf node(i.e.,
  * a node with no other nodes using it as a `source`.) This method does
  * NOT check that the given node is not, in fact, a leaf node.
- * 
+ *
  * @param node_id The node id of the node to be undesignated as a leaf node.
  */
-void visual_operation_graph::remove_leaf_node(int node_id) { 
-    leaf_nodes_.erase(node_id); 
+void visual_operation_graph::remove_leaf_node(int node_id) {
+    leaf_nodes_.erase(node_id);
 }
 
 /**
@@ -375,8 +375,8 @@ void visual_operation_graph::evaluate() {
 
     visual_operation_node* leaf;
     std::unordered_set<int>::iterator leaf_itr;
-    for (leaf_itr=leaf_nodes_.begin(); 
-        leaf_itr!=leaf_nodes_.end(); 
+    for (leaf_itr=leaf_nodes_.begin();
+        leaf_itr!=leaf_nodes_.end();
         leaf_itr++) {
             leaf = nodes_[*leaf_itr];
             leaf->evaluate();
@@ -391,20 +391,20 @@ visual_operation_node* visual_operation_graph::get_node(int node_id) {
 /**
  * @brief Get the node image of the given node. If the node has already been evaluated,
  * then just get its image. Otherwise, evaluate it first and then get the resulting image.
- * For now, assume a node ALWAYS outputs precisely one node image and it is stored in 
+ * For now, assume a node ALWAYS outputs precisely one node image and it is stored in
  * `parameters_["source"]`. Other images can be used as input, but only the `source` is
  * used as output.
- * 
+ *
  * @param node_id The id of the node whose image is requested. A node_id of -1 indicates
  *                an "origin" node and will always result in a new, blank image.
- * 
+ *
  * @return opencv_image* The image of the given node, or NULL if such a
  *         node doesn't exist or cannot be evaluated.
  */
 opencv_image* visual_operation_graph::get_node_image(int node_id) {
     if (node_id == -1) { return new opencv_image(); }
     if (nodes_.find(node_id) == nodes_.end()) { return NULL; }
-    
+
     visual_operation_node* node = nodes_[node_id];
     if (evaluated_nodes_.find(node_id) == evaluated_nodes_.end()) {
         bool node_eval_result = node->evaluate();
@@ -439,6 +439,6 @@ void visual_operation_graph::proxy_get_children(std::map<std::string, cliproxy*>
 }
 
 void visual_operation_graph::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
-    os << "========== VSM INTERFACE ==========" << std::endl;
+    os << "========== VWM VOG INTERFACE ==========" << std::endl;
     os << "======================================" << std::endl;
 }

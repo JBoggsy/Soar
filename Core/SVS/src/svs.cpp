@@ -25,7 +25,6 @@
 #include "exact_visual_archetype.h"
 #include "visual_long_term_memory.h"
 #include "visual_working_memory.h"
-#include "visual_sensory_memory.h"
 
 #include "symbol.h"
 typedef std::map<std::string, command*>::iterator cmd_iter;
@@ -273,7 +272,7 @@ void svs_state::update_cmd_results(int command_type)
 
 void svs_state::process_cmds()
 {
-    // Retrieve all the child WMEs of the command link and put them into a vector 
+    // Retrieve all the child WMEs of the command link and put them into a vector
     wme_vector all;
     wme_vector::iterator all_it;
     si->get_child_wmes(cmd_link, all);
@@ -522,7 +521,7 @@ void svs::input_callback()
 #ifdef ENABLE_ROS
 void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img)
 {
-    // TODO: Rework function to work with visual_sensory_memory class
+    // TODO: Rework function to work with visual_working_memory class
 }
 #endif
 

@@ -10,7 +10,7 @@
 #include "visual_operation_data_structs.h"
 #include "visual_operation.h"
 #include "image.h"
-class visual_sensory_memory;
+class visual_working_memory;
 class visual_operation_graph;
 
 
@@ -22,7 +22,7 @@ private:
 
     std::string op_type_;
     data_dict parameters_;
-    void (*operation_)(data_dict args);  
+    void (*operation_)(data_dict args);
     visual_ops::vop_params_metadata op_metadata_;
 
     visual_operation_graph* vog_;
@@ -35,12 +35,12 @@ private:
     std::unordered_map<std::string, Symbol*> param_syms_;
     std::unordered_map<std::string, wme*> param_wmes_;
 public:
-    visual_operation_node(std::string op_name, data_dict* params, 
+    visual_operation_node(std::string op_name, data_dict* params,
                           visual_operation_graph* vog, soar_interface* si, Symbol* node_link);
     ~visual_operation_node();
 
     std::string get_op_type() { return op_type_; }
-    
+
     void set_id(int id) { id_ = id; }
     int get_id() { return id_; }
     std::unordered_set<int>* get_child_ids() { return &child_ids_; }
@@ -70,18 +70,18 @@ typedef std::unordered_map<int, visual_operation_node*>          id_node_map;
  * are organized in a feed-forward graph structure wherein the output of a parent
  * node is fed as the input to its children. This allows the agent to construct
  * complex visual filters with high granularity.
- * 
+ *
  * Operation inputs can be images or structured data, and the can output the same.
  * In addition to a child operation, operations can output to visual or symbolic
  * working memory. Operations can receive the contents of visual sensory memory
  * as input instead of other operation nodes.
- * 
- * The `visual_operations_graph` contains a mapping from integer node IDs to 
- * `visual_operation_node` objects, The `visual_operation_node`s keep track of 
+ *
+ * The `visual_operations_graph` contains a mapping from integer node IDs to
+ * `visual_operation_node` objects, The `visual_operation_node`s keep track of
  * their parents and children to allow graph traversal. They also hold their
  * own parameters, a pointer to the correct visual operation method, and the
  * results of their operation.
- * 
+ *
  * When the `visual_operation_graph.evaluate()` method is called, the graph is
  * traversed recursively upwards from the leaf nodes. Each node requires one or
  * more input images, which are obtained from parent nodes. Each parent node has
@@ -92,7 +92,7 @@ typedef std::unordered_map<int, visual_operation_node*>          id_node_map;
  */
 class visual_operation_graph : public cliproxy {
 private:
-    visual_sensory_memory* vsm_;
+    visual_working_memory* vwm_;
     soar_interface* si_;
 
     int num_operations_;
@@ -106,7 +106,7 @@ private:
     std::vector<Symbol*> node_links_;
 
 public:
-    visual_operation_graph(visual_sensory_memory* vsm, soar_interface* si, Symbol* vsm_link);
+    visual_operation_graph(visual_working_memory* vwm, soar_interface* si, Symbol* vwm_link);
     ~visual_operation_graph();
 
     int get_num_operations() { return num_operations_; }
@@ -114,7 +114,7 @@ public:
 
     int insert(std::string op_name, data_dict* params, std::unordered_map<std::string, int> parent_ids);
     int remove(int source_id);
-    
+
     bool add_child_to_node(int child_id, int parent_id);
     void add_leaf_node(int node_id);
     void remove_leaf_node(int node_id);
@@ -130,19 +130,19 @@ public:
     // CLIPROXY METHODS //
     //////////////////////
     /**
-     * @brief Provide a map of the sub-commands for this command to the CLI 
+     * @brief Provide a map of the sub-commands for this command to the CLI
      * parser.
-     * 
+     *
      * @details The `svs vision` command family is outlined at the top of this
      * file.
-     * 
+     *
      * @param c A mapping of string identifiers to `cliproxy` instance.
      */
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
     /**
-     * @brief Provides the "base" functionality for the `svs vsm` command.
+     * @brief Provides the "base" functionality for the `svs vwm` command.
      * In particular, it writes the current source image file and a help message.
-     * 
+     *
      * @param args The args sent to the command. These are discarded.
      * @param os The output stream to write to.
      */

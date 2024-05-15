@@ -76,8 +76,8 @@ Import('env', 'compiler', 'lsb_build')
 svs_env = env.Clone()
 svs_env['LIBS'] = []
 
-srcdirs = ['src', 'src/filters', 'src/commands', 'src/models', 'base64', 'src/spatial_scene', 'src/vltm', 'src/vwm', 'src/vsm']
-incdirs = [env.Dir(d).srcnode() for d in 'src src/spatial_scene src/vltm src/vwm src/vsm src/models eigen ccd base64'.split()]
+srcdirs = ['src', 'src/filters', 'src/commands', 'src/models', 'base64', 'src/spatial_scene', 'src/vltm', 'src/vwm']
+incdirs = [env.Dir(d).srcnode() for d in 'src src/spatial_scene src/vltm src/vwm src/models eigen ccd base64'.split()]
 scu_src = ['SVS.cxx']
 
 if compiler == 'g++':
@@ -92,7 +92,7 @@ if compiler == 'g++':
 	]
 	if lsb_build:
 		flags.append('-DEIGEN_ALLOCA=aligned_malloc')   # alloca isn't in LSB
-	
+
 	if sys.platform == "darwin":
 		srcdirs.append('src/osx')
 		incdirs.append('src/osx')
@@ -133,7 +133,7 @@ ccd_src = Glob('ccd/*.c')
 
 if compiler == 'msvc':
 	ccd_env.Append(CPPFLAGS=['/D', 'WIN32'])
-	
+
 if GetOption('static'):
 	svs_objs = svs_env.Object(src) + ccd_env.Object(ccd_src)
 else:
