@@ -12,9 +12,25 @@
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "macos-clang-arm64",
-            // build the project once to generate this file
             "compileCommands": "${workspaceFolder}/compile_commands.json",
             "compilerPath": "/usr/bin/clang"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include/pcl-1.8/",
+                "/opt/ros/melodic/include/",
+                "/usr/include/opencv2"
+            ],
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "defines": [
+                "ENABLE_OPENCV",
+                "ENABLE_ROS"
+            ]
         }
     ],
     "version": 4
