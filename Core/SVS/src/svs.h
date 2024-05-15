@@ -73,11 +73,11 @@ class sgwme : public sgnode_listener
         void delete_tag(const std::string& tag_name);
         void set_tag(const std::string& tag_name, const std::string& tag_value);
 
+        soar_interface* soarint;
+        Symbol*         id;
         sgwme*          parent;
         sgnode*         node;
-        Symbol*         id;
         wme*            id_wme;
-        soar_interface* soarint;
 
         std::map<sgwme*, wme*> childs;
 
@@ -194,8 +194,8 @@ class svs_state : public cliproxy
 
         std::string     name;
         svs*            svsp;
-        int             level;
         svs_state*      parent;
+        int             level;
         scene*          scn;
         sgwme*          root;
         soar_interface* si;
@@ -204,12 +204,12 @@ class svs_state : public cliproxy
 
         Symbol* state;
         Symbol* svs_link;
-        Symbol* scene_link;
         Symbol* cmd_link;
         Symbol* vwm_link;
 
         int scene_num;
         wme* scene_num_wme;
+        Symbol* scene_link;
 
         /* command changes per decision cycle */
         command_set curr_cmds;

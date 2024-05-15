@@ -174,9 +174,9 @@ void sgwme::delete_tag(const std::string& tag_name)
 // SVS_STATE CLASS //
 /////////////////////
 
-svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
-    : svsp(svsp), parent(NULL), state(state), si(si), level(0),
-      scene_num(-1), scene_num_wme(NULL), scn(scn), scene_link(NULL)
+svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* soar, scene* scn)
+    : svsp(svsp), parent(NULL), level(0), scn(scn), si(soar), state(state),
+      scene_num(-1), scene_num_wme(NULL), scene_link(NULL)
 {
     assert(state->is_top_state());
     state->get_id_name(name);
@@ -184,9 +184,8 @@ svs_state::svs_state(svs* svsp, Symbol* state, soar_interface* si, scene* scn)
 }
 
 svs_state::svs_state(Symbol* state, svs_state* parent)
-    : parent(parent), state(state), svsp(parent->svsp), si(parent->si),
-      level(parent->level + 1), scene_num(-1),
-      scene_num_wme(NULL), scn(NULL), scene_link(NULL)
+    : svsp(parent->svsp), parent(parent), level(parent->level + 1), scn(NULL),
+      si(parent->si), state(state), scene_num(-1), scene_num_wme(NULL), scene_link(NULL)
 {
     assert(state->get_parent_state() == parent->state);
     init();
@@ -521,15 +520,14 @@ void svs::input_callback()
 #ifdef ENABLE_ROS
 void svs::image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img)
 {
-    // TODO: Rework function to work with visual_working_memory class
+    throw std::bad_function_call();
 }
 #endif
 
 #ifdef ENABLE_OPENCV
 void svs::image_callback(const cv::Mat& new_img)
 {
-    if (!enabled) return;
-    vib_manager->update_visual_buffer(new_img);
+    throw std::bad_function_call();
 }
 #endif
 
