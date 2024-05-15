@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -9,8 +6,12 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/out/UnitTests",
-            // "args": ["-e", "PRIMS_Sanity1", "-e", "PRIMS_Sanity2", "-f", "testSmemArithmetic", "-l", "-c", "FullTestsClientThread"],
-            "args": ["-e", "PRIMS_Sanity1","-c", "MiscTests"],
+            "args": [
+                "-e",
+                "PRIMS_Sanity1",
+                "-c",
+                "MiscTests"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/out",
             "environment": [],
@@ -39,23 +40,49 @@
             "program": "${env:JAVA_HOME}/bin/java",
             "MIMode": "gdb",
             "osx": {
-                // Keep in mind that VSCode might freeze for you! You may need to use lldb directly instead.
-                // https://github.com/microsoft/vscode-cpptools/issues/7240
-                // You may also need to codesign your java executable with permissions to debug:
-                // https://stackoverflow.com/questions/66575538/xcode-lldb-cant-attach-to-macos-system-program-bin-cp-not-allowed-to-attach
                 "MIMode": "lldb",
                 "targetArchitecture": "ARM64"
-            },
+            }
         },
         {
             "name": "Debug project build",
             "type": "python",
             "request": "launch",
             "program": "scons/scons.py",
-			"args": ["--scu", "--dbg", "all", "performance_tests"],
+            "args": [
+                "--scu",
+                "--dbg",
+                "all",
+                "performance_tests"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
-        // TODO: Python debugger for scons build
+        {
+            "name": "C/C++: g++ build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "C/C++: g++ build active file",
+            "miDebuggerPath": "/usr/bin/gdb"
+        }
     ]
 }
