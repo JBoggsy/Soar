@@ -95,7 +95,8 @@
         "typeindex": "cpp",
         "regex": "cpp",
         "future": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "*.ipp": "cpp"
     },
     "openInGitHub.defaultBranch": "development",
     "[python]": {

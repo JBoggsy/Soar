@@ -14,10 +14,18 @@
 ///////////////
 #include "soar_interface.h"
 #include "image.h"
+#include "cliproxy.h"
+#include "forward.h"
 // OpenCV
 /////////
 #include <opencv2/opencv.hpp>
 
+
+
+enum vib_type {
+    generic,
+    filepath
+};
 
 class visual_buffer_frame
 {
@@ -43,16 +51,15 @@ public:
 };
 
 
-class visual_input_buffer {
+class visual_input_buffer : public cliproxy {
 protected:
     const static int MAX_SIZE = 8;
 
-    int size;
-    int newest_update;
-    int oldest_update;
-    visual_buffer_frame** buffer;
+    soar_interface* si;
 
     Symbol* visual_buffer_link;
+    Symbol* vib_id_sym;
+    wme*    vib_id_wme;
     Symbol* size_sym;
     wme*    size_wme;
     Symbol* newest_update_sym;
@@ -61,11 +68,18 @@ protected:
     wme*    oldest_update_wme;
     Symbol* frames_link;
 
-    soar_interface* si;
+    std::string vib_id;
+    int size;
+    int newest_update;
+    int oldest_update;
+    visual_buffer_frame** buffer;
+
+    vib_type type;
+
 
 public:
-    visual_input_buffer(soar_interface* si, Symbol* vsm_link);
-    ~visual_input_buffer();
+    visual_input_buffer(soar_interface* si, Symbol* vib_manager_link, std::string vib_id);
+    virtual ~visual_input_buffer();
 
     bool add_new_frame(const cv::Mat& new_image);
     opencv_image* get_frame();
@@ -76,6 +90,10 @@ public:
 
     int get_newest_update_time() { return newest_update; }
     int get_oldest_update_time() { return oldest_update; }
+
+    void proxy_get_children(std::map<std::string, cliproxy*>& c);
+    void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
+    void cli_inject(const std::vector<std::string>& args, std::ostream& os);
 };
 
 
@@ -86,7 +104,7 @@ class filepath_visual_input_buffer : public visual_input_buffer {
         bool file_exists(std::string fp);
 
     public:
-        filepath_visual_input_buffer(soar_interface* si, Symbol* vsm_link, std::string fp);
+        filepath_visual_input_buffer(soar_interface* si, Symbol* vib_manager_link, std::string vib_id, std::string fp);
         ~filepath_visual_input_buffer();
 
         void proxy_get_children(std::map<std::string, cliproxy*>& c);
@@ -94,7 +112,6 @@ class filepath_visual_input_buffer : public visual_input_buffer {
 
         void cli_setfile(const std::vector<std::string>& args, std::ostream& os);
         void cli_load(const std::vector<std::string>& args, std::ostream& os);
-        void cli_inject(const std::vector<std::string>& args, std::ostream& os);
 
 
         /**
@@ -114,14 +131,33 @@ class filepath_visual_input_buffer : public visual_input_buffer {
 };
 
 
-class visual_input_buffer_manager {
+class visual_input_buffer_manager : public cliproxy {
     private:
-        std::map<int, visual_input_buffer*> visual_input_buffers;
+        typedef std::map<std::string, visual_input_buffer*> vib_map;
+
+        soar_interface* si;
+        Symbol* svs_link;
+
+        int num_vibs;
+        vib_map visual_input_buffers;
+
+        Symbol* vib_manager_link;
 
     public:
-        visual_input_buffer_manager();
+        visual_input_buffer_manager(soar_interface* si, Symbol* vib_link);
         ~visual_input_buffer_manager();
-        visual_input_buffer* get_vib(int id) { return visual_input_buffers[id]; }
+
+        void add_visual_input_buffer(std::string vib_id, visual_input_buffer* new_vib);
+        void del_visual_input_buffer(std::string vib_id);
+        visual_input_buffer* get_visual_input_buffer(std::string vib_id) { return visual_input_buffers[vib_id]; }
+
+        void proxy_get_children(std::map<std::string, cliproxy*>& c);
+        void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
+
+        void cli_add_visual_input_buffer(const std::vector<std::string>& args, std::ostream& os);
+        void cli_add_filepath_visual_input_buffer(const std::vector<std::string>& args, std::ostream& os);
+        void cli_del_visual_input_buffer(const std::vector<std::string>& args, std::ostream& os);
+        void cli_get_visual_input_buffers(const std::vector<std::string>& args, std::ostream& os);
 };
 
 #endif

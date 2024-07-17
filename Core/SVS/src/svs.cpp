@@ -385,10 +385,6 @@ svs::svs(agent* a)
     ri = new ros_interface(this);
     ri->start_ros();
 #endif
-
-#ifdef ENABLE_OPENCV
-    v_mem_opencv = new visual_long_term_memory<opencv_image, exact_visual_archetype>(this);
-#endif
 }
 
 bool svs::filter_dirty_bit = true;
@@ -413,7 +409,7 @@ void svs::state_creation_callback(Symbol* state)
     std::string type, msg;
     svs_state* s;
 
-    // The first SVS state gets the VIB manager and VTLM
+    // The first SVS state gets the VIB manager
     if (state_stack.empty())
     {
         common_syms& cs = si->get_common_syms();
@@ -424,9 +420,8 @@ void svs::state_creation_callback(Symbol* state)
         s = new svs_state(this, state, si, scn_cache);
         scn_cache = NULL;
 
-        vltm_link = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vltm));
         vib_link = si->get_wme_val(si->make_id_wme(s->get_svs_link(), cs.vib));
-        vib_manager = new visual_input_buffer_manager();
+        vib_manager = new visual_input_buffer_manager(si, vib_link);
     }
     else
     {

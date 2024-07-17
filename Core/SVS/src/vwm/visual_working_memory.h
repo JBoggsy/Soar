@@ -15,6 +15,7 @@
 #include "cliproxy.h"
 #include "visual_operation_graph.h"
 #include "visual_input_buffer.h"
+#include "visual_operation.h"
 // forward definitions
 //////////////////////
 class svs;
@@ -35,6 +36,7 @@ private:
 
     int                 num_operations;
     Symbol*             num_operations_symbol;
+    wme*                num_operations_wme;
     int                 next_vop_node_id;
     std::vector<int>    source_vop_node_ids;
     id_node_map         vop_nodes;
@@ -47,9 +49,47 @@ public:
     //////////////////////////////
     // VISUAL OPERATION METHODS //
     //////////////////////////////
-    int add_visual_operation(std::string op_name, data_dict op_args);
-    bool edit_visual_operation(int node_id, data_dict new_op_args);
+    /**
+     * @brief Adds a new visual operation to the vop graph.
+     *
+     * @todo Add details
+     *
+     * @param op_type The name of the operation type to add.
+     * @param op_args The values for the vop's arguments as a `data_dict`.
+     * @param parent_ids The node ids of the parent(s) of the new node
+     * @return The node id of the new vop node, or -1 if the method fails.
+     */
+    int add_visual_operation(std::string op_type, data_dict* op_args, std::unordered_map<std::string, int> parent_ids);
+
+    /**
+     * @brief Removes a visual operation from the vop graph.
+     *
+     * @todo Fill in details
+     *
+     * @note ALL CHILDREN ARE DESTROYED.
+     *
+     * @param node_id The node id of the vop to remove.
+     * @return The number of remaining vop nodes, or -1 if the method fails.
+     */
     int remove_visual_operation(int node_id);
+
+    /**
+     * @brief Add the given child node to the given parent node, and ensure the parent
+     * node is no longer marked as a leaf node.
+     *
+     * @param child_id
+     * @param parent_id
+     * @return true The child node id was successfully added to the parent node.
+     * @return false The child node id couldn't be added to the parent node.
+     */
+    bool add_child_to_node(int child_id, int parent_id);
+
+    bool evaluate_node(int node_id);
+
+
+    int assign_new_node_id();
+    visual_operation_node* get_node(int node_id);
+    opencv_image* get_node_image(int node_id);
 
 
     //////////////////////

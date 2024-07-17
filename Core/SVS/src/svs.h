@@ -9,6 +9,7 @@
 #include "common.h"
 #include "svs_interface.h"
 #include "cliproxy.h"
+#include "forward.h"
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "visual_working_memory.h"

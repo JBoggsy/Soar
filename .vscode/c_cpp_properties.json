@@ -24,12 +24,14 @@
                 "/opt/ros/melodic/include/**",
                 "/opt/ros/melodic/include",
                 "/usr/include/opencv2/**",
-                "/usr/include/opencv2"
+                "/usr/include/opencv2",
+                "/usr/include/c++/7/**",
+                "/usr/include/c++/7/"
             ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x86",
+            "intelliSenseMode": "linux-gcc-x64",
             "defines": [
                 "ENABLE_OPENCV",
                 "ENABLE_ROS"

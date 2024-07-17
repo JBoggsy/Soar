@@ -76,6 +76,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_SOURCE      std::string("source")
 #define VOP_ARG_THRESH      std::string("thresh")
 #define VOP_ARG_TYPE        std::string("type")
+#define VOP_ARG_VIBID       std::string("vib-id")
 #define VOP_ARG_VIBMGR      std::string("vib-manager")
 #define VOP_ARG_WIDTH       std::string("width")
 #define VOP_ARG_WINDOWNAME  std::string("window-name")
@@ -94,7 +95,8 @@ namespace visual_ops
      * @brief Pull an image from a visual input buffer. The root node always has
      *        this operation.
      * @param args
-     *        `int buffer_index`: The index of the VIB which should be retrieved.
+     *        `std::string vib_id`: The id of the VIB to retrieve from.
+     *        `int buffer_index`: The index of the frame which should be retrieved.
      *        Optional, defaults to 0.
      *        `visual_input_buffer_manager* vib_manager`: Pointer to the `visual_input_buffer_manager`
      *        `opencv_image* source` New `opencv_image` to copy the VIB image into
@@ -420,11 +422,11 @@ namespace visual_ops
     // GET FROM VIB
     inline vop_params_metadata get_from_vib_metadata = {
         /* vop_function = */        get_from_vib,
-        /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_BUFFERINDEX, VOP_ARG_VIBMGR, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, VIBMGR_ARG, NODE_ID_ARG},
-        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
-        /* param_optionalities = */ {OPTIONAL_ARG, REQUIRED_ARG, OPTIONAL_ARG}
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_VIBID, VOP_ARG_BUFFERINDEX, VOP_ARG_VIBMGR, VOP_ARG_SOURCE},
+        /* param_types = */         {STRING_ARG, INT_ARG, VIBMGR_ARG, NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     // LOAD FROM FILE

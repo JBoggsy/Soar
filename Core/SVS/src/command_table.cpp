@@ -33,34 +33,16 @@ command_table_entry* delete_node_command_entry();
 command_table_entry* set_tag_command_entry();
 command_table_entry* delete_tag_command_entry();
 
-// VISUAL SENSORY MEMORY COMMANDS
+// VISUAL WORKING MEMORY COMMANDS
 //////////////////
-
-command_table_entry* set_file_command_entry();
-command_table_entry* save_percept_command_entry();
-command_table_entry* load_percept_command_entry();
 command_table_entry* add_vop_node_command_entry();
 command_table_entry* edit_vop_node_command_entry();
-
-// VISUAL WORKING MEMORY COMMANDS
-///////////////////////
-
-command_table_entry* flip_percept_command_entry();
-command_table_entry* get_vision_command_entry();
-command_table_entry* match_percept_command_entry();
-command_table_entry* move_percept_command_entry();
-command_table_entry* recall_command_entry();
-command_table_entry* remember_percept_command_entry();
-command_table_entry* remove_percept_command_entry();
-command_table_entry* translate_percept_command_entry();
-command_table_entry* rotate_percept_command_entry();
 
 command_table::command_table()
 {
     set_help("Prints out a list of all soar commands");
-    
-    // Scene graph
 
+    // Scene graph
     add(extract_command_entry());
     add(extract_once_command_entry());
     add(add_node_command_entry());
@@ -71,24 +53,9 @@ command_table::command_table()
     add(set_tag_command_entry());
     add(delete_tag_command_entry());
 
-    // Visual Sensory Memory
-
-    add(set_file_command_entry());
-    add(save_percept_command_entry());
-    add(load_percept_command_entry());
+    // Visual Working Memory
     add(add_vop_node_command_entry());
     add(edit_vop_node_command_entry());
-
-    // Visual Working Memory
-    add(flip_percept_command_entry());
-    add(get_vision_command_entry());
-    add(match_percept_command_entry());
-    add(move_percept_command_entry());
-    add(recall_command_entry());
-    add(remember_percept_command_entry());
-    add(remove_percept_command_entry());
-    add(rotate_percept_command_entry());
-    add(translate_percept_command_entry());
 }
 
 command* command_table::make_command(svs_state* state, wme* w)

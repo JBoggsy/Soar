@@ -4,8 +4,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "visual_sensory_memory.h"
 #include "visual_operation.h"
+#include "visual_input_buffer.h"
 #include "image.h"
 
 
@@ -15,22 +15,26 @@ namespace visual_ops
     // IMAGE SOURCES //
     ///////////////////
 
-    void get_from_vsm(data_dict args) {
-        opencv_image* image;
-        image = (opencv_image*)args[VOP_ARG_SOURCE];
-
+    void get_from_vib(data_dict args) {
+        std::string vib_id;
         int buffer_index;
+        visual_input_buffer_manager* vibmgr;
+        opencv_image* image;
+
+        vib_id = *(std::string*)(args[VOP_ARG_VIBID]);
+
         if (args[VOP_ARG_BUFFERINDEX] == NULL) {
             buffer_index = 0;
         } else {
             buffer_index = *(int*)args[VOP_ARG_BUFFERINDEX];
         }
 
-        visual_sensory_memory* vsm;
-        vsm = (visual_sensory_memory*)args[VOP_ARG_VSM];
+        vibmgr = (visual_input_buffer_manager*)args[VOP_ARG_VIBMGR];
+
+        image = (opencv_image*)args[VOP_ARG_SOURCE];
 
         cv::Mat converted_image;
-        vsm->get_vision(buffer_index)->get_image()->convertTo(converted_image, CV_32F);
+        vibmgr->get_visual_input_buffer(vib_id)->get_frame(buffer_index)->get_image()->convertTo(converted_image, CV_32F);
 
         image->set_image(&converted_image);
         cv::Size image_shape = image->get_image()->size();
@@ -40,7 +44,7 @@ namespace visual_ops
     void load_from_file(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         std::string* filepath = (std::string*)args[VOP_ARG_FILEPATH];
-        
+
         image->update_image(cv::imread(*filepath, cv::IMREAD_UNCHANGED));
         cv::Size image_shape = image->get_image()->size();
     }
@@ -48,13 +52,13 @@ namespace visual_ops
     void save_to_file(data_dict args) {
         cv::Mat image = *(((opencv_image*)args[VOP_ARG_SOURCE])->get_image());
         std::string filepath = *(std::string*)args[VOP_ARG_FILEPATH];
-        
+
         try {
             cv::imwrite(filepath, image);
         } catch (const cv::Exception& ex) {
             printf("Exception converting image to file: %s\n", ex.what());
         }
-        
+
     }
 
     void display_image(data_dict args) {
@@ -83,14 +87,14 @@ namespace visual_ops
         int size_x = *(int*)args[VOP_ARG_SIZEX];
         int size_y = *(int*)args[VOP_ARG_SIZEY];
         cv::Size ksize(size_x, size_y);
-        
+
         cv::Point anchor;
         if (args[VOP_ARG_ANCHORX] != NULL) {
             anchor.x = -1;
         } else {
             anchor.x = *(int*)args[VOP_ARG_ANCHORX];
         }
-        
+
         if (args[VOP_ARG_ANCHORY] != NULL) {
             anchor.y = -1;
         } else {
@@ -294,7 +298,7 @@ namespace visual_ops
         image->set_image(&result);
     }
 
-    void sub_mats(data_dict args) { 
+    void sub_mats(data_dict args) {
         opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
@@ -320,7 +324,7 @@ namespace visual_ops
         image->set_image(&result);
     }
 
-    void mul_mats(data_dict args) { 
+    void mul_mats(data_dict args) {
         opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
@@ -354,7 +358,7 @@ namespace visual_ops
         image->set_image(&result);
     }
 
-    void div_mats(data_dict args) { 
+    void div_mats(data_dict args) {
         opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
         opencv_image* a =       (opencv_image*)args[VOP_ARG_A];
         opencv_image* b =       (opencv_image*)args[VOP_ARG_B];
@@ -399,8 +403,8 @@ namespace visual_ops
         }
     }
 
-   
-    
+
+
     //////////////////////
     // OBJECT DETECTION //
     //////////////////////
