@@ -11,7 +11,6 @@
 #include "visual_operation.h"
 #include "image.h"
 class visual_working_memory;
-class visual_operation_graph;
 
 
 class visual_operation_node {
@@ -64,6 +63,14 @@ public:
     bool evaluate();
     bool evaluate(bool evaluation_parity);
     opencv_image* get_node_image();
+
+    /**
+     * @brief Return a DOT language representation of this vop node.
+     *
+     * This method allows visual working memory to recursively construct a DOT language
+     * representation of the visual operation graph.
+     */
+    std::string get_dot_string();
 };
 
 

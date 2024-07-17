@@ -137,6 +137,18 @@ int visual_working_memory::assign_new_node_id() {
     return next_vop_node_id++;
 }
 
+std::string visual_working_memory::get_vog_dot_string() {
+    std::string ret_str = std::string("digraph {\n");
+
+    id_node_map::iterator nodes_itr = vop_nodes.begin();
+    for (; nodes_itr!=vop_nodes.end(); nodes_itr++) {
+        ret_str.append(nodes_itr->second->get_dot_string());
+    }
+
+    ret_str.append("}");
+    return ret_str;
+}
+
 //////////////////////
 // CLIPROXY METHODS //
 //////////////////////

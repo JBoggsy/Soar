@@ -91,6 +91,11 @@ public:
     visual_operation_node* get_node(int node_id);
     opencv_image* get_node_image(int node_id);
 
+    /**
+     * @brief Generate a DOT language representation of the visual operations graph.
+     */
+    std::string get_vog_dot_string();
+
 
     //////////////////////
     // CLIPROXY METHODS //

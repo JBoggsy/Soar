@@ -227,3 +227,23 @@ bool visual_operation_node::evaluate(bool evaluation_parity) {
 opencv_image* visual_operation_node::get_node_image() {
     return (opencv_image*)parameters_["source"];
 }
+
+std::string visual_operation_node::get_dot_string() {
+    std::string ret_str = std::string();
+    ret_str.append("vop_");
+    ret_str.append(std::to_string(id_));
+    ret_str.append(" [label=\"]");
+    ret_str.append(op_type_);
+    ret_str.append(" \"];\n");
+
+    std::unordered_set<int>::iterator child_ids_itr = child_ids_.begin();
+    for (; child_ids_itr!=child_ids_.end(); child_ids_itr++) {
+        ret_str.append("vop_");
+        ret_str.append(std::to_string(id_));
+        ret_str.append(" -> vop_");
+        ret_str.append(std::to_string(*child_ids_itr));
+        ret_str.append(";\n");
+    }
+
+    return ret_str;
+}
