@@ -9,10 +9,10 @@
 #include "common.h"
 #include "svs_interface.h"
 #include "cliproxy.h"
+#include "forward.h"
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "visual_working_memory.h"
-#include "visual_sensory_memory.h"
 #endif
 #ifdef ENABLE_ROS
 #include <boost/thread.hpp>
@@ -68,20 +68,20 @@ class sgwme : public sgnode_listener
 
     private:
         void add_child(sgnode* c);
-        
+
         // Functions dealing with maintaining tags on sgnodes
         void update_tag(const std::string& tag_name);
         void delete_tag(const std::string& tag_name);
         void set_tag(const std::string& tag_name, const std::string& tag_value);
-        
+
+        soar_interface* soarint;
+        Symbol*         id;
         sgwme*          parent;
         sgnode*         node;
-        Symbol*         id;
         wme*            id_wme;
-        soar_interface* soarint;
-        
+
         std::map<sgwme*, wme*> childs;
-        
+
         std::map<std::string, wme*> tags;
 };
 
@@ -110,8 +110,8 @@ typedef command_set::iterator command_set_it;
  * can have multiple "states" held in a state stack. In general, there is a
  * separate SVS state for each state in orking memory. Each state in the state
  * stack has its own SVS link, scene, visual input, etc. These states handle
- * are what receive filters, visual operations, and so on. 
- * 
+ * are what receive filters, visual operations, and so on.
+ *
  */
 class svs_state : public cliproxy
 {
@@ -120,12 +120,12 @@ class svs_state : public cliproxy
         /**
          * @brief Construct a new svs state object as the root of the svs state
          * stack.
-         * 
-         * @param svsp A pointer to the `svs` object whose state stack this 
+         *
+         * @param svsp A pointer to the `svs` object whose state stack this
          * state will be the root of. Essentially the `svs` object which owns
          * this state and its children.
          * @param state The working memory `Symbol` representing this state in
-         * working memory. 
+         * working memory.
          * @param soar An interface for interacting with Soar's working memory.
          * @param scn A pointer to a scene graph.
          */
@@ -134,21 +134,21 @@ class svs_state : public cliproxy
         /**
          * @brief Construct a new svs state object which is not the root of its
          * state stack.
-         * 
+         *
          * @param state The working memory `Symbol` representing this state in
-         * working memory. 
-         * @param parent The `svs_state` in the state stack which is the parent 
+         * working memory.
+         * @param parent The `svs_state` in the state stack which is the parent
          * of this one.
          */
         svs_state(Symbol* state, svs_state* parent);
-        
+
         ~svs_state();
-        
+
         void           process_cmds();
         void           update_cmd_results(int command_type);
         void           update_scene_num();
         void           clear_scene();
-        
+
         std::string    get_name() const
         {
             return name;
@@ -176,7 +176,7 @@ class svs_state : public cliproxy
         visual_working_memory* get_vwm() {
             return vwm;
         }
-        
+
         Symbol* get_svs_link() {
             return svs_link;
         }
@@ -185,18 +185,18 @@ class svs_state : public cliproxy
          during init.
         */
         void disown_scene();
-        
+
     private:
         void init();
         void collect_cmds(Symbol* id, std::set<wme*>& all_cmds);
-        
+
         void proxy_get_children(std::map<std::string, cliproxy*>& c);
         void cli_out(const std::vector<std::string>& args, std::ostream& os);
 
         std::string     name;
         svs*            svsp;
-        int             level;
         svs_state*      parent;
+        int             level;
         scene*          scn;
         sgwme*          root;
         soar_interface* si;
@@ -205,15 +205,13 @@ class svs_state : public cliproxy
 
         Symbol* state;
         Symbol* svs_link;
-        Symbol* scene_link;
         Symbol* cmd_link;
-        Symbol* vsm_link;
         Symbol* vwm_link;
-        Symbol* vltm_link;
-        
+
         int scene_num;
         wme* scene_num_wme;
-        
+        Symbol* scene_link;
+
         /* command changes per decision cycle */
         command_set curr_cmds;
 };
@@ -227,7 +225,7 @@ class svs : public svs_interface, public cliproxy {
 public:
     svs(agent* a);
     ~svs();
-    
+
     void state_creation_callback(Symbol* goal);
     void state_deletion_callback(Symbol* goal);
     void output_callback();
@@ -237,7 +235,7 @@ public:
 
     /**
      * @brief Gets the root `svs_state` from the `state_stack`.
-     * 
+     *
      * @note The "root" of the state stack is actually the *most recent*
      * `svs_state` object to be created, the top of the stack.
      */
@@ -248,8 +246,9 @@ public:
     void image_callback(const cv::Mat& new_img);
     typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
     exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
-    visual_sensory_memory* get_vsm() { return vsm; }
+    visual_input_buffer_manager* get_vib_manager() { return vib_manager; }
 #endif
+
 #ifdef ENABLE_ROS
     void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
     ros_interface* get_ros_interface() { return ri; }
@@ -264,9 +263,9 @@ public:
     {
         return draw;
     }
-    
+
     bool do_cli_command(const std::vector<std::string>& args, std::string& output);
-    
+
     bool is_enabled()
     {
         return enabled;
@@ -275,14 +274,14 @@ public:
     {
         enabled = is_enabled;
     }
-    
+
     std::string get_output() const
     {
         return "";
     }
 
     // dirty bit is true only if there has been a new command
-    //   from soar or from SendSVSInput 
+    //   from soar or from SendSVSInput
     //   (no need to recheck filters)
     static void mark_filter_dirty_bit()
     {
@@ -293,10 +292,10 @@ public:
     {
         return svs::filter_dirty_bit;
     }
-        
+
 private:
     void proc_input(svs_state* s);
-    
+
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
     void cli_connect_viewer(const std::vector<std::string>& args, std::ostream& os);
     void cli_disconnect_viewer(const std::vector<std::string>& args, std::ostream& os);
@@ -307,19 +306,19 @@ private:
 #endif
 
 #ifdef ENABLE_OPENCV
-    exact_opencv_mem*         v_mem_opencv;
-    visual_sensory_memory*    vsm;
+    exact_opencv_mem*               v_mem_opencv;
+    visual_input_buffer_manager*    vib_manager;
+    Symbol*                         vib_link;
+    Symbol*                         vltm_link;
 #endif
 
-    Symbol*                   vsm_link_;
-    Symbol*                   vltm_link_;
     soar_interface*           si;
     std::vector<svs_state*>   state_stack;
     std::vector<std::string>  env_inputs;
     std::string               env_output;
     mutable drawer*           draw;
     scene*                    scn_cache;      // temporarily holds top-state scene during init
-    
+
     bool enabled;
 
     static bool filter_dirty_bit;

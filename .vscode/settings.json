@@ -78,11 +78,30 @@
         "chrono": "cpp",
         "compare": "cpp",
         "concepts": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "csignal": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "strstream": "cpp",
+        "*.tcc": "cpp",
+        "forward_list": "cpp",
+        "iterator": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "utility": "cpp",
+        "shared_mutex": "cpp",
+        "cfenv": "cpp",
+        "typeindex": "cpp",
+        "regex": "cpp",
+        "future": "cpp",
+        "valarray": "cpp",
+        "*.ipp": "cpp"
     },
     "openInGitHub.defaultBranch": "development",
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "python.formatting.provider": "none",
+    "C_Cpp.errorSquiggles": "disabled",
 }

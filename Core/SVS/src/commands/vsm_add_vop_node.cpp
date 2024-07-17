@@ -20,7 +20,7 @@ private:
     Symbol* root;
     soar_interface* si;
     svs_state* state;
-    visual_sensory_memory* vsm;
+    visual_working_memory* vwm;
 public:
     add_vop_node_command(svs_state* state, Symbol* root);
     ~add_vop_node_command();
@@ -37,7 +37,7 @@ public:
 add_vop_node_command::add_vop_node_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
     si = state->get_svs()->get_soar_interface();
-    vsm = state->get_svs()->get_vsm();
+    vwm = state->get_vwm();
 }
 
 add_vop_node_command::~add_vop_node_command() {};
@@ -70,7 +70,7 @@ bool add_vop_node_command::update_sub() {
     std::unordered_map<std::string, int> node_parents;
     int num_params = node_params_metadata.num_params;
     for (int param_i=0; param_i < num_params; param_i++) {
-        
+
         std::string param_name = node_params_metadata.param_names.at(param_i);
         visual_ops::ArgOptionality param_opt = node_params_metadata.param_optionalities.at(param_i);
         visual_ops::ArgDirection param_dir = node_params_metadata.param_direction.at(param_i);
@@ -95,12 +95,8 @@ bool add_vop_node_command::update_sub() {
                 param_present = si->get_const_attr(root, param_name, *((long*)node_data_dict[param_name]));
                 node_parents[param_name] = (int)*((long*)node_data_dict[param_name]);
                 break;
-            case visual_ops::VSM_ARG:
-                node_data_dict[param_name] = vsm;
-                param_present = true;
-                break;
             case visual_ops::VWM_ARG:
-                node_data_dict[param_name] = state->get_vwm();
+                node_data_dict[param_name] = vwm;
                 param_present = true;
                 break;
             case visual_ops::VLTM_ARG:
@@ -141,13 +137,15 @@ bool add_vop_node_command::update_sub() {
         }
     }
 
-    int node_insertion_result = vsm->get_vop_graph()->insert(op_type, node_data_dict_pointer, node_parents);
+    int node_insertion_result = vwm->add_visual_operation(op_type, node_data_dict_pointer, node_parents);
     if (node_insertion_result == -1) {
         set_status("no valid parent specified");
+        // @todo Delete node_parents object
         return false;
     }
 
     set_status("success");
+    // @todo Delete node_parents object
     return true;
 }
 

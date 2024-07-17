@@ -19,9 +19,14 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/include/pcl-1.8/",
-                "/opt/ros/melodic/include/",
-                "/usr/include/opencv2"
+                "/usr/include/pcl-1.8/**",
+                "/usr/include/pcl-1.8",
+                "/opt/ros/melodic/include/**",
+                "/opt/ros/melodic/include",
+                "/usr/include/opencv2/**",
+                "/usr/include/opencv2",
+                "/usr/include/c++/7/**",
+                "/usr/include/c++/7/"
             ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
@@ -30,7 +35,8 @@
             "defines": [
                 "ENABLE_OPENCV",
                 "ENABLE_ROS"
-            ]
+            ],
+            "compileCommands": "${workspaceFolder}/compile_commands.json"
         }
     ],
     "version": 4

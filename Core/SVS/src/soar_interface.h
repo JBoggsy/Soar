@@ -31,7 +31,7 @@ class common_syms
         common_syms(soar_interface* si);
         ~common_syms();
 
-        Symbol* svs, *cmd, *scene, *vsm, *child, *result, *id, *status, *vwm, *vltm, *vops;
+        Symbol* svs, *cmd, *scene, *vib, *child, *result, *id, *status, *vwm, *vltm, *vops;
 
     private:
         soar_interface* si;
@@ -42,45 +42,45 @@ class soar_interface
     public:
         soar_interface(agent* a);
         ~soar_interface();
-        
+
         Symbol*      make_sym(const std::string& val);
         Symbol*      make_sym(int val);
         Symbol*      make_sym(double val);
         void         del_sym(Symbol* s);
-        
+
         wme*         make_id_wme(Symbol* id, const std::string& attr);
         wme*         make_id_wme(Symbol* id, Symbol* attr);
         wme*         make_svs_wme(Symbol* id);
-        
+
         wme*         make_wme(Symbol* id, Symbol* attr, Symbol* val);
         wme*         make_wme(Symbol* id, const std::string& attr, Symbol* val);
-        
+
         template<class T>
         wme*         make_wme(Symbol* id, const std::string& attr, const T& val);
-        
+
         template<class T>
         wme*         make_wme(Symbol* id, Symbol* attr, const T& val);
-        
+
         void         remove_wme(wme* w);
         bool         get_child_wmes(Symbol* id, wme_vector& childs);
         bool         find_child_wme(Symbol* id, const std::string& attr, wme*& w);
-        
+
         template<class T>
         bool         get_const_attr(Symbol* id, const std::string& attr, T& val);
-        
+
         bool         get_vec3(Symbol* id, const std::string& attr, vec3& val);
-        
+
         Symbol*      get_wme_id(wme* w);
         Symbol*      get_wme_attr(wme* w);
         Symbol*      get_wme_val(wme* w);
-        
+
         tc_number    new_tc_num();
-        
+
         uint64_t     get_timetag(wme* w);
         common_syms& get_common_syms() { return cs; }
-        
+
         void         print(const std::string& msg);
-        
+
     private:
         agent* thisAgent;
         common_syms cs;

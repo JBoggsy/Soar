@@ -23,7 +23,7 @@ common_syms::common_syms(soar_interface* si) : si(si)
     result = si->make_sym("result");
     id     = si->make_sym("id");
     status = si->make_sym("status");
-    vsm    = si->make_sym("vsm");
+    vib    = si->make_sym("vib");
     vltm   = si->make_sym("vltm");
     vwm    = si->make_sym("vwm");
     vops   = si->make_sym("vops");
@@ -38,7 +38,7 @@ common_syms::~common_syms()
     si->del_sym(result);
     si->del_sym(id);
     si->del_sym(status);
-    si->del_sym(vsm);
+    si->del_sym(vib);
     si->del_sym(vltm);
     si->del_sym(vwm);
     si->del_sym(vops);

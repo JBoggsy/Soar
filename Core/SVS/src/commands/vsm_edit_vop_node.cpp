@@ -20,7 +20,7 @@ private:
     Symbol* root;
     soar_interface* si;
     svs_state* state;
-    visual_sensory_memory* vsm;
+    visual_working_memory* vwm;
 public:
     edit_vop_node_command(svs_state* state, Symbol* root);
     ~edit_vop_node_command();
@@ -37,7 +37,7 @@ public:
 edit_vop_node_command::edit_vop_node_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
     si = state->get_svs()->get_soar_interface();
-    vsm = state->get_svs()->get_vsm();
+    vwm = state->get_vwm();
 }
 
 edit_vop_node_command::~edit_vop_node_command() {};
@@ -53,8 +53,8 @@ bool edit_vop_node_command::update_sub() {
         return false;
     }
 
-    visual_operation_node* vop_node = vsm->get_vop_graph()->get_node(node_id);
-    if (vop_node == NULL) { 
+    visual_operation_node* vop_node = vwm->get_node(node_id);
+    if (vop_node == NULL) {
         set_status("cannot find node-id specified");
         return false;
     }

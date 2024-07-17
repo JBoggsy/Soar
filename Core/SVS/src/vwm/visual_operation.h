@@ -18,7 +18,7 @@ class opencv_image;
 typedef std::unordered_map<std::string, void*> data_dict;
 
 // Define operation names as strings
-#define VOP_GET_FROM_VSM            std::string("get-from-vsm")
+#define VOP_GET_FROM_VIB            std::string("get-from-vib")
 #define VOP_LOAD_FROM_FILE          std::string("load-from-file")
 #define VOP_SAVE_TO_FILE            std::string("save-to-file")
 #define VOP_BLUR                    std::string("blur")
@@ -76,7 +76,8 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_SOURCE      std::string("source")
 #define VOP_ARG_THRESH      std::string("thresh")
 #define VOP_ARG_TYPE        std::string("type")
-#define VOP_ARG_VSM         std::string("vsm")
+#define VOP_ARG_VIBID       std::string("vib-id")
+#define VOP_ARG_VIBMGR      std::string("vib-manager")
 #define VOP_ARG_WIDTH       std::string("width")
 #define VOP_ARG_WINDOWNAME  std::string("window-name")
 #define VOP_ARG_X           std::string("x")
@@ -84,29 +85,30 @@ typedef std::unordered_map<std::string, void*> data_dict;
 
 /**
  * All visual operations are performed IN-PLACE. That is, the source image is
- * altered by the operation. When passing in `data_dict` based arguments, 
- * arguments which have default values can be given a NULL value, but ALL 
+ * altered by the operation. When passing in `data_dict` based arguments,
+ * arguments which have default values can be given a NULL value, but ALL
  * arguments must be passed in.
  */
 namespace visual_ops
 {
     /**
-     * @brief Pull an image from visual sensory memory. The root node always has
+     * @brief Pull an image from a visual input buffer. The root node always has
      *        this operation.
      * @param args
-     *        `int buffer_index`: The index of the VSM buffer which should be
-     *         retrieved. Optional, defaults to 0.
-     *        `visual_sensory_memory* vsm`: Pointer to vsm
-     *        `opencv_image* source` New `opencv_image` to copy the VSM image into
-     */ 
-    void get_from_vsm(data_dict args);
-    
+     *        `std::string vib_id`: The id of the VIB to retrieve from.
+     *        `int buffer_index`: The index of the frame which should be retrieved.
+     *        Optional, defaults to 0.
+     *        `visual_input_buffer_manager* vib_manager`: Pointer to the `visual_input_buffer_manager`
+     *        `opencv_image* source` New `opencv_image` to copy the VIB image into
+     */
+    void get_from_vib(data_dict args);
+
     /**
      * @brief Load an image from a file
      * @param args
      *        `std::string filepath`: The absolute path to the source file
      *        `opencv_image* source` Object to load the specified file into
-     */ 
+     */
     void load_from_file(data_dict args);
 
     /**
@@ -114,7 +116,7 @@ namespace visual_ops
      * @param args
      *        `std::string filepath`: The absolute path to save location
      *        `opencv_image* source` Object to save into the specified file
-     */ 
+     */
     void save_to_file(data_dict args);
 
     /**
@@ -151,13 +153,13 @@ namespace visual_ops
 
     /**
      * @brief Blur the single source image using a Gaussian filter.
-     * 
+     *
      * @note ksize-x and ksize-yt can differ but they both must be positive and odd. Alternatively, they can be zeroes and
      *       then they are computed from sigma.
      * @param args
      *        `int ksize-x`: Gaussian kernel width
      *        `int ksize-y`: Gaussian kernel height
-     *        `double sigmaX`: Gaussian kernel standard deviation in X direction. 
+     *        `double sigmaX`: Gaussian kernel standard deviation in X direction.
      *        `double sigmaY`: Gaussian kernel standard deviation in Y direction; if sigmaY is zero, it is set to be equal to sigmaX, if both sigmas are zeros, they are computed from ksize.width and ksize.height, respectively (see getGaussianKernel for details); to fully control the result regardless of possible future modifications of all this semantics, it is recommended to specify all of ksize, sigmaX, and sigmaY.
      *        `int borderType`: Border mode used to extrapolate pixels outside of the image
      *        `opencv_image* source`: The image to blur
@@ -171,7 +173,7 @@ namespace visual_ops
      */
     void greyscale(data_dict args);
 
-    /** 
+    /**
      * @brief Binarize a grayscale image according to a threshold
      * @param args
      *        `double thresh`: The threshold value.
@@ -183,8 +185,8 @@ namespace visual_ops
 
     /**
      * @brief Flip the image across the x or y axis, or both.
-     * 
-     * @param args 
+     *
+     * @param args
      *      `std:string axes`: One of `x`, `y`, `xy,` or `yx`. Indicates axes to flip across.
      *      `opencv_image* source`: The image to flip
      */
@@ -197,7 +199,7 @@ namespace visual_ops
 
     /**
      * @brief Create a matrix of the given size filled with the given value.
-     * 
+     *
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
@@ -208,7 +210,7 @@ namespace visual_ops
 
     /**
      * @brief Create a matrix of the given size filled with the given value.
-     * 
+     *
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
@@ -219,7 +221,7 @@ namespace visual_ops
 
     /**
      * @brief Create a matrix of the given size where the value of a each cell is its x coordinate.
-     * 
+     *
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
@@ -229,7 +231,7 @@ namespace visual_ops
 
     /**
      * @brief Create a matrix of the given size where the value of a each cell is its y coordinate.
-     * 
+     *
      * @param args
      *      `int size-x`: Width of the new matrix in pixels
      *      `int size-y`: Height of the new matrix in pixels
@@ -243,14 +245,14 @@ namespace visual_ops
     ////////////////////////
 
     /**
-     * @brief Combine two matrices by stacking them channel-wise. 
-     * 
+     * @brief Combine two matrices by stacking them channel-wise.
+     *
      * @details This is essentially the cv::merge method, but slightly more limited. It allows the
      * agent to combine two matrices of the same size and depth by "stacking" them. For example, if
      * matrix A has three channels R,G,B, and matrix B has three channels X,Y,Z, then stacking A on
      * B creates a new matrix with six channels R,G,B,X,Y,Z.
-     * 
-     * @param args 
+     *
+     * @param args
      *      `opencv_image* a`: The matrix whose channels will come first in the new matrix
      *      `opencv_image* b`: The matrix whose channels will come last in the new matrix
      *      `opencv_image* source`: The matrix resulting from the stacking of `a` on `b`.
@@ -259,8 +261,8 @@ namespace visual_ops
 
     /**
      * @brief Extract a single channel from the source image into a new matrix.
-     * 
-     * @param args 
+     *
+     * @param args
      *      `int channel`: THe (0-based) index of the channel to extract
      *      `opencv_image* source`: The image to extract channels from
      */
@@ -268,8 +270,8 @@ namespace visual_ops
 
     /**
      * @brief Extract one or more sequential channels from the source image into a new matrix.
-     * 
-     * @param args 
+     *
+     * @param args
      *      `int start`: the index of the lowest channel to extract, the "bottom" of the extracted channels
      *      `int end`: the index of the highest channel to extract, the "bottom" of the extracted channels
      *      `opencv_image* source`: The image to extract channels from
@@ -283,8 +285,8 @@ namespace visual_ops
 
     /**
      * @brief Add two matrices together element-wise as `c[x,y] = a[x,y]+b[x,y]`.
-     * 
-     * @param args 
+     *
+     * @param args
      *      `opencv_image* a`: First addend
      *      `opencv_image* b`: Second addend
      *      `opencv_image* source`: Result of element-wise addition
@@ -293,19 +295,19 @@ namespace visual_ops
 
     /**
      * @brief Subtract matrix `a` from matrix `b` element-wise as `c[x,y] = a[x,y]-b[x,y]`.
-     * 
-     * @param args 
-     *      `opencv_image* a`: Multiplicand 
+     *
+     * @param args
+     *      `opencv_image* a`: Multiplicand
      *      `opencv_image* b`: Multiplier
      *      `opencv_image* source`: Result of element-wise subtraction
      */
     void sub_mats(data_dict args);
-    
+
     /**
      * @brief Multiply matrix `a` by matrix `b` element-wise as `c[x,y] = a[x,y]*b[x,y]`.
-     * 
-     * @param args 
-     *      `opencv_image* a`: Minuend 
+     *
+     * @param args
+     *      `opencv_image* a`: Minuend
      *      `opencv_image* b`: Subtrahend
      *      `opencv_image* source`: Result of element-wise multiplication
      */
@@ -313,9 +315,9 @@ namespace visual_ops
 
     /**
      * @brief Divide matrix `a` by matrix `b` element-wise as `c[x,y] = a[x,y]/b[x,y]`.
-     * 
-     * @param args 
-     *      `opencv_image* a`: Dividend 
+     *
+     * @param args
+     *      `opencv_image* a`: Dividend
      *      `opencv_image* b`: Divisor
      *      `opencv_image* source`: Result of element-wise division
      */
@@ -323,10 +325,10 @@ namespace visual_ops
 
     /**
      * @brief Apply the specifid unary operation elementwise across the source.
-     * 
+     *
      * @note Presently only applicable to single-channel arrays.
-     * 
-     * @param args 
+     *
+     * @param args
      *      `opencv_image* source`: The matrix to apply the operation to
      *      `std::string op`: The name of the operation to apply. One of:
      *          "negate"
@@ -364,7 +366,7 @@ namespace visual_ops
     void crop_to_ROI(data_dict args);
 
     /**
-     * @brief Finds the global minimum and maximum in an array. 
+     * @brief Finds the global minimum and maximum in an array.
      * @param args Map of non-image arguments to method:
      *        `double* minval`: pointer to the returned minimum value
      *        `double* maxval`: pointer to the returned maximum value
@@ -382,7 +384,7 @@ namespace visual_ops
     ////////////////////////////////////////////////////////////
 
     // Define argument types enum
-    enum ArgType { 
+    enum ArgType {
         // SIMPLE DATA TYPES
         INT_ARG,
         DOUBLE_ARG,
@@ -391,7 +393,7 @@ namespace visual_ops
         NODE_ID_ARG, // an integer which represents the ID of another
                      // vop node. -1 indicates no parent
         // MEMORY POINTERS
-        VSM_ARG,         // pointer to VSM
+        VIBMGR_ARG,      // pointer to the VIB manager
         VWM_ARG,         // pointer to VWM
         VLTM_ARG,        // pointer to VLTM
         WM_ARG,          // pointer to WM
@@ -402,7 +404,7 @@ namespace visual_ops
 
     // Define argument optionality enum
     enum ArgOptionality { REQUIRED_ARG, OPTIONAL_ARG };
-    
+
     // Define a struct to hold the parameter metadata for every parameter of a
     // VOp  (i.e., the name, type, directionality, and optionality of the parameters)
     struct vop_params_metadata {
@@ -417,14 +419,14 @@ namespace visual_ops
     // VISUAL OPERATIONS METADATA DEFINITIONS
     /////////////////////////////////////////
 
-    // GET FROM VSM
-    inline vop_params_metadata get_from_vsm_metadata = {
-        /* vop_function = */        get_from_vsm,
-        /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_BUFFERINDEX, VOP_ARG_VSM, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, VSM_ARG, NODE_ID_ARG},
-        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
-        /* param_optionalities = */ {OPTIONAL_ARG, REQUIRED_ARG, OPTIONAL_ARG}
+    // GET FROM VIB
+    inline vop_params_metadata get_from_vib_metadata = {
+        /* vop_function = */        get_from_vib,
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_VIBID, VOP_ARG_BUFFERINDEX, VOP_ARG_VIBMGR, VOP_ARG_SOURCE},
+        /* param_types = */         {STRING_ARG, INT_ARG, VIBMGR_ARG, NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     // LOAD FROM FILE
@@ -670,7 +672,7 @@ namespace visual_ops
     // CREATE LOOKUP TABLE MAPPING OPERATION NAMES TO METADATA
     //////////////////////////////////////////////////////////
     inline std::unordered_map<std::string, vop_params_metadata> vops_param_table({
-        {VOP_GET_FROM_VSM, get_from_vsm_metadata},
+        {VOP_GET_FROM_VIB, get_from_vib_metadata},
         {VOP_LOAD_FROM_FILE, load_from_file_metadata},
         {VOP_SAVE_TO_FILE, save_to_file_metadata},
         {VOP_DISPLAY_IMAGE, display_image_metadata},

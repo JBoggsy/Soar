@@ -42,22 +42,19 @@
 #include "src/filters/tag_select.cpp"
 #include "src/filters/volume.cpp"
 
-#include "src/vsm/visual_buffer.cpp"
-#include "src/vsm/visual_operation.cpp"
-#include "src/vsm/visual_operation_graph.cpp"
-#include "src/vsm/visual_sensory_memory.cpp"
+#include "src/vwm/visual_buffer.cpp"
+#include "src/vwm/visual_operation.cpp"
+#include "src/vwm/visual_operation_graph.cpp"
+#include "src/vwm/visual_working_memory.cpp"
 
-#include "src/commands/vsm_add_vop_node.cpp"
-#include "src/commands/vsm_edit_vop_node.cpp"
-#include "src/commands/vsm_load_percept.cpp"
-#include "src/commands/vsm_save_percept.cpp"
-#include "src/commands/vsm_set_file.cpp"
+#include "src/commands/vwm_add_vop_node.cpp"
+#include "src/commands/vwm_edit_vop_node.cpp"
+#include "src/commands/vwm_load_percept.cpp"
+#include "src/commands/vwm_save_percept.cpp"
+#include "src/commands/vwm_set_file.cpp"
 
 #include "src/vltm/exact_visual_archetype.cpp"
 #include "src/vltm/visual_long_term_memory.cpp"
-
-#include "src/vwm/visual_wme.cpp"
-#include "src/vwm/visual_working_memory.cpp"
 
 #include "src/commands/vwm_flip_percept.cpp"
 #include "src/commands/vwm_get_vision.cpp"
