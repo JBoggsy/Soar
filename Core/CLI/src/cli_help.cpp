@@ -3978,6 +3978,7 @@ void initdocstrings()
 		"filters.<filter_name>              Prints information about a specific filter\n"
 		"commands                           Prints out a list of all the soar commands\n"
 		"commands.<command_name>            Prints information about a specific command\n"
+        "vibmgr                             Prints information about the visual input buffer manager\n"
 		"<state>.scene.world                Prints information about the world\n"
 		"<state>.scene.<node-path>          Prints information about a specific node\n"
 		"<state>.scene.properties           Prints pos/rot/scale/tag info about all\n"

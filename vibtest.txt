@@ -1,0 +1,7 @@
+svs --enable
+svs vibmgr.add-vib env
+svs vibmgr.get-vibs
+svs vibmgr.del-vib env
+svs vibmgr.del-vib env
+svs vibmgr.get-vibs
+[EOF]

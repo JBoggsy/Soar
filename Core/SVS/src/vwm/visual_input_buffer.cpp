@@ -142,7 +142,7 @@ void visual_input_buffer::proxy_get_children(std::map<std::string, cliproxy*>& c
 void visual_input_buffer::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
     os << "========== VISUAL INPUT BUFFER INTERFACE ==========" << std::endl;
     os << "VISUAL INPUT BUFFER ID: " << vib_id << std::endl;
-    os << "svs vibmgr.vib" << vib_id << ".inject <IMGDATA> - Injects the image defined by IMGDATA into VSM. Data should be base64."<< std::endl;
+    os << "svs vibmgr." << vib_id << ".inject <IMGDATA> - Injects the image defined by IMGDATA into VSM. Data should be base64."<< std::endl;
     os << "========================================================" << std::endl;
 }
 
@@ -210,9 +210,9 @@ void filepath_visual_input_buffer::proxy_use_sub(const std::vector<std::string>&
     os << "========== FILE VISUAL INPUT BUFFER INTERFACE ==========" << std::endl;
     os << "CURRENT TARGET FILE: " << filepath << std::endl;
     os << "CLI USAGE:" << std::endl << std::endl;
-    os << "svs vibmgr.vib" << vib_id << " - Prints the last file uploaded to the agent, then this help text."<< std::endl;
-    os << "svs vibmgr.vib" << vib_id << ".setfile <FILEPATH> - Sets the image upload target to the given filepath."<< std::endl;
-    os << "svs vibmgr.vib" << vib_id << ".load - Loads the current image upload target into the agent's vision."<< std::endl;
+    os << "svs vibmgr." << vib_id << " - Prints the last file uploaded to the agent, then this help text."<< std::endl;
+    os << "svs vibmgr." << vib_id << ".setfile <FILEPATH> - Sets the image upload target to the given filepath."<< std::endl;
+    os << "svs vibmgr." << vib_id << ".load - Loads the current image upload target into the agent's vision."<< std::endl;
     os << "========================================================" << std::endl;
 }
 
@@ -256,7 +256,8 @@ void filepath_visual_input_buffer::load() {
 /////////////////////////////////
 
 visual_input_buffer_manager::visual_input_buffer_manager(soar_interface* si, Symbol* vib_link)
-    : si(si), svs_link(svs_link), num_vibs(0), vib_manager_link(vib_link) {
+    : si(si), svs_link(svs_link), vib_manager_link(vib_link) {
+    num_vibs_wme = si->make_wme(vib_manager_link, "num-vibs", (int)visual_input_buffers.size());
 }
 
 visual_input_buffer_manager::~visual_input_buffer_manager() {
@@ -269,14 +270,16 @@ visual_input_buffer_manager::~visual_input_buffer_manager() {
 void visual_input_buffer_manager::add_visual_input_buffer(std::string vib_id, visual_input_buffer* new_vib) {
     visual_input_buffers[vib_id] = new_vib;
     // TODO: Add listener?
-    num_vibs++;
+    si->remove_wme(num_vibs_wme);
+    num_vibs_wme = si->make_wme(vib_manager_link, "num-vibs", get_num_vibs());
 }
 
-void visual_input_buffer_manager::del_visual_input_buffer(std::string vib_id){
-    vib_map::iterator vib_itr = visual_input_buffers.find(vib_id);
-    if (vib_itr != visual_input_buffers.end()){
-        delete &(vib_itr->first);
-        delete vib_itr->second;
+void visual_input_buffer_manager::del_visual_input_buffer(std::string tgt_vib_id){
+    vib_map::iterator vib_itr = visual_input_buffers.find(tgt_vib_id);
+    if (vib_itr != visual_input_buffers.end()) {
+        visual_input_buffers.erase(vib_itr);
+        si->remove_wme(num_vibs_wme);
+        num_vibs_wme = si->make_wme(vib_manager_link, "num-vibs", get_num_vibs());
     }
 }
 
@@ -288,7 +291,7 @@ void visual_input_buffer_manager::proxy_get_children(std::map<std::string, clipr
     c["add-file-vib"]->add_arg("FILEPATH", "The path of the file to load the image from.");
     c["add-file-vib"]->add_arg("NAME", "A unique name to associate the VIB with.");
 
-    c["add-vib"] = new memfunc_proxy<visual_input_buffer_manager>(this, &visual_input_buffer_manager::cli_del_visual_input_buffer);
+    c["del-vib"] = new memfunc_proxy<visual_input_buffer_manager>(this, &visual_input_buffer_manager::cli_del_visual_input_buffer);
     c["del-vib"]->add_arg("NAME", "The unique name of the VIB to be deleted.");
 
     c["get-vibs"] = new memfunc_proxy<visual_input_buffer_manager>(this, &visual_input_buffer_manager::cli_get_visual_input_buffers);
@@ -301,14 +304,14 @@ void visual_input_buffer_manager::proxy_get_children(std::map<std::string, clipr
 
 void visual_input_buffer_manager::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
     os << "========== VIB MANAGER INTERFACE ==========" << std::endl;
-    os << "CURRENT NUMBER OF VIBS: " << num_vibs << std::endl;
+    os << "CURRENT NUMBER OF VIBS: " << get_num_vibs() << std::endl;
     os << "CLI USAGE:" << std::endl << std::endl;
     os << "svs vibmgr - Prints the number of visual input buffers, then this help text."<< std::endl;
     os << "svs vibmgr.add-vib <NAME> - Adds a generic (injection-only) visual input buffer with the given name."<< std::endl;
     os << "svs vibmgr.add-file-vib <FILEPATH> <NAME> - Adds a file-based visual input buffer targeting the specified file."<< std::endl;
     os << "svs vibmgr.del-vib <NAME> - Removes the visual input buffer with the given name."<< std::endl;
     os << "svs vibmgr.get-vibs - Lists the names and types of the current visual input buffers." << std::endl;
-    os << "svs.vibmgr.<vib-name> - Accesses the CLI interface of the specified visual input buffer." << std::endl;
+    os << "svs vibmgr.<vib-name> - Accesses the CLI interface of the specified visual input buffer." << std::endl;
     os << "========================================================" << std::endl;
 }
 
@@ -320,16 +323,48 @@ void visual_input_buffer_manager::cli_add_visual_input_buffer(const std::vector<
 
     std::string new_vib_id(args[0]);
     add_visual_input_buffer(new_vib_id, new visual_input_buffer(si, vib_manager_link, new_vib_id));
+
+    os << "Added new VIB, access via svs vibmgr." << new_vib_id << std::endl;
 }
 
 void visual_input_buffer_manager::cli_add_filepath_visual_input_buffer(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.size()<2) {
+        os << "Not enough arguments specified." << std::endl;
+        return;
+    }
 
+    std::string new_vib_id(args[0]);
+    std::string new_vib_fp(args[1]);
+    add_visual_input_buffer(new_vib_id, new filepath_visual_input_buffer(si, vib_manager_link, new_vib_id, new_vib_fp));
+
+    os << "Added new VIB, access via svs vibmgr." << new_vib_id << std::endl;
 }
 
 void visual_input_buffer_manager::cli_del_visual_input_buffer(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "No vib name specified." << std::endl;
+        return;
+    }
 
+    std::string vib_id(args[0]);
+    del_visual_input_buffer(vib_id);
+
+    os << "Deleted VIB " << vib_id << std::endl;
 }
 
 void visual_input_buffer_manager::cli_get_visual_input_buffers(const std::vector<std::string>& args, std::ostream& os) {
+    os << "Visual input buffers:" << std::endl;
 
+    vib_map::iterator vib_itr = visual_input_buffers.begin();
+    std::string vib_id;
+    visual_input_buffer* vib;
+
+    for (; vib_itr!=visual_input_buffers.end(); vib_itr++) {
+        vib_id = vib_itr->first;
+        vib = vib_itr->second;
+        os << "    " << vib_id;
+        if (vib->get_type() == vib_type::filepath) {
+            os << " <- " << ((filepath_visual_input_buffer*)vib)->get_filepath();
+        }
+    }
 }
