@@ -33,6 +33,7 @@ visual_working_memory::~visual_working_memory() {
 
 visual_working_memory* visual_working_memory::clone(Symbol* vwm_link) {
     visual_working_memory* new_vwm = new visual_working_memory(svs_ptr, si, vwm_link);
+    return new_vwm;
 }
 
 // VOP GRAPH METHODS
