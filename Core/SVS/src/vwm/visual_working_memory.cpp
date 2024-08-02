@@ -62,10 +62,13 @@ int visual_working_memory::add_visual_operation(std::string op_type, data_dict* 
     }
 
     vop_nodes[new_node->get_id()] = new_node;
+    if (op_type == VOP_GET_FROM_VIB) {
+        std::string vib_id = *(std::string*)(op_args->at(VOP_ARG_VIBID));
+        vib_vop_node_ids[vib_id].push_back(new_node->get_id());
+    }
     num_operations++;
 
     evaluate_from_node(new_node->get_id());
-
     return new_node->get_id();
 
 }
@@ -123,6 +126,12 @@ bool visual_working_memory::evaluate_from_node(int node_id) {
         }
     }
 
+}
+
+bool visual_working_memory::evaluate_vib_nodes(std::string vib_id) {
+    for (int node_id : vib_vop_node_ids[vib_id]) {
+        evaluate_from_node(node_id);
+    }
 }
 
 bool visual_working_memory::add_child_to_node(int child_id, int parent_id) {

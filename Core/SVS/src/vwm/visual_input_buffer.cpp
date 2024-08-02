@@ -352,6 +352,17 @@ void visual_input_buffer_manager::del_visual_input_buffer(std::string tgt_vib_id
     }
 }
 
+std::vector<std::string> visual_input_buffer_manager::get_vib_ids() {
+    std::vector<std::string> vib_ids;
+
+    vib_map::iterator vib_itr = visual_input_buffers.begin();
+    for (;vib_itr != visual_input_buffers.end(); vib_itr++) {
+        vib_ids.push_back(vib_itr->first);
+    }
+
+    return vib_ids;
+}
+
 void visual_input_buffer_manager::proxy_get_children(std::map<std::string, cliproxy*>& c) {
     c["add-vib"] = new memfunc_proxy<visual_input_buffer_manager>(this, &visual_input_buffer_manager::cli_add_visual_input_buffer);
     c["add-vib"]->add_arg("NAME", "A unique name to associate the VIB with.");

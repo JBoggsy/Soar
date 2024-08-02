@@ -229,6 +229,11 @@ public:
     void state_creation_callback(Symbol* goal);
     void state_deletion_callback(Symbol* goal);
     void output_callback();
+
+    /**
+     * @brief Called every input phase.
+     *
+     */
     void input_callback();
     void add_input(const std::string& in);
     std::string svs_query(const std::string& query);

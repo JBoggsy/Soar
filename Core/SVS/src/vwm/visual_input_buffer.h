@@ -154,6 +154,8 @@ class visual_input_buffer_manager : public cliproxy {
 
         void add_visual_input_buffer(std::string vib_id, visual_input_buffer* new_vib);
         void del_visual_input_buffer(std::string vib_id);
+
+        std::vector<std::string> get_vib_ids();
         visual_input_buffer* get_visual_input_buffer(std::string vib_id) { return visual_input_buffers[vib_id]; }
         int get_num_vibs() { return (int)visual_input_buffers.size(); }
 

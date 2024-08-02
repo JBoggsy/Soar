@@ -91,6 +91,10 @@ typedef std::unordered_map<std::string, void*> data_dict;
  */
 namespace visual_ops
 {
+    ///////////////////////////
+    // VISUAL INPUTS/OUTPUTS //
+    ///////////////////////////
+
     /**
      * @brief Pull an image from a visual input buffer. The root node always has
      *        this operation.

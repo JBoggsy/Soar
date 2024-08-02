@@ -509,6 +509,15 @@ void svs::input_callback()
         (**i).update_cmd_results(SVS_READ_COMMAND);
     }
 
+    std::vector<std::string> vib_ids = get_vib_manager()->get_vib_ids();
+
+
+    for (std::string vib_id : vib_ids){
+        for (svs_state* state : state_stack) {
+            state->get_vwm()->evaluate_vib_nodes(vib_id);
+        }
+    }
+
     svs::filter_dirty_bit = false;
 }
 

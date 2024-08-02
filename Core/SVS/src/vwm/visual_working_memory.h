@@ -28,6 +28,7 @@ class visual_working_memory: public cliproxy
 {
 private:
     typedef std::unordered_map<int, visual_operation_node*> id_node_map;
+    typedef std::unordered_map<std::string, std::vector<int>> str_nodes_map;
     const static std::string ROS_TOPIC_NAME;
 
     svs*            svs_ptr;
@@ -38,8 +39,8 @@ private:
     Symbol*             num_operations_symbol;
     wme*                num_operations_wme;
     int                 next_vop_node_id;
-    std::vector<int>    source_vop_node_ids;
     id_node_map         vop_nodes;
+    str_nodes_map       vib_vop_node_ids;
 
 public:
     visual_working_memory(svs* svs_ptr, soar_interface* si, Symbol* vwm_link);
@@ -95,6 +96,16 @@ public:
      * @return True if the evaluation is successful, false otherwise.
      */
     bool evaluate_from_node(int node_id);
+
+    /**
+     * @brief Evaluates the vop sub-graphs rooted at each get-from-vib vop which
+     * gets a frame from the specified vib.
+     *
+     * @param vib_id The string id of the vib whose associated get-from-vib vops
+     * need to be evaluated.
+     * @return True if the evaluation is successful, false otherwise.
+     */
+    bool evaluate_vib_nodes(std::string vib_id);
 
 
     int assign_new_node_id();
