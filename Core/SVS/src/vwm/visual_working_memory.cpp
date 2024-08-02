@@ -41,8 +41,6 @@ visual_working_memory* visual_working_memory::clone(Symbol* vwm_link) {
 int visual_working_memory::add_visual_operation(std::string op_type, data_dict* op_args, std::unordered_map<std::string, int> parent_ids) {
     visual_ops::vop_params_metadata op_metadata = visual_ops::vops_param_table[op_type];
 
-
-
     Symbol* new_node_link = si->get_wme_val(si->make_id_wme(vwm_link, std::string("node")));
     visual_operation_node* new_node = new visual_operation_node(op_type, op_args, assign_new_node_id(), this, si, new_node_link);
     // Now that the VOP is created and added, link it to its source nodes
@@ -65,6 +63,8 @@ int visual_working_memory::add_visual_operation(std::string op_type, data_dict* 
 
     vop_nodes[new_node->get_id()] = new_node;
     num_operations++;
+
+    evaluate_from_node(new_node->get_id());
 
     return new_node->get_id();
 
@@ -100,15 +100,29 @@ int visual_working_memory::remove_visual_operation(int node_id) {
 
 }
 
-bool visual_working_memory::evaluate_node(int node_id) {
-    visual_operation_node* target_node = vop_nodes[node_id];
-    bool evaluation_parity = target_node->evaluate(evaluation_parity);
-
+bool visual_working_memory::evaluate_from_node(int node_id) {
+    std::vector<int> frontier(1, node_id);
+    int active_node_id;
+    visual_operation_node* active_node;
     std::unordered_set<int>::iterator child_node_ids_itr;
-    child_node_ids_itr = target_node->get_child_ids()->begin();
-    for (;child_node_ids_itr != target_node->get_child_ids()->end(); child_node_ids_itr++) {
-        get_node(*child_node_ids_itr)->evaluate(evaluation_parity);
+    bool success;
+
+    while (!frontier.empty()) {
+        active_node_id = frontier.front();
+        frontier.erase(frontier.begin());
+        active_node = get_node(active_node_id);
+
+        child_node_ids_itr = active_node->get_child_ids()->begin();
+        for (;child_node_ids_itr != active_node->get_child_ids()->end(); child_node_ids_itr++) {
+            frontier.push_back(*child_node_ids_itr);
+        }
+
+        success = active_node->evaluate();
+        if (!success) {
+            return false;
+        }
     }
+
 }
 
 bool visual_working_memory::add_child_to_node(int child_id, int parent_id) {

@@ -146,7 +146,7 @@ bool visual_operation_node::edit_parameter(std::string param_name, std::string n
 }
 
 /**
- * @brief Evaluate the visual operation node
+ * @brief Evaluate the visual operation node.
  *
  * @invariant `NODE_ID_ARG` type params will be NULL when evaluate is called,
  *            meaning this method doesn't need to `delete` old `opencv_image`
@@ -155,7 +155,7 @@ bool visual_operation_node::edit_parameter(std::string param_name, std::string n
  *            params is handled by the `vog_->get_node_image` call, meaning
  *            this method doesn't need to `new` any opencv_image instances.
  *
- * @returns The value of the evaluation parity bit, which prevents double evaluation.
+ * @returns True if the evaluation was successful, false otherwise.
  */
 bool visual_operation_node::evaluate() {
     printf("Evaluating node %d...\n", id_);
@@ -213,15 +213,7 @@ bool visual_operation_node::evaluate() {
         ((opencv_image*)parameters_["source"])->save_image_data(debug_save_filename);
     }
 
-    return flip_evaluation_parity();
-}
-
-bool visual_operation_node::evaluate(bool evaluation_parity) {
-    if (evaluation_parity != evaluation_parity_) {
-        return evaluate();
-    } else {
-        return get_evaluation_parity();
-    }
+    return true;
 }
 
 opencv_image* visual_operation_node::get_node_image() {

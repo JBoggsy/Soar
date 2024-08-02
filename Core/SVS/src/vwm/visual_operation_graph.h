@@ -26,7 +26,6 @@ private:
 
     visual_working_memory* vwm_;
     opencv_image* node_image_;
-    bool evaluation_parity_;
 
     soar_interface* si_;
     Symbol* node_link_;
@@ -45,8 +44,6 @@ public:
     int get_id() { return id_; }
     std::unordered_set<int>* get_child_ids() { return &child_ids_; }
     std::unordered_map<std::string, int>* get_parent_ids() { return &parent_ids_; }
-    bool get_evaluation_parity() { return evaluation_parity_; }
-    bool flip_evaluation_parity() { evaluation_parity_ = !evaluation_parity_; }
 
     bool edit_parameter(std::string param_name, int new_value);
     bool edit_parameter(std::string param_name, double new_value);
@@ -55,13 +52,7 @@ public:
     void add_child_id(int id) { child_ids_.insert(id); }
     void remove_child_id(int id) {child_ids_.erase(id); }
 
-    /**
-     * @brief Evaluate the visual operation node, thereby updating its outputs.
-     *
-     * @return The value of the evaluation parity bit.
-     */
     bool evaluate();
-    bool evaluate(bool evaluation_parity);
     opencv_image* get_node_image();
 
     /**

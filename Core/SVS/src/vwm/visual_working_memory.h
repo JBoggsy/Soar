@@ -84,7 +84,17 @@ public:
      */
     bool add_child_to_node(int child_id, int parent_id);
 
-    bool evaluate_node(int node_id);
+    /**
+     * @brief Evaluates the visual operation graph starting from the given node.
+     * This will re-evaluate the entire sub-graph rooted at the given node so
+     * that any change to the image resulting from node will be reflected in all
+     * descendant nodes. Uses a breadth-first traversal to ensure all image
+     * sources for a given node are evaluated before that node is.
+     *
+     * @param node_id
+     * @return True if the evaluation is successful, false otherwise.
+     */
+    bool evaluate_from_node(int node_id);
 
 
     int assign_new_node_id();
