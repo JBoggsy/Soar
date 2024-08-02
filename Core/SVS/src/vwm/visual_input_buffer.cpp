@@ -124,6 +124,9 @@ bool visual_input_buffer::add_new_frame(const cv::Mat& new_image) {
 }
 
 opencv_image* visual_input_buffer::get_frame() {
+    if (buffer[0] == NULL) {
+        return NULL;
+    }
     return buffer[0]->get_image();
 }
 
@@ -137,12 +140,21 @@ opencv_image* visual_input_buffer::get_frame(int index) {
 void visual_input_buffer::proxy_get_children(std::map<std::string, cliproxy*>& c) {
     c["inject"] =  new memfunc_proxy<visual_input_buffer>(this, &visual_input_buffer::cli_inject);
     c["inject"]->add_arg("IMGDATA", "Base64-encoded image data to inject.");
+
+    c["imgdata"] = new memfunc_proxy<visual_input_buffer>(this, &visual_input_buffer::cli_imgdata);
+    c["imgdata"]->add_arg("FRAMENUM", "Optional, default=0. The number of the frame to get image data from.");
+
+    c["save-img"] = new memfunc_proxy<visual_input_buffer>(this, &visual_input_buffer::cli_save_img);
+    c["save-img"]->add_arg("FILENAME", "File path to save the image to.");
+    c["save-img"]->add_arg("FRAMENUM", "Optional, default=0. The number of the frame to get image data from.");
 }
 
 void visual_input_buffer::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
     os << "========== VISUAL INPUT BUFFER INTERFACE ==========" << std::endl;
     os << "VISUAL INPUT BUFFER ID: " << vib_id << std::endl;
     os << "svs vibmgr." << vib_id << ".inject <IMGDATA> - Injects the image defined by IMGDATA into VSM. Data should be base64."<< std::endl;
+    os << "svs vibmgr." << vib_id << ".imgdata [FRAMENUM] - Prints the .png encoding of the image associated with frame number (default: 0), outputted as a base64 string. " << std::endl;
+    os << "svs vibmgr." << vib_id << ".save-img <FILEPATH> [FRAMENUM] - Saves the image associated with frame number (default: 0) to the specified filepath. " << std::endl;
     os << "========================================================" << std::endl;
 }
 
@@ -164,6 +176,63 @@ void visual_input_buffer::cli_inject(const std::vector<std::string>& args, std::
     }
 
     return;
+}
+
+void visual_input_buffer::cli_imgdata(const std::vector<std::string>& args, std::ostream& os) {
+    int frame_num;
+    opencv_image* latest_frame;
+    cv::Mat* latest_frame_image;
+    std::vector<uchar> raw_png_data;
+    std::string b64_data;
+
+    if (args.empty()) {
+        frame_num = 0;
+    } else {
+        frame_num = std::stoi(args[0]);
+    }
+
+    latest_frame = get_frame(frame_num);
+    if (latest_frame == NULL) {
+        os << 0 << std::endl;
+        return;
+    }
+    latest_frame_image = latest_frame->get_image();
+    if (latest_frame_image == NULL) {
+        os << 0 << std::endl;
+        return;
+    }
+
+    cv::imencode(std::string(".png"), *(latest_frame_image), raw_png_data);
+    b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
+    os << b64_data << std::endl;
+}
+
+void visual_input_buffer::cli_save_img(const std::vector<std::string>& args, std::ostream& os) {
+    std::string filepath;
+    int frame_num;
+    opencv_image* latest_frame;
+    cv::Mat* latest_frame_image;
+
+    if (args.empty()) {
+        os << "Filepath required." << std::endl;
+    } else {
+        filepath = args[0];
+    }
+
+    if (args.size() < 2) {
+        frame_num = 0;
+    } else {
+        frame_num = std::stoi(args[1]);
+    }
+
+    latest_frame = get_frame(frame_num);
+    if (latest_frame == NULL) {
+        os << "Frame #" << frame_num << "does not exist." << std::endl;
+        return;
+    }
+
+    latest_frame->draw_image(filepath);
+    os << "Saved frame #" << frame_num << " to " << filepath << std::endl;
 }
 
 

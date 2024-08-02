@@ -103,6 +103,10 @@ bool add_vop_node_command::update_sub() {
                 node_data_dict[param_name] = state->get_svs()->get_v_mem_opencv();
                 param_present = true;
                 break;
+            case visual_ops::VIBMGR_ARG:
+                node_data_dict[param_name] = state->get_svs()->get_vib_manager();
+                param_present = true;
+                break;
             default:
                 node_data_dict[param_name] = NULL;
                 param_present = false;

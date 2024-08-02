@@ -95,6 +95,8 @@ public:
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
     void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
     void cli_inject(const std::vector<std::string>& args, std::ostream& os);
+    void cli_imgdata(const std::vector<std::string>& args, std::ostream& os);
+    void cli_save_img(const std::vector<std::string>& args, std::ostream& os);
 };
 
 
