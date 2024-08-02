@@ -126,6 +126,7 @@ visual_operation_node* visual_working_memory::get_node(int node_id) {
 }
 
 opencv_image* visual_working_memory::get_node_image(int node_id) {
+    if (node_id == -1) { return new opencv_image(); }
     visual_operation_node* target_node = get_node(node_id);
     if (target_node == NULL) {
         return NULL;

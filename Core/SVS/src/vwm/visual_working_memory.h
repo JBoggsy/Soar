@@ -89,6 +89,20 @@ public:
 
     int assign_new_node_id();
     visual_operation_node* get_node(int node_id);
+
+    /**
+     * @brief Get the node image of the given node. If the node has already been evaluated,
+     * then just get its image. Otherwise, evaluate it first and then get the resulting image.
+     * For now, assume a node ALWAYS outputs precisely one node image and it is stored in
+     * `parameters_["source"]`. Other images can be used as input, but only the `source` is
+     * used as output.
+     *
+     * @param node_id The id of the node whose image is requested. A node_id of -1 indicates
+     *                an "origin" node and will always result in a new, blank image.
+     *
+     * @return opencv_image* The image of the given node, or NULL if such a
+     *         node doesn't exist or cannot be evaluated.
+     */
     opencv_image* get_node_image(int node_id);
 
     /**

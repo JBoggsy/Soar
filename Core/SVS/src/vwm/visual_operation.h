@@ -95,10 +95,10 @@ namespace visual_ops
      * @brief Pull an image from a visual input buffer. The root node always has
      *        this operation.
      * @param args
-     *        `std::string vib_id`: The id of the VIB to retrieve from.
-     *        `int buffer_index`: The index of the frame which should be retrieved.
+     *        `std::string vib-id`: The id of the VIB to retrieve from.
+     *        `int buffer-index`: The index of the frame which should be retrieved.
      *        Optional, defaults to 0.
-     *        `visual_input_buffer_manager* vib_manager`: Pointer to the `visual_input_buffer_manager`
+     *        `visual_input_buffer_manager* vib-manager`: Pointer to the `visual_input_buffer_manager`
      *        `opencv_image* source` New `opencv_image` to copy the VIB image into
      */
     void get_from_vib(data_dict args);
