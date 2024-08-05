@@ -6,8 +6,8 @@
 // SVS Includes
 #include "image.h"
 #include "visual_long_term_memory.h"
-#include "visual_archetype.h"
-#include "exact_visual_archetype.h"
+#include "visual_concept_descriptor.h"
+#include "exact_visual_concept_descriptor.h"
 
 template <typename img_T, template<typename T> class atype_T>
 visual_long_term_memory<img_T, atype_T>::visual_long_term_memory(svs* svs_parent) {
@@ -38,7 +38,7 @@ template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::recall(std::string entity_id, img_T* output) {
     int target_idx = _id_index_map[entity_id];
     archetype_T* target_archetype = _archetypes.at(target_idx);
-    target_archetype->reconstruct(output);
+    target_archetype->generate(output);
 }
 
 // template <typename img_T, template<typename T> class atype_T>
@@ -58,23 +58,23 @@ void visual_long_term_memory<img_T, atype_T>::search(img_T* percept, float thres
 
 // Explicit definition of visual_memory::match and ::search methods
 // template <>
-// void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, vmem_match* output) {
+// void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::match(opencv_image* percept, vmem_match* output) {
 //     std::string best_match_name;
 //     float best_similarity = 0.0;
 
 //     std::string current_id;
 //     float current_similarity;
 
-//     std::vector<exact_visual_archetype<opencv_image>*>::iterator atype_iterator;
+//     std::vector<exact_visual_concept_descriptor<opencv_image>*>::iterator atype_iterator;
 //     for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
-//         exact_visual_archetype<opencv_image>* archetype = *atype_iterator;
+//         exact_visual_concept_descriptor<opencv_image>* archetype = *atype_iterator;
 //         opencv_image vmem_percept = archetype->get_raw_percept();
-        
+
 //         archetype->get_id(current_id);
-//         current_similarity = percept->compare(&vmem_percept); 
+//         current_similarity = percept->recognize(&vmem_percept);
 //         printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
 
-//         if (current_similarity > best_similarity) { 
+//         if (current_similarity > best_similarity) {
 //             best_similarity = current_similarity;
 //             best_match_name.assign(current_id);
 //         }
@@ -85,23 +85,23 @@ void visual_long_term_memory<img_T, atype_T>::search(img_T* percept, float thres
 // }
 
 template <>
-void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv_image* percept, double (*match_func)(opencv_image*, opencv_image*), vmem_match* output) {
+void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::match(opencv_image* percept, double (*match_func)(opencv_image*, opencv_image*), vmem_match* output) {
     std::string best_match_name;
     float best_similarity = 0.0;
 
     std::string current_id;
     float current_similarity;
 
-    std::vector<exact_visual_archetype<opencv_image>*>::iterator atype_iterator;
+    std::vector<exact_visual_concept_descriptor<opencv_image>*>::iterator atype_iterator;
     for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
-        exact_visual_archetype<opencv_image>* archetype = *atype_iterator;
+        exact_visual_concept_descriptor<opencv_image>* archetype = *atype_iterator;
         opencv_image vmem_percept = archetype->get_raw_percept();
-        
+
         archetype->get_id(current_id);
         current_similarity = match_func(percept, &vmem_percept);
         printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
 
-        if (current_similarity > best_similarity) { 
+        if (current_similarity > best_similarity) {
             best_similarity = current_similarity;
             best_match_name.assign(current_id);
         }
@@ -114,5 +114,5 @@ void visual_long_term_memory<opencv_image, exact_visual_archetype>::match(opencv
 
 // Explicit instantiation of visual memory classes
 #ifdef ENABLE_OPENCV
-template class visual_long_term_memory<opencv_image, exact_visual_archetype>;
+template class visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>;
 #endif

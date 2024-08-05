@@ -34,7 +34,7 @@ class opencv_image;
 class basic_image;
 
 template<typename img_t>
-class exact_visual_archetype;
+class exact_visual_concept_descriptor;
 
 template <typename img_T, template<typename T> class atype_T>
 class visual_long_term_memory;
@@ -249,7 +249,7 @@ public:
 
 #ifdef ENABLE_OPENCV
     void image_callback(const cv::Mat& new_img);
-    typedef visual_long_term_memory<opencv_image, exact_visual_archetype> exact_opencv_mem;
+    typedef visual_long_term_memory<opencv_image, exact_visual_concept_descriptor> exact_opencv_mem;
     exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
     visual_input_buffer_manager* get_vib_manager() { return vib_manager; }
 #endif

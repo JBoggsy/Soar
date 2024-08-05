@@ -22,11 +22,12 @@
 #include "drawer.h"
 // SVS vision includes
 #include "image.h"
-#include "exact_visual_archetype.h"
+#include "exact_visual_concept_descriptor.h"
 #include "visual_long_term_memory.h"
 #include "visual_working_memory.h"
 
 #include "symbol.h"
+
 typedef std::map<std::string, command*>::iterator cmd_iter;
 
 svs_interface* make_svs(agent* a)
