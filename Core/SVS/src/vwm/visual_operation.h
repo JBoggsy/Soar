@@ -749,7 +749,7 @@ namespace visual_ops
 
     // LEARN FROM IMAGE
     inline vop_params_metadata learn_from_metadata = {
-        /* vop_function = */        recognize,
+        /* vop_function = */        learn_from,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_CLASSNAME, VOP_ARG_VLTM},
         /* param_types = */         {NODE_ID_ARG,    STRING_ARG,        VLTM_ARG},

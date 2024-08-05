@@ -381,6 +381,10 @@ svs::svs(agent* a)
     si = new soar_interface(a);
     draw = new drawer();
 
+#ifdef ENABLE_OPENCV
+    v_mem_opencv = new exact_opencv_mem(this);
+#endif
+
 #ifdef ENABLE_ROS
     ros_interface::init_ros();
     ri = new ros_interface(this);

@@ -6,6 +6,8 @@
 
 #include "visual_operation.h"
 #include "visual_input_buffer.h"
+#include "visual_long_term_memory.h"
+#include "exact_visual_concept_descriptor.h"
 #include "image.h"
 
 
@@ -467,10 +469,31 @@ namespace visual_ops
     ///////////////////////////
 
     void recognize(data_dict args) {
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm;
+        vltm = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
 
+        vmem_match** matches = new vmem_match*[3];
+        vltm->match(source, matches, 3);
+
+        ((std::string*)args[VOP_ARG_CLASS1])->assign(matches[0]->entity_id);
+        ((std::string*)args[VOP_ARG_CLASS2])->assign(matches[1]->entity_id);
+        ((std::string*)args[VOP_ARG_CLASS3])->assign(matches[2]->entity_id);
+
+        *((float*)args[VOP_ARG_CONF1]) = matches[0]->confidence;
+        *((float*)args[VOP_ARG_CONF2]) = matches[1]->confidence;
+        *((float*)args[VOP_ARG_CONF3]) = matches[2]->confidence;
     }
 
     void learn_from(data_dict args) {
+        opencv_image* source;
+        std::string class_name;
+        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm;
 
+        source = (opencv_image*)args[VOP_ARG_SOURCE];
+        class_name = *(std::string*)args[VOP_ARG_CLASSNAME];
+        vltm = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+
+        vltm->store_percept(source, class_name);
     }
 } // namespace visual_ops
