@@ -50,7 +50,7 @@ typedef struct vmem_match {
  * @sa visual_concept_descriptor
  */
 template <typename img_T, template<typename T> class atype_T>
-class visual_long_term_memory : cliproxy
+class visual_long_term_memory : public cliproxy
 {
 private:
     /**
@@ -173,7 +173,29 @@ public:
      */
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
 
+    /**
+     * @brief Displays how many VCDs are in VLTM, then prints out the help menu.
+     */
     void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Prints a newline-separated list of the VCD IDs (aka class names)
+     * in VLTM.
+     */
+    void cli_list_vcd_ids(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Given a class name and base64-encoded image data, update or create
+     * the VCD in VLTM with the given class name using the image reconstructed
+     * from the image data.
+     */
+    void cli_learn(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Given a class name, return base64-encoded image data corresponding
+     * to a generated image of that class.
+     */
+    void cli_generate(const std::vector<std::string>& args, std::ostream& os);
 };
 
 #endif

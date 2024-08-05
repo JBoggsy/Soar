@@ -583,6 +583,7 @@ void svs::proxy_get_children(std::map<std::string, cliproxy*>& c)
 #endif
 #ifdef ENABLE_OPENCV
     c["vibmgr"] = vib_manager;
+    c["vltm"] = v_mem_opencv;
 
     for (size_t j = 0, jend = state_stack.size(); j < jend; ++j)
     {
