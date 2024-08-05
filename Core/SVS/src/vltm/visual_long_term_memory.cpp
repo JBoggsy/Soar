@@ -1,6 +1,7 @@
 // C++ STD libraries
 #include <string>
 #include <vector>
+#include <list>
 #include <unordered_map>
 #include <exception>
 // SVS Includes
@@ -41,13 +42,13 @@ void visual_long_term_memory<img_T, atype_T>::recall(std::string entity_id, img_
     target_archetype->generate(output);
 }
 
-// template <typename img_T, template<typename T> class atype_T>
-// void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match* output) {
-//     throw "Not implemented yet";
-// }
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match** output) {
+    match(percept, output, 1);
+}
 
 template <typename img_T, template<typename T> class atype_T>
-void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, double (*match_func)(img_T*, img_T*), vmem_match* output) {
+void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match** output, int n) {
     throw "Not implemented yet";
 }
 
@@ -56,63 +57,60 @@ void visual_long_term_memory<img_T, atype_T>::search(img_T* percept, float thres
     throw "Not implemented yet";
 }
 
-// Explicit definition of visual_memory::match and ::search methods
-// template <>
-// void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::match(opencv_image* percept, vmem_match* output) {
-//     std::string best_match_name;
-//     float best_similarity = 0.0;
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::proxy_get_children(std::map<std::string, cliproxy*>& c) {
+}
 
-//     std::string current_id;
-//     float current_similarity;
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
+    os << "========== VLTM INTERFACE ==========" << std::endl;
+    os << "CLI USAGE:" << std::endl << std::endl;
+    os << "====================================" << std::endl;
+}
 
-//     std::vector<exact_visual_concept_descriptor<opencv_image>*>::iterator atype_iterator;
-//     for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
-//         exact_visual_concept_descriptor<opencv_image>* archetype = *atype_iterator;
-//         opencv_image vmem_percept = archetype->get_raw_percept();
-
-//         archetype->get_id(current_id);
-//         current_similarity = percept->recognize(&vmem_percept);
-//         printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
-
-//         if (current_similarity > best_similarity) {
-//             best_similarity = current_similarity;
-//             best_match_name.assign(current_id);
-//         }
-//     }
-
-//     output->entity_id = best_match_name;
-//     output->confidence = best_similarity;
-// }
+#ifdef ENABLE_OPENCV
+////////////////////
+// EXACT VCD VLTM //
+////////////////////
 
 template <>
-void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::match(opencv_image* percept, double (*match_func)(opencv_image*, opencv_image*), vmem_match* output) {
-    std::string best_match_name;
-    float best_similarity = 0.0;
+void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::match(opencv_image* percept, vmem_match** output, int n) {
+    std::list<std::pair<float, std::string>> best_matches;
 
     std::string current_id;
     float current_similarity;
 
     std::vector<exact_visual_concept_descriptor<opencv_image>*>::iterator atype_iterator;
     for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
-        exact_visual_concept_descriptor<opencv_image>* archetype = *atype_iterator;
-        opencv_image vmem_percept = archetype->get_raw_percept();
+        exact_visual_concept_descriptor<opencv_image>* vcd = *atype_iterator;
 
-        archetype->get_id(current_id);
-        current_similarity = match_func(percept, &vmem_percept);
+        vcd->get_id(current_id);
+        current_similarity = vcd->recognize(*percept);
         printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
 
-        if (current_similarity > best_similarity) {
-            best_similarity = current_similarity;
-            best_match_name.assign(current_id);
+        std::list<std::pair<float, std::string>>::iterator best_match_itr;
+        best_match_itr = best_matches.begin();
+        int i = 0;
+        for (; best_match_itr != best_matches.end(); best_match_itr++) {
+            if (i >= n) { break; }
+            if (current_similarity > best_match_itr->first) {
+                best_matches.insert(best_match_itr, std::pair<float, std::string>(current_similarity, current_id));
+                break;
+            }
+            i++;
         }
     }
 
-    output->entity_id = best_match_name;
-    output->confidence = best_similarity;
+    for (int i=0; i<n; i++) {
+        std::pair<float, std::string> match = best_matches.front();
+        float match_confidence = match.first;
+        std::string match_id = match.second;
+        output[i]->entity_id = match_id;
+        output[i]->confidence = match_confidence;
+        best_matches.pop_front();
+    }
 }
 
-
-// Explicit instantiation of visual memory classes
-#ifdef ENABLE_OPENCV
 template class visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>;
 #endif
+

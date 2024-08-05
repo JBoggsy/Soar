@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+// SVS Includes
+#include "cliproxy.h"
 // Forward declarations
 class svs;  // "svs.h"
 class image_base;  // "image.h"
@@ -48,7 +50,7 @@ typedef struct vmem_match {
  * @sa visual_concept_descriptor
  */
 template <typename img_T, template<typename T> class atype_T>
-class visual_long_term_memory
+class visual_long_term_memory : cliproxy
 {
 private:
     /**
@@ -117,32 +119,19 @@ public:
      * Search through all of the entity - percept knowledge pairs in visual
      * memory and return the entity identifier most likely to correctly identify
      * what the percept is. This method just iterates through each
-     * visual_concept_descriptor stored in _archetypes and calls its recognize method on
-     * the given percept. The archetype with the highest resulting value is used
-     * as the match.
+     * visual_concept_descriptor stored in _archetypes and calls its recognize
+     * method on the given percept. The archetype with the highest resulting
+     * value is used as the match.
      *
      * @param percept The percept to be identified.
-     * @param output A `vmem_match` object to write the best match into.
+     * @param output An array of `vmem_match` objects to write the best matches
+     * into. Expected to be of length `n`.
+     * @param n (Optional, default 1) How many matches to return. Returns the
+     * top `n` matches.
      */
-    void match(img_T* percept, vmem_match* output);
+    void match(img_T* percept, vmem_match** output);
+    void match(img_T* percept, vmem_match** output, int n);
 
-        /**
-     * @brief Given a percept and comparison function, return a likely entity type/token.
-     *
-     * @details
-     * Search through all of the entity - percept knowledge pairs in visual
-     * memory and return the entity identifier most likely to correctly identify
-     * what the percept is. This method just iterates through each
-     * visual_concept_descriptor stored in _archetypes and calls the given recognize method on
-     * the given percept. The archetype with the highest resulting value is used
-     * as the match.
-     *
-     * @param percept The percept to be identified.
-     * @param cmp_func A function which, given two percepts, compares them and
-     *      returns their similarity as a double where higher is better
-     * @param output A `vmem_match` object to write the best match into.
-     */
-    void match(img_T* percept, double (*cmp_func)(img_T*, img_T*), vmem_match* output);
 
     /**
      * @brief Given the string identifier of a VisualArchetype instance presumed
@@ -167,6 +156,24 @@ public:
      * @param output A vector to write the matches to.
      */
     void search(img_T* percept, float threshold, std::vector<vmem_match*>* output);
+
+    //////////////////////
+    // CLIPROXY METHODS //
+    //////////////////////
+
+    /**
+     * @brief Provide a map of the sub-commands for this command to the CLI
+     * parser.
+     *
+     * @details Todo
+     *
+     * @todo Write details
+     *
+     * @param c A mapping of string identifiers to `cliproxy` instance.
+     */
+    void proxy_get_children(std::map<std::string, cliproxy*>& c);
+
+    void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
 };
 
 #endif
