@@ -1,3 +1,6 @@
+// C++ STD Libraries
+#include <string>
+#include <vector>
 // SVS INCLUDES
 #include "visual_operation.h"
 #include "visual_operation_graph.h"
@@ -24,6 +27,7 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
     // Populate parent_ids_ and the WM link by scanning over op_metadata_
     std::string param_name;
     visual_ops::ArgType param_type;
+
     int         param_val_int;
     double      param_val_dbl;
     std::string param_val_str;

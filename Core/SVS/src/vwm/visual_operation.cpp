@@ -460,4 +460,17 @@ namespace visual_ops
         printf("Result max %f at (%d, %d)\n", *((double*)args[VOP_ARG_MAXVAL]), maxloc.x, maxloc.y);
 
     }
+
+
+    ///////////////////////////
+    // VLTM-BASED OPERATIONS //
+    ///////////////////////////
+
+    void recognize(data_dict args) {
+
+    }
+
+    void learn_from(data_dict args) {
+
+    }
 } // namespace visual_ops

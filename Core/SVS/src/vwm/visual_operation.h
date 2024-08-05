@@ -43,6 +43,8 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_MATCH_TEMPLATE          std::string("match-template")
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
+#define VOP_RECOGNIZE               std::string("recognize")
+#define VOP_LEARN_FROM              std::string("learn-from")
 
 // Define argument names as strings
 #define VOP_ARG_A           std::string("a")
@@ -53,6 +55,13 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_BORDERTYPE  std::string("border-type")
 #define VOP_ARG_BUFFERINDEX std::string("buffer-index")
 #define VOP_ARG_CHANNEL     std::string("channel")
+#define VOP_ARG_CLASS1      std::string("class1")
+#define VOP_ARG_CLASS2      std::string("class2")
+#define VOP_ARG_CLASS3      std::string("class3")
+#define VOP_ARG_CLASSNAME   std::string("class-name")
+#define VOP_ARG_CONF1       std::string("confidence1")
+#define VOP_ARG_CONF2       std::string("confidence2")
+#define VOP_ARG_CONF3       std::string("confidence3")
 #define VOP_ARG_END         std::string("end")
 #define VOP_ARG_FILEPATH    std::string("filepath")
 #define VOP_ARG_FILL_VAL    std::string("fill-val")
@@ -78,6 +87,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_TYPE        std::string("type")
 #define VOP_ARG_VIBID       std::string("vib-id")
 #define VOP_ARG_VIBMGR      std::string("vib-manager")
+#define VOP_ARG_VLTM        std::string("vltm")
 #define VOP_ARG_WIDTH       std::string("width")
 #define VOP_ARG_WINDOWNAME  std::string("window-name")
 #define VOP_ARG_X           std::string("x")
@@ -102,7 +112,6 @@ namespace visual_ops
      *        `std::string vib-id`: The id of the VIB to retrieve from.
      *        `int buffer-index`: The index of the frame which should be retrieved.
      *        Optional, defaults to 0.
-     *        `visual_input_buffer_manager* vib-manager`: Pointer to the `visual_input_buffer_manager`
      *        `opencv_image* source` New `opencv_image` to copy the VIB image into
      */
     void get_from_vib(data_dict args);
@@ -371,17 +380,72 @@ namespace visual_ops
 
     /**
      * @brief Finds the global minimum and maximum in an array.
-     * @param args Map of non-image arguments to method:
-     *        `double* minval`: pointer to the returned minimum value
-     *        `double* maxval`: pointer to the returned maximum value
-     *        `int* minloc_x`: pointer to the returned minimum location's x coordinate
-     *        `int* minloc_y`: pointer to the returned minimum location's y coordinate
-     *        `int* maxloc_x`: pointer to the returned maximum location's x coordinate
-     *        `int* maxloc_y`: pointer to the returned maximum location's y coordinate
-     *        `opencv_image* source`: The single-channel input image to find
-     *                                min/max of
+     * @param args Map of arguments to method:
+     *
+     * - `double* minval`: pointer to the returned minimum value
+     *
+     * - `double* maxval`: pointer to the returned maximum value
+     *
+     * - `int* minloc_x`: pointer to the returned minimum location's x
+     *   coordinate
+     *
+     * - `int* minloc_y`: pointer to the returned minimum location's y
+     *   coordinate
+     *
+     * - `int* maxloc_x`: pointer to the returned maximum location's x
+     *   coordinate
+     *
+     * - `int* maxloc_y`: pointer to the returned maximum location's y
+     *   coordinate
+     *
+     * - `opencv_image* source`: The single-channel input image to find min/max
+     *   of
      */
     void min_max_loc(data_dict args);
+
+
+    ///////////////////////////
+    // VLTM-BASED OPERATIONS //
+    ///////////////////////////
+
+    /**
+     * @brief Query VLTM with the source image in order to get a class label and
+     * confidence value.
+     *
+     * @param args Argument name-value map for the visual operation:
+     *
+     * - `opencv_image* source` The image to query VLTM with
+     *
+     * - `std::string class1` The VLTM ID for the class with the highest
+     *   confidence score.
+     *
+     * - `float confidence1` The confidence score for the first returned class.
+     *
+     * - `std::string class2` The VLTM ID for the class with the second highest
+     *   confidence score.
+     *
+     * - `float confidence2` The confidence score for the second returned class.
+     *
+     * - `std::string class3` The VLTM ID for the class with the third highest
+     *   confidence score.
+     *
+     * - `float confidence3` The confidence score for the third returned class.
+     */
+    void recognize(data_dict args);
+
+    /**
+     * @brief Use a source image to update the VCD with the specified class
+     * label.
+     *
+     * @param args Argument name-value map for the visual operation:
+     *
+     * - `opencv_image* source` The image to learn from, i.e., to use for
+     *   updating the VCD.
+     *
+     * - `std::string class_name` The VLTM ID of the VCD which should be updated
+     *   using the source image.
+     */
+    void learn_from(data_dict args);
 
     ////////////////////////////////////////////////////////////
     // DEFINE METADATA AND LOOKUP TABLE FOR VISUAL OPERATIONS //
@@ -673,6 +737,26 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}
     };
 
+    // RECOGNIZE IMAGE
+    inline vop_params_metadata recognize_metadata = {
+        /* vop_function = */        recognize,
+        /* num_params = */          8,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_CLASS1, VOP_ARG_CONF1,   VOP_ARG_CLASS2,  VOP_ARG_CONF2,   VOP_ARG_CLASS3,  VOP_ARG_CONF3, VOP_ARG_VLTM},
+        /* param_types = */         {NODE_ID_ARG,    STRING_ARG,     DOUBLE_ARG,      STRING_ARG,      DOUBLE_ARG,      STRING_ARG,      DOUBLE_ARG,    VLTM_ARG},
+        /* param_directions */      {INPUT_ARG,      OUTPUT_ARG,     OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,    INPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,  REQUIRED_ARG}
+    };
+
+    // LEARN FROM IMAGE
+    inline vop_params_metadata learn_from_metadata = {
+        /* vop_function = */        recognize,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_CLASSNAME, VOP_ARG_VLTM},
+        /* param_types = */         {NODE_ID_ARG,    STRING_ARG,        VLTM_ARG},
+        /* param_directions */      {INPUT_ARG,      INPUT_ARG,         INPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,      REQUIRED_ARG}
+    };
+
     // CREATE LOOKUP TABLE MAPPING OPERATION NAMES TO METADATA
     //////////////////////////////////////////////////////////
     inline std::unordered_map<std::string, vop_params_metadata> vops_param_table({
@@ -700,7 +784,9 @@ namespace visual_ops
         {VOP_APPLY_UNARY_OP, apply_unary_op_metadata},
         {VOP_MATCH_TEMPLATE, match_template_metadata},
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
-        {VOP_MIN_MAX_LOC, min_max_loc_metadata}
+        {VOP_MIN_MAX_LOC, min_max_loc_metadata},
+        {VOP_RECOGNIZE, recognize_metadata},
+        {VOP_LEARN_FROM, learn_from_metadata}
     });
 
 } // namespace visual_ops
