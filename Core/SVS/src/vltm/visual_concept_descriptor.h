@@ -62,7 +62,7 @@ public:
      *
      * @param percept The visual percept which should be compared against.
      */
-    virtual float recognize(img_t percept) = 0;
+    virtual double recognize(img_t percept) = 0;
 
     /**
      * @brief Generate a mental image of the entity this VCD represents.

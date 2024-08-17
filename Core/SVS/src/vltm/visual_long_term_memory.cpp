@@ -118,10 +118,11 @@ void visual_long_term_memory<img_T, atype_T>::cli_generate(const std::vector<std
 
 template <>
 void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::match(opencv_image* percept, vmem_match** output, int n) {
-    std::list<std::pair<float, std::string>> best_matches;
+    std::list<std::pair<double, std::string>> best_matches;
+    best_matches.insert(best_matches.begin(), std::pair<double, std::string>(0.0, "NOMATCH"));
 
     std::string current_id;
-    float current_similarity;
+    double current_similarity;
 
     std::vector<exact_visual_concept_descriptor<opencv_image>*>::iterator atype_iterator;
     for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
@@ -129,28 +130,40 @@ void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::mat
 
         vcd->get_id(current_id);
         current_similarity = vcd->recognize(*percept);
-        printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
-
-        std::list<std::pair<float, std::string>>::iterator best_match_itr;
+        // printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
+        
+        std::list<std::pair<double, std::string>>::iterator best_match_itr;
         best_match_itr = best_matches.begin();
         int i = 0;
         for (; best_match_itr != best_matches.end(); best_match_itr++) {
             if (i >= n) { break; }
+            // printf("\tChecking current %dth best: %f\n",i, best_match_itr->first);
             if (current_similarity > best_match_itr->first) {
-                best_matches.insert(best_match_itr, std::pair<float, std::string>(current_similarity, current_id));
+                // printf("\tInserting %s at index %d\n", current_id.c_str(), i);
+                best_matches.insert(best_match_itr, std::pair<double, std::string>(current_similarity, current_id));
                 break;
             }
             i++;
-        }
+        }        
     }
 
-    for (int i=0; i<n; i++) {
-        std::pair<float, std::string> match = best_matches.front();
-        float match_confidence = match.first;
-        std::string match_id = match.second;
-        output[i]->entity_id = match_id;
-        output[i]->confidence = match_confidence;
+    // printf("Size of best matches: %d\n", best_matches.size());
+    // printf("First best match: %s - %f\n", best_matches.front().second.c_str(), best_matches.front().first);
+
+    std::pair<double, std::string> match;
+    double match_confidence;
+    std::string match_id;
+    vmem_match* vmatch;
+    int i = 0;
+    while (best_matches.size() > 0 && i < n) {
+        match = best_matches.front();
+        match_confidence = match.first;
+        match_id = match.second;
+        printf("Match %d: %s (%f)\n", i, match_id.c_str(), match_confidence);
+        vmatch = new vmem_match(match_id, match_confidence);
+        output[i] = vmatch;
         best_matches.pop_front();
+        i++;
     }
 }
 

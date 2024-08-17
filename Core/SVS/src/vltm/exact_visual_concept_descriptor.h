@@ -58,12 +58,12 @@ class exact_visual_concept_descriptor : public visual_concept_descriptor<img_t> 
         /**
          * @brief Indicate whether the given percept is the same as this one.
          *
-         * @details Given a visual percept, return either 0.0 to indicate
-         * inequality or 1.0 to indicate equaity.
+         * @details Given a visual percept, return a confidence score that the
+         * percept contains an instance of the VCD.
          *
          * @param percept The visual percept which should be compared against.
          */
-        float recognize(img_t percept) override;
+        double recognize(img_t percept) override;
 
         /**
          * @brief Generate a mental image of the entity this VCD represents.

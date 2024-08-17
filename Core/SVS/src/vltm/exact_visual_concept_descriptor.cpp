@@ -21,9 +21,9 @@ void exact_visual_concept_descriptor<img_t>::store_percept(img_t example) {
 }
 
 template<typename img_t>
-float exact_visual_concept_descriptor<img_t>::recognize(img_t percept) {
-    if (percept == archetype) { return 1.0f; }
-    else { return 0.0f; }
+double exact_visual_concept_descriptor<img_t>::recognize(img_t percept) {
+    if (percept == archetype) { return 1.0; }
+    else { return 0.0; }
 }
 
 template<typename img_t>
@@ -45,15 +45,15 @@ void exact_visual_concept_descriptor<opencv_image>::store_percept(opencv_image e
 }
 
 template<>
-float exact_visual_concept_descriptor<opencv_image>::recognize(opencv_image percept) {
+double exact_visual_concept_descriptor<opencv_image>::recognize(opencv_image percept) {
     int result_cols = percept.get_width() - archetype.get_width() + 1;
     int result_rows = percept.get_height() - archetype.get_height() + 1;
 
     cv::Mat result;
     result.create(result_rows, result_cols, CV_32FC1);
 
-    cv::matchTemplate(*(percept.get_image()), *(archetype.get_image()), result, cv::TM_SQDIFF);
-    normalize(result, result, 0.0, 1.0, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
+    cv::matchTemplate(*(percept.get_image()), *(archetype.get_image()), result, cv::TM_CCOEFF);
+    // cv::imwrite("/home/boggsj/Coding/research/svs_experiments/recognize_test.png", result);
 
     double min, max;
     cv::Point minloc;
@@ -61,7 +61,7 @@ float exact_visual_concept_descriptor<opencv_image>::recognize(opencv_image perc
 
     cv::minMaxLoc(result, &min, &max, &minloc, &maxloc);
 
-    return min;
+    return max;
 }
 
 template<>

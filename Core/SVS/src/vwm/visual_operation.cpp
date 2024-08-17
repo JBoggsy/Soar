@@ -480,9 +480,12 @@ namespace visual_ops
         ((std::string*)args[VOP_ARG_CLASS2])->assign(matches[1]->entity_id);
         ((std::string*)args[VOP_ARG_CLASS3])->assign(matches[2]->entity_id);
 
-        *((float*)args[VOP_ARG_CONF1]) = matches[0]->confidence;
-        *((float*)args[VOP_ARG_CONF2]) = matches[1]->confidence;
-        *((float*)args[VOP_ARG_CONF3]) = matches[2]->confidence;
+        printf("Conf1: %f\n", matches[0]->confidence);
+        *((double*)args[VOP_ARG_CONF1]) = matches[0]->confidence;
+        *((double*)args[VOP_ARG_CONF2]) = matches[1]->confidence;
+        *((double*)args[VOP_ARG_CONF3]) = matches[2]->confidence;
+        printf("Arg Conf1: %f\n", *((double*)args[VOP_ARG_CONF1]));
+
     }
 
     void learn_from(data_dict args) {

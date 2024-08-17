@@ -162,7 +162,7 @@ bool visual_operation_node::edit_parameter(std::string param_name, std::string n
  * @returns True if the evaluation was successful, false otherwise.
  */
 bool visual_operation_node::evaluate() {
-    printf("Evaluating node %d...\n", id_);
+    // printf("Evaluating node %d...\n", id_);
     std::string parent_param_name;
     int parent_node_id;
     std::unordered_map<std::string, int>::iterator parent_itr;
@@ -200,6 +200,7 @@ bool visual_operation_node::evaluate() {
             case visual_ops::DOUBLE_ARG:
                 param_val_dbl = *(double*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_dbl);
+                printf("Param %s: %f\n", param_name.c_str(), param_val_dbl);
                 break;
             case visual_ops::STRING_ARG:
                 param_val_str = *(std::string*)parameters_[param_name];
@@ -209,7 +210,7 @@ bool visual_operation_node::evaluate() {
         param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
     }
 
-    printf("Done with node %d\n", id_);
+    // printf("Done with node %d\n", id_);
 
     if (op_type_.compare(VOP_SAVE_TO_FILE) != 0) {
         char debug_save_filename[64];
