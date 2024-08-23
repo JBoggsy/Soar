@@ -178,9 +178,106 @@ std::string visual_working_memory::get_vog_dot_string() {
 // CLIPROXY METHODS //
 //////////////////////
 void visual_working_memory::proxy_get_children(std::map<std::string, cliproxy*>& c) {
+    c["nlist"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_list_nodes);
 
+    c["ninfo"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_get_node_info);
+    c["ninfo"]->add_arg("NID", "The id of the node to inspect.");
+
+    c["nimg"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_get_node_image);
+    c["ninfo"]->add_arg("NID", "The id of the node whose image should be retrieved.");
+    c["ninfo"]->add_arg("ARG", "The argument of the VOp whose image should be retrieved. Optional, defaults to 'source'.");
+
+    c["vogdot"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_get_vog_dot);
 }
 
 void visual_working_memory::proxy_use_sub(const std::vector<std::string>& args, std::ostream& os) {
+    os << "========== VISUAL WORKING MEMORY INTERFACE ==========" << std::endl;
+    os << "NUMBER OF VOP NODES: " << num_operations << std::endl;
+    os << "CLI USAGE:" << std::endl << std::endl;
+    os << "svs vwm - Prints this help message."<< std::endl;
+    os << "svs vwm.nlist - Prints a list of all of the VOp nodes in the VOG. Nodes are printed one per line, with the format <node-id> - <vop-type>."<< std::endl;
+    os << "svs vwm.ninfo <NID> - Prints detailed information about the VOp node with the specified ID." << std::endl;
+    os << "svs vwm.nimg <NID> <ARG-NAME> - Prints the image corresponding to the given argument of the VOp node with the specified ID. The image is printed as a base64-encoded .png. <ARG-NAME> is optional and defaults to 'source'." << std::endl;
+    os << "svs vwm.vogdot - Recursively generates a DOT representation of the VOG and prints it. Used to display the VOG using a GraphViz renderer."<< std::endl;
+    os << "========================================================" << std::endl;
+}
 
+void visual_working_memory::cli_list_nodes(const std::vector<std::string>& args, std::ostream& os) {
+    os << "NID - VOP" << std::endl;
+
+    id_node_map::iterator nodes_itr = vop_nodes.begin();
+    id_node_map::iterator nodes_end = vop_nodes.end();
+    for (; nodes_itr != nodes_end; nodes_itr++) {
+        os << nodes_itr->first << " - " << nodes_itr->second->get_op_type().c_str() << std::endl;
+    }
+}
+void visual_working_memory::cli_get_node_info(const std::vector<std::string>& args, std::ostream& os) {
+    int node_id;
+    visual_operation_node* vop_node;
+    int i;
+
+    if (args.empty()) {
+        os << "You must specify a node id." << std::endl;
+        return;
+    } else {
+        node_id = std::stoi(args[0]);
+    }
+
+    vop_node = vop_nodes[node_id];
+    os << "VOP NODE " << node_id << "(" << vop_node->get_op_type() << ")" << std::endl;
+    os << "Children: ";
+    i = 0;
+    for (int child_id : *(vop_node->get_child_ids())) {
+        os << child_id;
+        if (i < (vop_node->get_child_ids()->size()-1)) {
+            os << ",";
+        }
+        os << std::endl;
+        i++;
+    }
+    os << "Parents: ";
+    i = 0;
+    for (std::pair<std::string, int> parent : *(vop_node->get_parent_ids())) {
+        os << parent.second;
+        if (i < (vop_node->get_parent_ids()->size()-1)) {
+            os << ",";
+        }
+        os << std::endl;
+        i++;
+    }
+}
+
+void visual_working_memory::cli_get_node_image(const std::vector<std::string>& args, std::ostream& os) {
+    int node_id;
+    std::string arg_name;
+    visual_operation_node* vop_node;
+    opencv_image* node_img;
+    cv::Mat* node_img_mat;
+    std::vector<uchar> raw_png_data;
+    std::string b64_data;
+
+    if (args.empty()) {
+        os << "You must specify a node id." << std::endl;
+        return;
+    } else {
+        node_id = std::stoi(args[0]);
+    }
+
+    if (args.size() > 1) {
+        arg_name = args[1];
+    } else {
+        arg_name = std::string("source");
+    }
+
+    vop_node = vop_nodes[node_id];
+    node_img = vop_node->get_node_image();
+    node_img_mat = node_img->get_image();
+    cv::imencode(std::string(".png"), *(node_img_mat), raw_png_data);
+    b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
+    os << b64_data << std::endl;
+}
+
+void visual_working_memory::cli_get_vog_dot(const std::vector<std::string>& args, std::ostream& os) {
+    os << "VOG DOT:" << std::endl;
+    os << get_vog_dot_string() << std::endl;
 }

@@ -578,6 +578,11 @@ void svs::proxy_get_children(std::map<std::string, cliproxy*>& c)
     c["filters"]           = &get_filter_table();
     c["commands"]          = &get_command_table();
 
+    std::vector<svs_state*>::iterator state_itr = state_stack.begin();
+    for (; state_itr != state_stack.end(); state_itr++) {
+        c[(*state_itr)->get_name()] = *state_itr;
+    }
+
 #ifdef ENABLE_ROS
     c["ros"] = ri;
 #endif

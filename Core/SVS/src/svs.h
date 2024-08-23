@@ -108,7 +108,7 @@ typedef command_set::iterator command_set_it;
 /**
  * @brief Represents a state in the SVS state stack, Like working memory, SVS
  * can have multiple "states" held in a state stack. In general, there is a
- * separate SVS state for each state in orking memory. Each state in the state
+ * separate SVS state for each state in working memory. Each state in the state
  * stack has its own SVS link, scene, visual input, etc. These states handle
  * are what receive filters, visual operations, and so on.
  *

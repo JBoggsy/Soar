@@ -155,6 +155,11 @@ public:
      * @param os The output stream to write to.
      */
     void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
+
+    void cli_list_nodes(const std::vector<std::string>& args, std::ostream& os);
+    void cli_get_node_info(const std::vector<std::string>& args, std::ostream& os);
+    void cli_get_node_image(const std::vector<std::string>& args, std::ostream& os);
+    void cli_get_vog_dot(const std::vector<std::string>& args, std::ostream& os);
 };
 
 #endif
