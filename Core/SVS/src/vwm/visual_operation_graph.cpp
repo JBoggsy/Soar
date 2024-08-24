@@ -67,6 +67,18 @@ visual_operation_node::~visual_operation_node() {
     si_->del_sym(node_link_);
 }
 
+std::map<std::string, int> visual_operation_node::get_param_names_and_types() {
+    std::map<std::string, int> params_info;
+    int param_i;
+
+    for (param_i=0; param_i<op_metadata_.num_params; param_i++) {
+        if (parameters_[op_metadata_.param_names[param_i]] == NULL) { continue; }
+        params_info[op_metadata_.param_names[param_i]] = (int)op_metadata_.param_types[param_i];
+    }
+
+    return params_info;
+}
+
 /**
  * @brief Edit the value of a parameter used as an arguments for the VOp in this node.
  *
@@ -229,7 +241,9 @@ std::string visual_operation_node::get_dot_string() {
     std::string ret_str = std::string();
     ret_str.append("vop_");
     ret_str.append(std::to_string(id_));
-    ret_str.append(" [label=\"]");
+    ret_str.append(" [label=\"");
+    ret_str.append(std::to_string(id_));
+    ret_str.append(": ");
     ret_str.append(op_type_);
     ret_str.append(" \"];\n");
 

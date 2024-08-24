@@ -215,6 +215,10 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
     int node_id;
     visual_operation_node* vop_node;
     int i;
+    std::map<std::string, int> params_info;
+    int param_val_int;
+    double param_val_dbl;
+    std::string param_val_str;
 
     if (args.empty()) {
         os << "You must specify a node id." << std::endl;
@@ -224,7 +228,7 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
     }
 
     vop_node = vop_nodes[node_id];
-    os << "VOP NODE " << node_id << "(" << vop_node->get_op_type() << ")" << std::endl;
+    os << "Node " << node_id << " (" << vop_node->get_op_type() << ")" << std::endl;
     os << "Children: ";
     i = 0;
     for (int child_id : *(vop_node->get_child_ids())) {
@@ -232,9 +236,9 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
         if (i < (vop_node->get_child_ids()->size()-1)) {
             os << ",";
         }
-        os << std::endl;
         i++;
     }
+    os << std::endl;
     os << "Parents: ";
     i = 0;
     for (std::pair<std::string, int> parent : *(vop_node->get_parent_ids())) {
@@ -242,8 +246,25 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
         if (i < (vop_node->get_parent_ids()->size()-1)) {
             os << ",";
         }
-        os << std::endl;
         i++;
+    }
+    os << std::endl;
+
+    params_info = vop_node->get_param_names_and_types();
+    for (std::pair<std::string, int> param_info : params_info) {
+        os << param_info.first << ": ";
+        if (param_info.second == 0) {
+            os << vop_node->get_int_parameter(param_info.first);
+        } else if (param_info.second == 1) {
+            os << vop_node->get_dbl_parameter(param_info.first);
+        } else if (param_info.second == 2) {
+            os << vop_node->get_str_parameter(param_info.first);
+        } else if (param_info.second == 3) {
+            os << vop_node->get_parent_ids()->at(param_info.first);
+        } else {
+            os << "MEMORY ARG";
+        }
+        os << std::endl;
     }
 }
 
@@ -278,6 +299,5 @@ void visual_working_memory::cli_get_node_image(const std::vector<std::string>& a
 }
 
 void visual_working_memory::cli_get_vog_dot(const std::vector<std::string>& args, std::ostream& os) {
-    os << "VOG DOT:" << std::endl;
     os << get_vog_dot_string() << std::endl;
 }

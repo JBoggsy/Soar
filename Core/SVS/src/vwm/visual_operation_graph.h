@@ -45,6 +45,11 @@ public:
     std::unordered_set<int>* get_child_ids() { return &child_ids_; }
     std::unordered_map<std::string, int>* get_parent_ids() { return &parent_ids_; }
 
+    std::map<std::string, int> get_param_names_and_types();
+    int get_int_parameter(std::string param_name) { return *((int*)parameters_[param_name]); }
+    double get_dbl_parameter(std::string param_name) { return *((double*)parameters_[param_name]); }
+    std::string get_str_parameter(std::string param_name) { return *((std::string*)parameters_[param_name]); }
+
     bool edit_parameter(std::string param_name, int new_value);
     bool edit_parameter(std::string param_name, double new_value);
     bool edit_parameter(std::string param_name, std::string new_value);
