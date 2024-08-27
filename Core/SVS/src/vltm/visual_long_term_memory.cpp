@@ -51,7 +51,47 @@ void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match**
 
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match** output, int n) {
-    throw "Not implemented yet";
+    std::list<std::pair<double, std::string>> best_matches;
+    best_matches.insert(best_matches.begin(), std::pair<double, std::string>(0.0, "NOMATCH"));
+
+    std::string current_id;
+    double current_similarity;
+
+    typename std::vector<archetype_T*>::iterator vcd_itr = _archetypes.begin();
+    for (; vcd_itr != _archetypes.end(); vcd_itr++) {
+        archetype_T* vcd = *vcd_itr;
+
+        vcd->get_id(current_id);
+        current_similarity = vcd->recognize(*percept);
+
+        std::list<std::pair<double, std::string>>::iterator best_match_itr;
+        best_match_itr = best_matches.begin();
+        int i = 0;
+        for (; best_match_itr != best_matches.end(); best_match_itr++) {
+            if (i >= n) { break; }
+            if (current_similarity > best_match_itr->first) {
+                best_matches.insert(best_match_itr, std::pair<double, std::string>(current_similarity, current_id));
+                break;
+            }
+            i++;
+        }
+    }
+
+    std::pair<double, std::string> match;
+    double match_confidence;
+    std::string match_id;
+    vmem_match* vmatch;
+    int i = 0;
+    while (best_matches.size() > 0 && i < n) {
+        match = best_matches.front();
+        match_confidence = match.first;
+        match_id = match.second;
+        printf("Match %d: %s (%f)\n", i, match_id.c_str(), match_confidence);
+        vmatch = new vmem_match(match_id, match_confidence);
+        output[i] = vmatch;
+        best_matches.pop_front();
+        i++;
+    }
 }
 
 template <typename img_T, template<typename T> class atype_T>
@@ -100,84 +140,6 @@ void visual_long_term_memory<img_T, atype_T>::cli_list_vcd_ids(const std::vector
 
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
-    os << "Need to use specialized vltm." << std::endl;
-    return;
-}
-
-template <typename img_T, template<typename T> class atype_T>
-void visual_long_term_memory<img_T, atype_T>::cli_generate(const std::vector<std::string>& args, std::ostream& os) {
-    os << "Need to use specialized vltm." << std::endl;
-    return;
-
-}
-
-#ifdef ENABLE_OPENCV
-////////////////////
-// EXACT VCD VLTM //
-////////////////////
-
-template <>
-void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::match(opencv_image* percept, vmem_match** output, int n) {
-    std::list<std::pair<double, std::string>> best_matches;
-    best_matches.insert(best_matches.begin(), std::pair<double, std::string>(0.0, "NOMATCH"));
-
-    std::string current_id;
-    double current_similarity;
-
-    std::vector<exact_visual_concept_descriptor<opencv_image>*>::iterator atype_iterator;
-    for (atype_iterator = _archetypes.begin(); atype_iterator != _archetypes.end(); atype_iterator++) {
-        exact_visual_concept_descriptor<opencv_image>* vcd = *atype_iterator;
-
-        vcd->get_id(current_id);
-        current_similarity = vcd->recognize(*percept);
-        // printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
-
-        std::list<std::pair<double, std::string>>::iterator best_match_itr;
-        best_match_itr = best_matches.begin();
-        int i = 0;
-        for (; best_match_itr != best_matches.end(); best_match_itr++) {
-            if (i >= n) { break; }
-            // printf("\tChecking current %dth best: %f\n",i, best_match_itr->first);
-            if (current_similarity > best_match_itr->first) {
-                // printf("\tInserting %s at index %d\n", current_id.c_str(), i);
-                best_matches.insert(best_match_itr, std::pair<double, std::string>(current_similarity, current_id));
-                break;
-            }
-            i++;
-        }
-    }
-
-    // printf("Size of best matches: %d\n", best_matches.size());
-    // printf("First best match: %s - %f\n", best_matches.front().second.c_str(), best_matches.front().first);
-
-    std::pair<double, std::string> match;
-    double match_confidence;
-    std::string match_id;
-    vmem_match* vmatch;
-    int i = 0;
-    while (best_matches.size() > 0 && i < n) {
-        match = best_matches.front();
-        match_confidence = match.first;
-        match_id = match.second;
-        printf("Match %d: %s (%f)\n", i, match_id.c_str(), match_confidence);
-        vmatch = new vmem_match(match_id, match_confidence);
-        output[i] = vmatch;
-        best_matches.pop_front();
-        i++;
-    }
-}
-
-template <>
-void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::recall(std::string entity_id, opencv_image* output) {
-    int vcd_index = _id_index_map.at(entity_id);
-    exact_visual_concept_descriptor<opencv_image>* vcd = _archetypes.at(vcd_index);
-
-    vcd->generate(output);
-}
-
-
-template <>
-void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
     if (args.size() < 2) {
         os << "Must specify class name and image data." << std::endl;
         return;
@@ -188,14 +150,14 @@ void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::cli
     std::string decoded_data = base64_decode(img_data);
     std::vector<uchar> data(decoded_data.begin(), decoded_data.end());
     cv::Mat raw_img = cv::imdecode(cv::Mat(data), -1);
-    opencv_image* image = new opencv_image();
+    img_T* image = new img_T();
     image->update_image(raw_img);
 
     store_percept(image, vcd_id);
 }
 
-template <>
-void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::cli_generate(const std::vector<std::string>& args, std::ostream& os) {
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::cli_generate(const std::vector<std::string>& args, std::ostream& os) {
     if (args.empty()) {
         os << "No vib name specified." << std::endl;
         return;
@@ -203,7 +165,7 @@ void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::cli
 
     std::string vcd_id(args[0]);
 
-    opencv_image* gened_image = new opencv_image();
+    img_T* gened_image = new img_T();
     recall(vcd_id, gened_image);
 
 
@@ -214,6 +176,10 @@ void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::cli
     os << b64_data << std::endl;
 }
 
-template class visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>;
-#endif
+#ifdef ENABLE_OPENCV
 
+template class visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>;
+
+
+
+#endif
