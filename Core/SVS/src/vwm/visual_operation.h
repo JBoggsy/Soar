@@ -27,6 +27,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_GAUSSIANBLUR            std::string("gaussian-blur")
 #define VOP_GREYSCALE               std::string("greyscale")
 #define VOP_THRESHOLD               std::string("threshold")
+#define VOP_ROTATE_IMAGE            std::string("rotate-image")
 #define VOP_FLIP_IMAGE              std::string("flip-image")
 #define VOP_CREATE_INT_FILLED_MAT   std::string("create-int-filled-mat")
 #define VOP_CREATE_FLOAT_FILLED_MAT std::string("create-float-filled-mat")
@@ -45,9 +46,11 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
 #define VOP_RECOGNIZE               std::string("recognize")
 #define VOP_LEARN_FROM              std::string("learn-from")
+#define VOP_GENERATE                std::string("generate")
 
 // Define argument names as strings
 #define VOP_ARG_A           std::string("a")
+#define VOP_ARG_AMOUNT      std::string("amount")
 #define VOP_ARG_ANCHORX     std::string("anchor-x")
 #define VOP_ARG_ANCHORY     std::string("anchor-y")
 #define VOP_ARG_AXES        std::string{"axes"}
@@ -204,6 +207,15 @@ namespace visual_ops
      *      `opencv_image* source`: The image to flip
      */
     void flip_image(data_dict args);
+
+    /**
+     * @brief Rotate the image by the given amount, in degrees.
+     *
+     * @param args
+     *     `double amount`: Number of degrees (including negatives) to
+     *        rotate. Positive values mean counter-clockwise rotation.
+     */
+    void rotate_image(data_dict args);
 
 
     /////////////////////
@@ -447,6 +459,16 @@ namespace visual_ops
      */
     void learn_from(data_dict args);
 
+    /**
+     * @brief Generate an image of the designated class.
+     *
+     * @param args
+     *
+     * - `std::string class_name`: The VLTM ID of the VCD which should be
+     *   generated.
+     */
+    void generate(data_dict args);
+
     ////////////////////////////////////////////////////////////
     // DEFINE METADATA AND LOOKUP TABLE FOR VISUAL OPERATIONS //
     ////////////////////////////////////////////////////////////
@@ -583,6 +605,16 @@ namespace visual_ops
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_AXES, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // FLIP IMAGE
+    inline vop_params_metadata rotate_image_metadata = {
+        /* vop_function = */        rotate_image,
+        /* num_params = */          2,
+        /* param_names = */         {VOP_ARG_AMOUNT, VOP_ARG_SOURCE},
+        /* param_types = */         {DOUBLE_ARG, NODE_ID_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -757,6 +789,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,      REQUIRED_ARG}
     };
 
+    // GENERATE IMAGE OF CLASS
+    inline vop_params_metadata generate_metadata = {
+        /* vop_function = */        generate,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_CLASSNAME, VOP_ARG_VLTM},
+        /* param_types = */         {NODE_ID_ARG,    STRING_ARG,        VLTM_ARG},
+        /* param_directions */      {INOUT_ARG,      INPUT_ARG,         INPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,      REQUIRED_ARG}
+    };
+
     // CREATE LOOKUP TABLE MAPPING OPERATION NAMES TO METADATA
     //////////////////////////////////////////////////////////
     inline std::unordered_map<std::string, vop_params_metadata> vops_param_table({
@@ -770,6 +812,7 @@ namespace visual_ops
         {VOP_GREYSCALE, greyscale_metadata},
         {VOP_THRESHOLD, threshold_metadata},
         {VOP_FLIP_IMAGE, flip_image_metadata},
+        {VOP_ROTATE_IMAGE, rotate_image_metadata},
         {VOP_CREATE_INT_FILLED_MAT, create_int_filled_mat_metadata},
         {VOP_CREATE_FLOAT_FILLED_MAT, create_float_filled_mat_metadata},
         {VOP_CREATE_X_COORD_MAT, create_x_coord_mat_metadata},
@@ -786,7 +829,8 @@ namespace visual_ops
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
-        {VOP_LEARN_FROM, learn_from_metadata}
+        {VOP_LEARN_FROM, learn_from_metadata},
+        {VOP_GENERATE, generate_metadata}
     });
 
 } // namespace visual_ops

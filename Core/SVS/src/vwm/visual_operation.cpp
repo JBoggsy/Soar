@@ -170,6 +170,18 @@ namespace visual_ops
         image->set_image(&result);
     }
 
+    void rotate_image(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        double amount = *(double*)args[VOP_ARG_AMOUNT];
+
+        cv::Mat rot_mat, result;
+        float center_x, center_y;
+        center_x = (float)image->get_width() / 2.0;
+        center_y = (float)image->get_height() / 2.0;
+        rot_mat = cv::getRotationMatrix2D(cv::Point2f(center_x, center_y), amount, 1.0);
+        cv::warpAffine(*(image->get_image()), result, rot_mat, image->get_image()->size());
+        image->set_image(&result);
+    }
 
     /////////////////////
     // MATRIX CREATION //
@@ -489,14 +501,20 @@ namespace visual_ops
     }
 
     void learn_from(data_dict args) {
-        opencv_image* source;
-        std::string class_name;
-        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm;
-
-        source = (opencv_image*)args[VOP_ARG_SOURCE];
-        class_name = *(std::string*)args[VOP_ARG_CLASSNAME];
-        vltm = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        std::string class_name = *(std::string*)args[VOP_ARG_CLASSNAME];
+        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm
+            = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
 
         vltm->store_percept(source, class_name);
+    }
+
+    void generate(data_dict args) {
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        std::string class_name = *(std::string*)args[VOP_ARG_CLASSNAME];
+        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm
+            = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+
+        vltm->recall(class_name, source);
     }
 } // namespace visual_ops

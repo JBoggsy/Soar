@@ -88,7 +88,7 @@ void visual_long_term_memory<img_T, atype_T>::cli_list_vcd_ids(const std::vector
     std::unordered_map<std::string, int>::iterator vcd_itr;
     std::string vcd_id;
 
-    os << "Visual Concept Descriptors:" << std::endl;    
+    os << "Visual Concept Descriptors:" << std::endl;
     vcd_itr = _id_index_map.begin();
     for (; vcd_itr != _id_index_map.end(); vcd_itr++) {
         vcd_id = vcd_itr->first;
@@ -131,7 +131,7 @@ void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::mat
         vcd->get_id(current_id);
         current_similarity = vcd->recognize(*percept);
         // printf("Similarity of %s: %f\n", current_id.c_str(), current_similarity);
-        
+
         std::list<std::pair<double, std::string>>::iterator best_match_itr;
         best_match_itr = best_matches.begin();
         int i = 0;
@@ -144,7 +144,7 @@ void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::mat
                 break;
             }
             i++;
-        }        
+        }
     }
 
     // printf("Size of best matches: %d\n", best_matches.size());
@@ -166,6 +166,15 @@ void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::mat
         i++;
     }
 }
+
+template <>
+void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::recall(std::string entity_id, opencv_image* output) {
+    int vcd_index = _id_index_map.at(entity_id);
+    exact_visual_concept_descriptor<opencv_image>* vcd = _archetypes.at(vcd_index);
+
+    vcd->generate(output);
+}
+
 
 template <>
 void visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
