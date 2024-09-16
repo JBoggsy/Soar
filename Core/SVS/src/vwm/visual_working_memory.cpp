@@ -126,12 +126,17 @@ bool visual_working_memory::evaluate_from_node(int node_id) {
         }
     }
 
+    return success;
 }
 
 bool visual_working_memory::evaluate_vib_nodes(std::string vib_id) {
-    for (int node_id : vib_vop_node_ids[vib_id]) {
-        evaluate_from_node(node_id);
+    std::vector<int>::iterator vop_node_itr = vib_vop_node_ids[vib_id].begin();
+
+    for (; vop_node_itr != vib_vop_node_ids[vib_id].end(); vop_node_itr++) {
+        evaluate_from_node(*vop_node_itr);
     }
+
+    return true;
 }
 
 bool visual_working_memory::add_child_to_node(int child_id, int parent_id) {
