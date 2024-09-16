@@ -16,6 +16,11 @@
 #include "visual_operation_graph.h"
 #include "visual_input_buffer.h"
 #include "visual_operation.h"
+// Third-party includes
+////////////////////////
+#ifdef ENABLE_TORCH
+#include <torch/script.h>
+#endif
 // forward definitions
 //////////////////////
 class svs;

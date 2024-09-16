@@ -47,6 +47,8 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_RECOGNIZE               std::string("recognize")
 #define VOP_LEARN_FROM              std::string("learn-from")
 #define VOP_GENERATE                std::string("generate")
+#define VOP_ENCODE                  std::string("encode")
+#define VOP_DECODE                  std::string("decode")
 
 // Define argument names as strings
 #define VOP_ARG_A           std::string("a")
@@ -415,6 +417,18 @@ namespace visual_ops
      */
     void min_max_loc(data_dict args);
 
+    ///////////////////////////
+    // ENCODING AND DECODING //
+    ///////////////////////////
+
+    /**
+     * @brief Encode the source image into a string.
+     *
+     * @param args
+     *      `opencv_image* source`: The image to encode
+     */
+    void encode(data_dict args);
+
 
     ///////////////////////////
     // VLTM-BASED OPERATIONS //
@@ -769,6 +783,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}
     };
 
+    // ENCODE IMAGE
+    inline vop_params_metadata encode_metadata = {
+        /* vop_function = */        encode,
+        /* num_params = */          1,
+        /* param_names = */         {VOP_ARG_SOURCE},
+        /* param_types = */         {NODE_ID_ARG},
+        /* param_directions */      {INPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG}
+    };
+
     // RECOGNIZE IMAGE
     inline vop_params_metadata recognize_metadata = {
         /* vop_function = */        recognize,
@@ -828,6 +852,7 @@ namespace visual_ops
         {VOP_MATCH_TEMPLATE, match_template_metadata},
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
+        {VOP_ENCODE, encode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
         {VOP_LEARN_FROM, learn_from_metadata},
         {VOP_GENERATE, generate_metadata}

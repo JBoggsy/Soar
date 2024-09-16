@@ -230,7 +230,6 @@ namespace visual_ops
         image->set_image(&new_mat);
     }
 
-
     //////////////////////
     // MATRIX ACCESSING //
     //////////////////////
@@ -417,8 +416,6 @@ namespace visual_ops
         }
     }
 
-
-
     //////////////////////
     // OBJECT DETECTION //
     //////////////////////
@@ -475,6 +472,13 @@ namespace visual_ops
 
     }
 
+    ///////////////////////////
+    // ENCODING AND DECODING //
+    ///////////////////////////
+
+    void encode(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+    }
 
     ///////////////////////////
     // VLTM-BASED OPERATIONS //

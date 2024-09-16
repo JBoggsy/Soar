@@ -1,5 +1,5 @@
 #include <time.h>
-
+// SVS includes
 #include "svs.h"
 #include "visual_working_memory.h"
 #include "image.h"

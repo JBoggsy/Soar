@@ -142,6 +142,7 @@ AddOption('--opt', action='store_false', dest='dbg', default=False, help='Enable
 AddOption('--verbose', action='store_true', dest='verbose', default=False, help='Output full compiler commands')
 AddOption('--no-svs', action='store_true', dest='nosvs', default=False, help='Build Soar without SVS functionality')
 AddOption('--use-opencv', action='store_true', dest='useopencv', default=False, help='Enable the use of opencv for SVS operations.')
+AddOption('--use-torch', action='store_true', dest='usetorch', default=False, help='Enable the use of torchscript for neural SVS operations.')
 AddOption('--use-ros', action='store_true', dest='useros', default=False, help='Enable ROS SVS interface. Requires ROS and PCL dependencies.')
 
 
@@ -253,6 +254,9 @@ if compiler == 'g++':
     if GetOption('useros'):
         cflags.append('-DENABLE_ROS')
         libs += ['roscpp', 'libpcl_common']
+    if GetOption('usetorch'):
+        cflags.append('-DENABLE_TORCH')
+        libs += ['torch']
     if GetOption('useopencv') and GetOption('useros'):
         libs += ['cv_bridge']
     if GetOption('defflags'):
