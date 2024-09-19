@@ -286,9 +286,23 @@ public:
         enabled = is_enabled;
     }
 
+    bool is_enabled_in_substates()
+    {
+        return enabled_in_substates;
+    }
+    void set_enabled_in_substates(bool disable)
+    {
+        enabled_in_substates = disable;
+    }
+
     std::string get_output() const
     {
         return "";
+    }
+
+    bool is_in_substate()
+    {
+        return state_stack.size() > 1;
     }
 
     // dirty bit is true only if there has been a new command
@@ -331,6 +345,8 @@ private:
     scene*                    scn_cache;      // temporarily holds top-state scene during init
 
     bool enabled;
+    // when enabled is true but enabled_in_substates is false, only the top state is enabled
+    bool enabled_in_substates = true;
 
     static bool filter_dirty_bit;
 };
