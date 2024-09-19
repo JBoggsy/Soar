@@ -12,6 +12,13 @@ import fnmatch
 from SCons.Node.Alias import default_ans
 import time
 
+try:
+    enscons_active = True
+    import toml
+    import enscons, enscons.cpyext
+except ImportError as e:
+    enscons_active = False
+
 # Add the current directory to the path so we can from build_support
 script_dir = Dir('.').srcnode().abspath
 sys.path.append(script_dir)
@@ -19,8 +26,8 @@ from build_support.tcl import prepare_for_compiling_with_tcl
 
 join = os.path.join
 
-SOAR_VERSION = "9.6.2"
-CPP_STD_VERSION = "c++20"
+SOAR_VERSION = "9.6.3"
+CPP_STD_VERSION = "c++17"
 
 soarversionFile = open('soarversion', 'w')
 print(SOAR_VERSION, file=soarversionFile)
@@ -144,8 +151,14 @@ AddOption('--no-svs', action='store_true', dest='nosvs', default=False, help='Bu
 AddOption('--use-opencv', action='store_true', dest='useopencv', default=False, help='Enable the use of opencv for SVS operations.')
 AddOption('--use-ros', action='store_true', dest='useros', default=False, help='Enable ROS SVS interface. Requires ROS and PCL dependencies.')
 
+if enscons_active:
+    tools = ['default', 'packaging', enscons.generate]
+else:
+    tools = None
 
 env = Environment(
+    tools=tools,
+    ENSCONS_ACTIVE=enscons_active,
     ENV=os.environ.copy(),
     SCU=GetOption('scu'),
     DEBUG=GetOption('dbg'),
@@ -162,6 +175,7 @@ env = Environment(
     SOAR_VERSION=SOAR_VERSION,
     VISHIDDEN=False,  # needed by swig
 	JAVAVERSION='11.0',
+    PY_ABI3_VERSION = (3, 5),
     SML_CSHARP_ALIAS = SML_CSHARP_ALIAS,
     SML_JAVA_ALIAS = SML_JAVA_ALIAS,
     SML_PYTHON_ALIAS = SML_PYTHON_ALIAS,
@@ -386,6 +400,62 @@ for d in os.listdir('.'):
         script = join(d, 'SConscript')
         if os.path.exists(script):
             SConscript(script, variant_dir=join(GetOption('build-dir'), d), duplicate=0)
+
+# section Python-related packaging
+Import('python_shlib')
+Import('python_source')
+Import('soarlib')
+py_lib_namespace = "soar_sml"
+
+# Targets to be built and included in wheel files.
+py_sources = []
+# Targets to be built but NOT included in wheel files.
+py_extra = []
+
+if sys.platform == 'darwin' or os.name == 'nt':
+    # Add soar's library to the wheel directory.
+    #
+    # With MacOS builds, these are shipped in the final wheel archive. Ditto for Windows.
+    #
+    # With linux builds, this step isn't neccecary, as its linker will pick up on the library from out/,
+    # and statically link it against the SWIG-generated shared library.
+    py_sources += [
+        env.Install(py_lib_namespace, soarlib)
+    ]
+
+if sys.platform == 'darwin':
+    # For MacOS, also add to the out/ directory,
+    # so the linker can pick up on it properly.
+    py_extra += [
+        env.Install(env['OUT_DIR'], soarlib)
+    ]
+
+py_sources += [
+    env.Install(py_lib_namespace, python_shlib),
+    env.InstallAs(py_lib_namespace + "/__init__.py", python_source)
+]
+
+env.Alias(SML_PYTHON_ALIAS + "_dev", py_sources)
+
+if enscons_active:
+    # Instead of giving an explicit tag, we tell enscons that we're not building a "pure" (python-only) library,
+    # and so we let it determine the wheel tag by itself.
+    env['ROOT_IS_PURELIB'] = False
+
+    # Whl and WhlFile add multiple targets (sdist, dist_info, bdist_wheel, editable) to env
+    # for enscons (python build backend for scons; required for building with cibuildwheel).
+    whl = env.Whl("platlib", py_sources, root="")
+
+    # Adding Depends makes scons build this file, but enscons will not include it in the final wheel file.
+    env.Depends(whl, py_extra)
+
+    env.WhlFile(source=whl)
+
+    # We make sure that an editable (`pip install -e`) installation always properly installs
+    # the files in the correct places.
+    env.Depends("editable", py_sources)
+
+# endsection Python-related packaging
 
 if 'MSVSSolution' in env['BUILDERS']:
 

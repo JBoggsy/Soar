@@ -142,12 +142,15 @@ class svs_state : public cliproxy
          */
         svs_state(Symbol* state, svs_state* parent);
 
+
         ~svs_state();
+
 
         void           process_cmds();
         void           update_cmd_results(int command_type);
         void           update_scene_num();
         void           clear_scene();
+
 
         std::string    get_name() const
         {
@@ -186,12 +189,15 @@ class svs_state : public cliproxy
         */
         void disown_scene();
 
+
     private:
         void init();
         void collect_cmds(Symbol* id, std::set<wme*>& all_cmds);
 
+
         void proxy_get_children(std::map<std::string, cliproxy*>& c);
         void cli_out(const std::vector<std::string>& args, std::ostream& os);
+
 
         std::string     name;
         svs*            svsp;
