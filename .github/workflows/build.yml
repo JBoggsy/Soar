@@ -1,6 +1,6 @@
 # Build, test and upload executables to GitHub
 # depends on pre-installed software; see image definitions:
-#  - https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2004-Readme.md
+#  - https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2404-Readme.md
 #  - https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
 # We use these tools from the runner images: git, gcc/XCode/MSVC, swig, Tcl/Tk on MacOS, pkg-config
 
@@ -12,6 +12,10 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+  release:
+    types:
+      - prereleased
+      - released
   schedule:
     # 5AM every Monday, to catch breaks due to changes in dependencies
     - cron: "0 5 * * 1"
@@ -23,7 +27,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [
+          # Use v24 beta for now to get newer SWIG; TODO: change back to ubuntu-latest once it points to v24
+          ubuntu-24.04,
+          # latest available X86_64 target
+          macos-12,
+          # latest is ARM
+          macos-latest,
+        ]
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -37,18 +48,28 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.X'
 
       - name: Setup tcl (ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+        if: startsWith(matrix.os, 'ubuntu-')
         run: sudo apt-get update && sudo apt-get install tcl-dev
+
+      - name: Setup tcl (macos-latest)
+        if: matrix.os == 'macos-latest'
+        run: brew install tcl-tk
+
+      - name: Setup SWIG (macos-latest)
+        if: matrix.os == 'macos-latest'
+        run: brew install swig
 
       - name: build
         env:
           # instructs SCons to print debug statements to stdout
           SCONS_MSCOMMON_DEBUG: '-'
+          # Build Python bindings that are portable across Python versions
+          SOAR_PYTHON_ABI3: 1
         run: python3 scons/scons.py --scu --opt --verbose all performance_tests sml_tcl
 
       - name: Pack artifacts
@@ -105,7 +126,7 @@ jobs:
           name: ${{ matrix.os }}-PerformanceTestResults.txt
           path: ./out/SoarPerformanceTests/PerformanceTestResults.txt
 
-# Using powershell means we need to explicitly stop on failure
+  # Using powershell means we need to explicitly stop on failure
   Windows:
     name: build-windows
     runs-on: [windows-latest]
@@ -246,3 +267,248 @@ jobs:
         with:
           name: Windows-PerformanceTestResults.txt
           path: ./out/SoarPerformanceTests/PerformanceTestResults.txt
+
+  python_wheels:
+    name: wheel-*nix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [
+            # 20.04 to preserve compatibility with testing stage
+            ubuntu-20.04,
+            # latest available X86_64 target
+            macos-12,
+            # latest is ARM
+            macos-latest,
+
+            windows-latest,
+          ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Do a complete clone, not a shallow one.
+          # https://github.com/actions/checkout/#usage
+          #
+          # We need a complete clone, as versioningit uses `git describe`,
+          # which requires a commit tree to determine the latest tag.
+          fetch-depth: 0
+
+      - name: Show tags
+        run: git describe --long --dirty --always --tags
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      # - name: Setup tcl (ubuntu)
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: sudo apt-get update && sudo apt-get install tcl-dev
+
+      # - name: Setup tcl (macos-latest)
+      #   if: matrix.os == 'macos-latest'
+      #   run: brew install tcl-tk
+
+      - name: Setup SWIG (macos-latest)
+        if: matrix.os == 'macos-latest'
+        run: brew install swig
+
+      - name: Setup SWIG (windows-latest)
+        if: matrix.os == 'windows-latest'
+        uses: MinoruSekine/setup-scoop@v4
+        with:
+          apps: swig
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.17.0
+        with:
+          package-dir: Core/ClientSMLSWIG/Python/
+
+      - name: Ensure unit tests built (ubuntu-20.04)
+        if: matrix.os == 'ubuntu-20.04'
+        # On Ubuntu, we run cibuildwheel inside docker containers, which don't retain the outputs.
+        # However, we want out/SoarUnitTests/ to be availible for future tests, so we build it again here.
+        run: python scons/scons.py tests
+
+        # Save out/SoarUnitTests/
+      - uses: actions/cache/save@v3
+        id: cache
+        with:
+          path: out/SoarUnitTests/
+          key: ${{ runner.os }}-${{ github.sha }}
+
+      - name: ABI3Audit (*nix)
+        if: matrix.os != 'windows-latest'
+        run: pipx run abi3audit -S -v wheelhouse/*
+
+      - name: ABI3Audit (Windows)
+        if: matrix.os == 'windows-latest'
+        # For windows we can't use glob expansion, so we need to enumerate the files manually.
+        # https://stackoverflow.com/a/16804630/8700553
+        run: Get-ChildItem -File wheelhouse | Foreach {pipx run abi3audit -S -v $_.fullname}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
+
+  test_python:
+    name: Test wheel on all python versions
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          # linux target which supports all python versions we want to install for
+          - ubuntu-20.04
+            # latest available X86_64 target
+          - macos-12
+            # latest is ARM
+          - macos-latest
+          - windows-latest
+        python-minor:
+          - 5
+          - 6
+          - 7
+          - 8
+          - 9
+          - 10
+          - 11
+          - 12
+
+        # for macos-latest, we can't use python 3.5 - 3.7
+        exclude:
+          - os: macos-latest
+            python-minor: 5
+          - os: macos-latest
+            python-minor: 6
+          - os: macos-latest
+            python-minor: 7
+
+    needs:
+      # We depend on the python wheel builds because we need their artifacts
+      - python_wheels
+
+      # We depend on the builds themselves to gatekeep the upload if build + testing fails,
+      # usually then also the python wheel build should fail, but the normal builds do more thorough checking.
+      - Posix
+      - Windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-wheels-*
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Setup Base Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.${{ matrix.python-minor }}
+        env:
+          # Older python versions fail install if we dont do this: https://github.com/actions/setup-python/issues/866
+          PIP_TRUSTED_HOST: "pypi.python.org pypi.org files.pythonhosted.org"
+
+        # Restore out/SoarUnitTests/
+      - uses: actions/cache/restore@v3
+        id: cache
+        with:
+          path: out/SoarUnitTests/
+          key: ${{ runner.os }}-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Install soar-sml
+        run: |
+          pip3.${{ matrix.python-minor }} install soar-sml -f wheelhouse --no-index
+
+      - name: Run test command (Non-Windows)
+        if: matrix.os != 'windows-latest'
+        env:
+          # Ensures unicode outputs properly on all versions
+          PYTHONUTF8: 1
+          PYTHONIOENCODING: utf-8
+        run: python3.${{ matrix.python-minor }} Core/ClientSMLSWIG/Python/TestPythonSML.py
+
+      - name: Run test command (Windows)
+        if: matrix.os == 'windows-latest'
+        env:
+          # Ensures unicode outputs properly on all versions
+          PYTHONUTF8: 1
+          PYTHONIOENCODING: utf-8
+        run: py -3.${{ matrix.python-minor }} Core/ClientSMLSWIG/Python/TestPythonSML.py
+
+  python_push_dev:
+    name: Publish to test.pypi.org
+    runs-on: ubuntu-latest
+    # - Upload only every monday to prevent spamming the index with too many build artifacts.
+    # - Allow uploading on manual workflow dispatch, to enable quick dev releases.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # Alternative, to upload on every commit to development;
+    # if: github.event_name != 'schedule' && github.event_name != 'release'
+
+    needs: test_python
+
+    # We use Trusted Publishing to manage our access to pypi:
+    # https://github.com/marketplace/actions/pypi-publish#trusted-publishing
+    environment:
+      name: test-pypi
+      url: https://test.pypi.org/p/soar-sml/
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-wheels-*
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: wheelhouse
+          skip-existing: true
+          verbose: true
+
+  python_push_release:
+    name: Publish to pypi.org
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    needs: test_python
+
+    # We use Trusted Publishing to manage our access to pypi:
+    # https://github.com/marketplace/actions/pypi-publish#trusted-publishing
+    environment:
+      name: pypi
+      url: https://pypi.org/p/soar-sml/
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-wheels-*
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: wheelhouse
+          skip-existing: true
+          verbose: true

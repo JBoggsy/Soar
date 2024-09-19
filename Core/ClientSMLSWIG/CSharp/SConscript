@@ -6,14 +6,18 @@ import os
 import sys
 import itertools
 
-def get_headers(d):
-	chain = itertools.chain.from_iterable
-	return list(chain([os.path.join(p, x) for x in f if x.endswith('.h')] for p, d, f in os.walk(d)))
+Import("env")
 
-Import("env", "compiler")
-if env.WhereIs('csc') == None:
-	print('C# compiler not found, not building C# SML wrappers')
-	Return()
+def get_headers(d):
+    chain = itertools.chain.from_iterable
+    return list(chain([os.path.join(p, x) for x in f if x.endswith('.h')] for p, d, f in os.walk(d)))
+
+# TODO: this could still fail if no actual SDKs are installed. We should check with dotnet --list-sdks.
+dotnet_path = env.WhereIs("dotnet")
+if not dotnet_path:
+    print(f'dotnet command not found; not building C# SML wrappers.')
+    Return()
+print(f'Found dotnet command: {dotnet_path}')
 
 clone = env.Clone()
 
@@ -26,33 +30,51 @@ wrapper = clone.File(name + '_wrap.cpp')
 srcdir = clone.Dir('src').abspath
 assembly = clone.File('sml_csharp.dll').abspath
 fake_target = '#fake-csharp-target'
+csproj_file = os.path.join(srcdir, 'temp_project.csproj')
+
+# Generate a temporary .csproj file for compilation
+def generate_csproj_file():
+    csproj_content = '''<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>sml_csharp</AssemblyName>
+    <RootNamespace>sml_csharp</RootNamespace>
+  </PropertyGroup>
+</Project>'''
+    with open(csproj_file, 'w') as file:
+        file.write(csproj_content)
 
 # This builder will insert extra dependencies during the COMPILATION stage
 # adapted from http://scons.org/wiki/DynamicSourceGenerator
 def late_csharp_builder(target, source, env):
-	if not os.path.isdir(srcdir):
-		print('source directory does not exist')
-		sys.exit(1)
+    if not os.path.isdir(srcdir):
+        print('source directory does not exist')
+        sys.exit(1)
 
-	cs_srcs = [ os.path.join(srcdir, f) for f in os.listdir(srcdir) ]
-	a = env.Command(env.File(assembly), cs_srcs, 'csc /target:library /out:%s %s/*.cs' % (assembly, srcdir))
-	env.Depends(a, fake_target)
-	install = env.Install(env['OUT_DIR'], a)
-	Alias(sml_csharp_target, install)
+    if not os.path.exists(csproj_file):
+        generate_csproj_file()
+
+    cs_srcs = [ os.path.join(srcdir, f) for f in os.listdir(srcdir) ]
+    build_command = f'dotnet build {csproj_file} -o {os.path.dirname(assembly)} -c Release'
+    a = env.Command(env.File(assembly), cs_srcs, build_command)
+    env.Depends(a, fake_target)
+    install = env.Install(env['OUT_DIR'], a)
+    Alias(sml_csharp_target, install)
 
 clone.Append(BUILDERS = {'LateCSharpBuilder' : Builder(action=late_csharp_builder)})
 
 incs = ' '.join('-I"%s"' % GetBuildPath(d) for d in env['CPPPATH'])
 nosvs = ''
 if GetOption('nosvs'):
-	nosvs = '-DNO_SVS'
+    nosvs = '-DNO_SVS'
 swig_cmd = 'swig %s -o "$TARGET" -c++ -csharp -Wall -namespace sml -dllimport %s -outdir "%s" %s "$SOURCE"' % (incs, name, srcdir, nosvs)
 if not GetOption('verbose'):
-	swig_cmd = '@' + swig_cmd
+    swig_cmd = '@' + swig_cmd
 
 headers = []
 for d in 'ClientSML ConnectionSML ElementXML'.split():
-	headers += get_headers(env.Dir(os.path.join('#Core', d, 'src')).abspath)
+    headers += get_headers(env.Dir(os.path.join('#Core', d, 'src')).abspath)
 
 swig_deps = [interface] + list(headers)
 clone.Command(wrapper, swig_deps, [Mkdir(srcdir), swig_cmd])
