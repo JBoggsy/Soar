@@ -19,7 +19,7 @@
 // Third-party includes
 ////////////////////////
 #ifdef ENABLE_TORCH
-#include <torch/script.h>
+#include "neural_network.h"
 #endif
 // forward definitions
 //////////////////////
