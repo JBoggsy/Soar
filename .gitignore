@@ -503,6 +503,12 @@ local.properties
 # TeXlipse plugin
 .texlipse
 
+# cibuildwheel output
+wheelhouse/
+
+# pip/enscons build output
+soar_sml/
+
 ### Soar ###
 out/
 build/

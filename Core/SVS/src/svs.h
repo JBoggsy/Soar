@@ -142,12 +142,15 @@ class svs_state : public cliproxy
          */
         svs_state(Symbol* state, svs_state* parent);
 
+
         ~svs_state();
+
 
         void           process_cmds();
         void           update_cmd_results(int command_type);
         void           update_scene_num();
         void           clear_scene();
+
 
         std::string    get_name() const
         {
@@ -186,12 +189,15 @@ class svs_state : public cliproxy
         */
         void disown_scene();
 
+
     private:
         void init();
         void collect_cmds(Symbol* id, std::set<wme*>& all_cmds);
 
+
         void proxy_get_children(std::map<std::string, cliproxy*>& c);
         void cli_out(const std::vector<std::string>& args, std::ostream& os);
+
 
         std::string     name;
         svs*            svsp;
@@ -280,9 +286,23 @@ public:
         enabled = is_enabled;
     }
 
+    bool is_enabled_in_substates()
+    {
+        return enabled_in_substates;
+    }
+    void set_enabled_in_substates(bool disable)
+    {
+        enabled_in_substates = disable;
+    }
+
     std::string get_output() const
     {
         return "";
+    }
+
+    bool is_in_substate()
+    {
+        return state_stack.size() > 1;
     }
 
     // dirty bit is true only if there has been a new command
@@ -325,6 +345,8 @@ private:
     scene*                    scn_cache;      // temporarily holds top-state scene during init
 
     bool enabled;
+    // when enabled is true but enabled_in_substates is false, only the top state is enabled
+    bool enabled_in_substates = true;
 
     static bool filter_dirty_bit;
 };

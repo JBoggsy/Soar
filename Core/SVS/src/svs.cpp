@@ -414,6 +414,11 @@ void svs::state_creation_callback(Symbol* state)
     std::string type, msg;
     svs_state* s;
 
+    if (!(state->is_top_state() || is_enabled_in_substates()))
+    {
+        return;
+    }
+
     // The first SVS state gets the VIB manager
     if (state_stack.empty())
     {
@@ -439,6 +444,12 @@ void svs::state_creation_callback(Symbol* state)
 void svs::state_deletion_callback(Symbol* state)
 {
     svs_state* s;
+
+    if (!(state->is_top_state() || is_enabled_in_substates()))
+    {
+        return;
+    }
+
     s = state_stack.back();
     assert(state == s->get_state());
     if (state_stack.size() == 1)

@@ -19,7 +19,7 @@ import sml.sml_Names;
 import edu.umich.soar.debugger.MainFrame;
 import edu.umich.soar.debugger.doc.Document;
 import edu.umich.soar.debugger.general.OSName;
-import edu.umich.soar.debugger.general.StartBrowser;
+import edu.umich.soar.debugger.general.DesktopActions;
 
 public class HelpMenu
 {
@@ -45,22 +45,22 @@ public class HelpMenu
         }
     };
 
-    private final AbstractAction m_Wiki = new AbstractAction(
-            "Soar Wiki (many topics)")
+    private final AbstractAction m_CLI = new AbstractAction("Soar and Debugger Command Line Help")
     {
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            open("https://github.com/SoarGroup");
+            open("https://soar.eecs.umich.edu/reference/CommandLineOptionsForDebuggerAndCLI/");
         }
     };
 
-    private final AbstractAction m_CLI = new AbstractAction("Soar Command Line Help")
+    private final AbstractAction m_Issues = new AbstractAction(
+        "Create Issue on GitHub")
     {
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            open("http://soar.eecs.umich.edu/articles/articles/general/73-command-line-help");
+            open("https://github.com/SoarGroup/Soar/issues");
         }
     };
 
@@ -82,8 +82,8 @@ public class HelpMenu
         BaseMenu menu = new BaseMenu(parent, title);
 
         menu.add(m_Homepage);
-        menu.add(m_Wiki);
         menu.add(m_CLI);
+        menu.add(m_Issues);
         menu.addSeparator();
         menu.add(m_About);
 
@@ -143,7 +143,7 @@ public class HelpMenu
     {
         try
         {
-            StartBrowser.openURL(url);
+            DesktopActions.openURL(url);
         }
         catch (Exception e)
         {
