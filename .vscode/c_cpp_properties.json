@@ -34,7 +34,8 @@
             "intelliSenseMode": "linux-gcc-x64",
             "defines": [
                 "ENABLE_OPENCV",
-                "ENABLE_ROS"
+                "ENABLE_ROS",
+                "ENABLE_TORCH"
             ],
             "compileCommands": "${workspaceFolder}/compile_commands.json"
         }

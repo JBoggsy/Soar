@@ -47,6 +47,10 @@ private:
     id_node_map         vop_nodes;
     str_nodes_map       vib_vop_node_ids;
 
+    #ifdef ENABLE_TORCH
+    neural_network*      nn;
+    #endif
+
 public:
     visual_working_memory(svs* svs_ptr, soar_interface* si, Symbol* vwm_link);
     ~visual_working_memory();
@@ -161,6 +165,7 @@ public:
      */
     void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
 
+    void cli_load_vae(const std::vector<std::string>& args, std::ostream& os);
     void cli_list_nodes(const std::vector<std::string>& args, std::ostream& os);
     void cli_get_node_info(const std::vector<std::string>& args, std::ostream& os);
     void cli_get_node_image(const std::vector<std::string>& args, std::ostream& os);
