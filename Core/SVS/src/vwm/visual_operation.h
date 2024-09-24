@@ -422,12 +422,16 @@ namespace visual_ops
     ///////////////////////////
 
     /**
-     * @brief Encode the source image into a string.
+     * @brief Encode the source image into a latent representation.
      *
      * @param args
-     *      `opencv_image* source`: The image to encode
+     *      `opencv_image* source`: The image to encode.
      */
     void encode(data_dict args);
+
+    /**
+     * @brief
+     */
 
 
     ///////////////////////////

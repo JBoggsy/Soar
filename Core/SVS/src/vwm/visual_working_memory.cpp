@@ -26,10 +26,6 @@ visual_working_memory::visual_working_memory(svs* svs_ptr, soar_interface* si, S
     #ifdef ENABLE_ROS
     svs_ptr->get_ros_interface()->create_rgb_publisher(ROS_TOPIC_NAME);
     #endif
-
-    #ifdef ENABLE_TORCH
-    nn = new neural_network();
-    #endif
 }
 
 visual_working_memory::~visual_working_memory() {
@@ -187,8 +183,6 @@ std::string visual_working_memory::get_vog_dot_string() {
 // CLIPROXY METHODS //
 //////////////////////
 void visual_working_memory::proxy_get_children(std::map<std::string, cliproxy*>& c) {
-    c["load-vae"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_load_vae);
-    c["load-vae"]->add_arg("VAE-FILE", "The path to the .pt file containing the traced VAE model to load.");
 
     c["nlist"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_list_nodes);
 
@@ -212,19 +206,6 @@ void visual_working_memory::proxy_use_sub(const std::vector<std::string>& args, 
     os << "svs vwm.nimg <NID> <ARG-NAME> - Prints the image corresponding to the given argument of the VOp node with the specified ID. The image is printed as a base64-encoded .png. <ARG-NAME> is optional and defaults to 'source'." << std::endl;
     os << "svs vwm.vogdot - Recursively generates a DOT representation of the VOG and prints it. Used to display the VOG using a GraphViz renderer."<< std::endl;
     os << "========================================================" << std::endl;
-}
-
-void visual_working_memory::cli_load_vae(const std::vector<std::string>& args, std::ostream& os) {
-    if (args.empty()) {
-        os << "You must specify a path to the .pt file containing the VAE model." << std::endl;
-        return;
-    }
-
-    std::string vae_file_path = args[0];
-    os << "Loading VAE from " << vae_file_path << std::endl;
-
-    // Load the VAE model
-    nn->load_traced_script(vae_file_path);
 }
 
 void visual_working_memory::cli_list_nodes(const std::vector<std::string>& args, std::ostream& os) {

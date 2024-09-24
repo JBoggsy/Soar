@@ -4,6 +4,11 @@ torch_module_wrapper::torch_module_wrapper()
 {
 }
 
+torch_module_wrapper::torch_module_wrapper(std::string traced_script_path)
+{
+    load_traced_script(traced_script_path);
+}
+
 torch_module_wrapper::~torch_module_wrapper()
 {
 }

@@ -7,13 +7,54 @@
 // forward declarations
 class torch_module_wrapper;
 
+
+/**
+ * @brief An abstract class for interfacing with a PyTorch-based neural network.
+ * 
+ * This class is a base class for classes which wrap around PyTorch neural
+ * networks that have been traced to TorchScript. Concrete sub-classes should be
+ * very simple to implement, because all they need to do is have their methods
+ * call the corresponding methods from the `torch_module_wrapper` class they
+ * wrap. This class is necessary because the PyTorch C++ library defines a
+ * `Symbol` class which conflicts with the `Symbol` class defined in the Soar
+ * codebase. The `torch_module_wrapper` class allows us to avoid including the
+ * PyTorch headers in the Soar codebase, but since the `.h` file for that class
+ * requires the PyTorch headers, we need to define this class and its subclasses
+ * in a separate file (and thus as a separate class).
+ */
 class neural_network 
 {
 private:
+    /**
+     * @brief The wrapper object for the PyTorch module underlying this model.
+     *
+     * The `neural_network` should just be a direct wrapper around this, meaning
+     * it should have all the same methods as the `torch_module_wrapper`
+     * subclass it wraps, and just call the corresponding methods directly.
+     */
     torch_module_wrapper* module;
+    bool module_loaded = false;
 public:
     neural_network();
+    neural_network(std::string traced_script_path);
     ~neural_network();
     void load_traced_script(std::string traced_script_path);
-    cv::Mat forward(cv::Mat input);
+    cv::Mat neural_network::forward(cv::Mat input);
+};
+
+
+class vae_model : neural_network
+{
+public:
+    vae_model(std::string traced_script_path) : neural_network(traced_script_path) {}
+    ~vae_model() {}
+
+    cv::M encode(cv::Mat input) {
+        return module->encode(input);
+    }
+
+    at::Tensor decode(at::Tensor input)
+    {
+        return module->decode(input);
+    }
 };

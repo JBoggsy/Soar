@@ -1,3 +1,6 @@
+// third-party includes
+#include <opencv2/opencv.hpp>
+#include <torch/torch.h>
 // local includes
 #include "neural_network.h"
 #include "torch_module_wrapper.h"
@@ -6,14 +9,19 @@ neural_network::neural_network()
 {
 }
 
+neural_network::neural_network(std::string traced_script_path)
+{
+    load_traced_script(traced_script_path);
+}
+
 neural_network::~neural_network()
 {
 }
 
 void neural_network::load_traced_script(std::string traced_script_path)
 {
-    module = new torch_module_wrapper();
-    module->load_traced_script(traced_script_path);
+    module = new torch_module_wrapper(traced_script_path);
+    module_loaded = true;
 }
 
 cv::Mat neural_network::forward(cv::Mat input)

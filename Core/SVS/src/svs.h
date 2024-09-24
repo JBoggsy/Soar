@@ -324,6 +324,7 @@ private:
     void proxy_get_children(std::map<std::string, cliproxy*>& c);
     void cli_connect_viewer(const std::vector<std::string>& args, std::ostream& os);
     void cli_disconnect_viewer(const std::vector<std::string>& args, std::ostream& os);
+    void cli_load_vae(const std::vector<std::string>& args, std::ostream& os);
 
 #ifdef ENABLE_ROS
     ros_interface*            ri;
@@ -332,9 +333,13 @@ private:
 
 #ifdef ENABLE_OPENCV
     exact_opencv_mem*               v_mem_opencv;
+    Symbol*                         vltm_link;
+
     visual_input_buffer_manager*    vib_manager;
     Symbol*                         vib_link;
-    Symbol*                         vltm_link;
+#ifdef ENABLE_TORCH
+    neural_network*                 vae_base;
+#endif
 #endif
 
     soar_interface*           si;
