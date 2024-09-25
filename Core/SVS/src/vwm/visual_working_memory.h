@@ -20,6 +20,7 @@
 ////////////////////////
 #ifdef ENABLE_TORCH
 #include "neural_network.h"
+#include "latent_representation.h"
 #endif
 // forward definitions
 //////////////////////
@@ -97,6 +98,9 @@ public:
      * descendant nodes. Uses a breadth-first traversal to ensure all image
      * sources for a given node are evaluated before that node is.
      *
+     * @note Since we start at the given node, we are assuming that any parents
+     * it has are already evaluated.
+     *
      * @param node_id
      * @return True if the evaluation is successful, false otherwise.
      */
@@ -112,24 +116,46 @@ public:
      */
     bool evaluate_vib_nodes(std::string vib_id);
 
-
     int assign_new_node_id();
     visual_operation_node* get_node(int node_id);
 
+
     /**
-     * @brief Get the node image of the given node. If the node has already been evaluated,
-     * then just get its image. Otherwise, evaluate it first and then get the resulting image.
-     * For now, assume a node ALWAYS outputs precisely one node image and it is stored in
-     * `parameters_["source"]`. Other images can be used as input, but only the `source` is
-     * used as output.
+     * @brief Gets an image from the VOp node with the given node.
      *
-     * @param node_id The id of the node whose image is requested. A node_id of -1 indicates
-     *                an "origin" node and will always result in a new, blank image.
+     * This argument retrieves an image from the VOp node with the given ID, by
+     * default retrieving the "source" parameter of the node. For now, assume a
+     * node ALWAYS outputs precisely one node image and it is stored in
+     * `parameters_["source"]`. Other images can be used as input, but only the
+     * `source` is used as output. This method does NOT trigger node evaluation,
+     * it ONLY retrieves the image. This method is used either to view the
+     * output of a node or to retrieve the output of a parent node during the
+     * evaluation of its child in the `visual_operation_node::evaluate` method.
      *
-     * @return opencv_image* The image of the given node, or NULL if such a
-     *         node doesn't exist or cannot be evaluated.
+     * @param node_id The id of the node whose image is requested. A node_id of
+     *                -1 indicates an "origin" node and will always result in a
+     *                new, blank image.
+     *
+     * @return opencv_image* The image of the given node, or NULL if such a node
+     *         doesn't exist or cannot be evaluated.
      */
     opencv_image* get_node_image(int node_id);
+    opencv_image* get_node_image(int node_id, std::string param_name);
+
+    /**
+     * @brief Gets a latent representation from the VOp node with the given ID.
+     *
+     * Note that unlike `get_node_image`, this method does not have a default
+     * parameter name to retrieve the latent representation from.
+     *
+     * @param node_id The id of the node whose latent representation is
+     * requested. A node_id of -1 indicates an "origin" node and will always
+     * result in a new latent representation with NULL data.
+     *
+     * @return latent_representation* The latent representation of the given
+     *        node, or NULL if such a node doesn't exist or cannot be evaluated.
+     */
+    latent_representation* get_node_latent_rep(int node_id, std::string param_name);
 
     /**
      * @brief Generate a DOT language representation of the visual operations graph.

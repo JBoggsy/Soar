@@ -24,7 +24,7 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
     node_id_sym_ = si_->make_sym(id_);
     si_->make_wme(node_link_, std::string("node-id"), node_id_sym_);
 
-    // Populate parent_ids_ and the WM link by scanning over op_metadata_
+    // Populate parent_ids_, parent_types_, and the WM link by scanning over op_metadata_
     std::string param_name;
     visual_ops::ArgType param_type;
 
@@ -49,10 +49,12 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                 param_val_str = *(std::string*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_str);
                 break;
-            case visual_ops::NODE_ID_ARG:
+            case visual_ops::CV_IMAGE_ARG:
+            case visual_ops::LATENT_REP_ARG:
                 param_val_int = *(int*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 parent_ids_[param_name] = param_val_int;
+                parent_types_[param_name] = param_type;
                 break;
             default:
                 param_val_int = *(int*)parameters_[param_name];
@@ -98,7 +100,7 @@ bool visual_operation_node::edit_parameter(std::string param_name, int new_value
     int param_index = std::distance(param_names_start, param_name_itr);
 
     visual_ops::ArgType param_type = op_metadata_.param_types.at(param_index);
-    if ( (param_type != visual_ops::INT_ARG) || (param_type != visual_ops::NODE_ID_ARG) ) { return false; }
+    if ( (param_type != visual_ops::INT_ARG) || (param_type != visual_ops::CV_IMAGE_ARG) ) { return false; }
 
     *((int*)parameters_[param_name]) = new_value;
     si_->del_sym(param_syms_[param_name]);
@@ -164,12 +166,17 @@ bool visual_operation_node::edit_parameter(std::string param_name, std::string n
 /**
  * @brief Evaluate the visual operation node.
  *
- * @invariant `NODE_ID_ARG` type params will be NULL when evaluate is called,
+ * @invariant `CV_IMAGE_ARG` type params will be NULL when evaluate is called,
  *            meaning this method doesn't need to `delete` old `opencv_image`
  *            instances.
- * @invariant the creation of new `opencv_image` instances for `NODE_ID_ARG` type
- *            params is handled by the `vog_->get_node_image` call, meaning
+ * @invariant the creation of new `opencv_image` instances for `CV_IMAGE_ARG`
+ *            type params is handled by the `vog_->get_node_image` call, meaning
  *            this method doesn't need to `new` any opencv_image instances.
+ *
+ * @note This method assumes that all parent nodes have already been evaluated.
+ * This is safe because each VOp node is evaluated as soon as it is created (in
+ * `visual_working_memory::add_vop_node`), so there should be no un-evaluated
+ * nodes in the VOG.
  *
  * @returns True if the evaluation was successful, false otherwise.
  */
@@ -177,12 +184,21 @@ bool visual_operation_node::evaluate() {
     // printf("Evaluating node %d...\n", id_);
     std::string parent_param_name;
     int parent_node_id;
+    visual_ops::ArgType parent_param_type;
     std::unordered_map<std::string, int>::iterator parent_itr;
     for (parent_itr=parent_ids_.begin(); parent_itr!=parent_ids_.end(); parent_itr++) {
         parent_param_name = parent_itr->first;
         parent_node_id = parent_itr->second;
+        parent_param_type = parent_types_[parent_param_name];
 
-        parameters_[parent_param_name] = vwm_->get_node_image(parent_node_id);
+        switch (parent_param_type) {
+            case visual_ops::CV_IMAGE_ARG:
+                parameters_[parent_param_name] = vwm_->get_node_image(parent_node_id, parent_param_name);
+                break;
+            case visual_ops::LATENT_REP_ARG:
+                parameters_[parent_param_name] = vwm_->get_node_latent_rep(parent_node_id, parent_param_name);
+                break;
+        }
         if (parameters_[parent_param_name] == NULL) { printf("ERROR: Node %d not found\n", parent_node_id); }
     }
     operation_(parameters_);
@@ -199,7 +215,7 @@ bool visual_operation_node::evaluate() {
         param_type = op_metadata_.param_types[param_i];
         param_dir = op_metadata_.param_direction[param_i];
         if (parameters_[param_name] == NULL) { continue; }
-        if (param_dir == visual_ops::INPUT_ARG || param_type == visual_ops::NODE_ID_ARG) { continue; }
+        if (param_dir == visual_ops::INPUT_ARG || param_type == visual_ops::CV_IMAGE_ARG) { continue; }
 
         // si_->del_sym(param_syms_[param_name]);
         si_->remove_wme(param_wmes_[param_name]);
@@ -233,8 +249,13 @@ bool visual_operation_node::evaluate() {
     return true;
 }
 
-opencv_image* visual_operation_node::get_node_image() {
-    return (opencv_image*)parameters_["source"];
+opencv_image* visual_operation_node::get_node_image() { return get_node_image("source"); }
+opencv_image* visual_operation_node::get_node_image(std::string param_name) {
+    return (opencv_image*)parameters_[param_name];
+}
+
+latent_representation* visual_operation_node::get_node_latent_rep(std::string param_name) {
+    return (latent_representation*)parameters_[param_name];
 }
 
 std::string visual_operation_node::get_dot_string() {

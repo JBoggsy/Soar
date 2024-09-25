@@ -73,6 +73,7 @@ typedef std::unordered_map<std::string, void*> data_dict;
 #define VOP_ARG_FOV_VERT    std::string("fov-vert")
 #define VOP_ARG_FOV_HORIZ   std::string("fov-horiz")
 #define VOP_ARG_HEIGHT      std::string("height")
+#define VOP_ARG_LATENT      std::string("latent")
 #define VOP_ARG_MAXLOCX     std::string("maxloc-x")
 #define VOP_ARG_MAXLOCY     std::string("maxloc-y")
 #define VOP_ARG_MAXVAL      std::string("maxval")
@@ -426,12 +427,18 @@ namespace visual_ops
      *
      * @param args
      *      `opencv_image* source`: The image to encode.
+     *      `latent_representation* latent`: The latent representation to encode into.
      */
     void encode(data_dict args);
 
     /**
-     * @brief
+     * @brief Decode a latent representation into an image.
+     *
+     * @param args
+     *      `opencv* source`: The decoded image.
+     *      `latent_representation* latent`: The latent representation to decode.
      */
+    void decode(data_dict args);
 
 
     ///////////////////////////
@@ -497,9 +504,9 @@ namespace visual_ops
         INT_ARG,
         DOUBLE_ARG,
         STRING_ARG,
-        // IMAGE TYPES
-        NODE_ID_ARG, // an integer which represents the ID of another
-                     // vop node. -1 indicates no parent
+        // IMAGE TYPES: integer ID parent VOp node, or -1 for no parent
+        CV_IMAGE_ARG,
+        LATENT_REP_ARG,
         // MEMORY POINTERS
         VIBMGR_ARG,      // pointer to the VIB manager
         VWM_ARG,         // pointer to VWM
@@ -532,7 +539,7 @@ namespace visual_ops
         /* vop_function = */        get_from_vib,
         /* num_params = */          4,
         /* param_names = */         {VOP_ARG_VIBID, VOP_ARG_BUFFERINDEX, VOP_ARG_VIBMGR, VOP_ARG_SOURCE},
-        /* param_types = */         {STRING_ARG, INT_ARG, VIBMGR_ARG, NODE_ID_ARG},
+        /* param_types = */         {STRING_ARG, INT_ARG, VIBMGR_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -542,7 +549,7 @@ namespace visual_ops
         /* vop_function = */        load_from_file,
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_FILEPATH, VOP_ARG_SOURCE},
-        /* param_types = */         {STRING_ARG, NODE_ID_ARG},
+        /* param_types = */         {STRING_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG}
     };
@@ -552,7 +559,7 @@ namespace visual_ops
         /* vop_function = */        save_to_file,
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_FILEPATH, VOP_ARG_SOURCE},
-        /* param_types = */         {STRING_ARG, NODE_ID_ARG},
+        /* param_types = */         {STRING_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -562,7 +569,7 @@ namespace visual_ops
         /* vop_function = */        display_image,
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_WINDOWNAME, VOP_ARG_SOURCE},
-        /* param_types = */         {STRING_ARG, NODE_ID_ARG},
+        /* param_types = */         {STRING_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -572,7 +579,7 @@ namespace visual_ops
         /* vop_function = */        identity,
         /* num_params = */          1,
         /* param_names = */         {VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG},
         /* param_directions */      {INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG}
     };
@@ -582,7 +589,7 @@ namespace visual_ops
         /* vop_function = */        blur,
         /* num_params = */          6,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_ANCHORX, VOP_ARG_ANCHORY, VOP_ARG_BORDERTYPE, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -592,7 +599,7 @@ namespace visual_ops
         /* vop_function = */        gaussian_blur,
         /* num_params = */          6,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SIGMAX, VOP_ARG_SIGMAY, VOP_ARG_BORDERTYPE, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, DOUBLE_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, DOUBLE_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -602,7 +609,7 @@ namespace visual_ops
         /* vop_function = */        greyscale,
         /* num_params = */          1,
         /* param_names = */         {VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG},
         /* param_directions */      {INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG}
     };
@@ -612,7 +619,7 @@ namespace visual_ops
         /* vop_function = */        threshold,
         /* num_params = */          4,
         /* param_names = */         {VOP_ARG_THRESH, VOP_ARG_MAXVAL, VOP_ARG_TYPE, VOP_ARG_SOURCE},
-        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -622,7 +629,7 @@ namespace visual_ops
         /* vop_function = */        flip_image,
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_AXES, VOP_ARG_SOURCE},
-        /* param_types = */         {STRING_ARG, NODE_ID_ARG},
+        /* param_types = */         {STRING_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -632,7 +639,7 @@ namespace visual_ops
         /* vop_function = */        rotate_image,
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_AMOUNT, VOP_ARG_SOURCE},
-        /* param_types = */         {DOUBLE_ARG, NODE_ID_ARG},
+        /* param_types = */         {DOUBLE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -642,7 +649,7 @@ namespace visual_ops
         /* vop_function = */        create_int_filled_mat,
         /* num_params = */          4,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -652,7 +659,7 @@ namespace visual_ops
         /* vop_function = */        create_float_filled_mat,
         /* num_params = */          4,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_FILL_VAL, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -662,7 +669,7 @@ namespace visual_ops
         /* vop_function = */        create_x_coord_mat,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -672,7 +679,7 @@ namespace visual_ops
         /* vop_function = */        create_y_coord_mat,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -682,7 +689,7 @@ namespace visual_ops
         /* vop_function = */        stack_matrices,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -692,7 +699,7 @@ namespace visual_ops
         /* vop_function = */        extract_channel,
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_CHANNEL, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -702,7 +709,7 @@ namespace visual_ops
         /* vop_function = */        extract_channels,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_START, VOP_ARG_END, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -712,7 +719,7 @@ namespace visual_ops
         /* vop_function = */        add_mats,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -722,7 +729,7 @@ namespace visual_ops
         /* vop_function = */        sub_mats,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -732,7 +739,7 @@ namespace visual_ops
         /* vop_function = */        mul_mats,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -742,7 +749,7 @@ namespace visual_ops
         /* vop_function = */        div_mats,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG, NODE_ID_ARG, NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -752,7 +759,7 @@ namespace visual_ops
         /* vop_function = */        apply_unary_op,
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_OP, VOP_ARG_SOURCE},
-        /* param_types = */         {STRING_ARG, NODE_ID_ARG},
+        /* param_types = */         {STRING_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -762,7 +769,7 @@ namespace visual_ops
         /* vop_function = */        match_template,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_SOURCE, VOP_ARG_TEMPLATE},
-        /* param_types = */         {INT_ARG, NODE_ID_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INOUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -772,7 +779,7 @@ namespace visual_ops
         /* vop_function = */        crop_to_ROI,
         /* num_params = */          5,
         /* param_names = */         {VOP_ARG_X, VOP_ARG_Y, VOP_ARG_WIDTH, VOP_ARG_HEIGHT, VOP_ARG_SOURCE},
-        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, NODE_ID_ARG},
+        /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
@@ -782,7 +789,7 @@ namespace visual_ops
         /* vop_function = */        min_max_loc,
         /* num_params = */          7,
         /* param_names = */         {VOP_ARG_MINVAL, VOP_ARG_MAXVAL, VOP_ARG_MINLOCX, VOP_ARG_MINLOCY, VOP_ARG_MAXLOCX, VOP_ARG_MAXLOCY, VOP_ARG_SOURCE},
-        /* param_types = */         {DOUBLE_ARG,     DOUBLE_ARG,     INT_ARG,         INT_ARG,         INT_ARG,         INT_ARG,         NODE_ID_ARG},
+        /* param_types = */         {DOUBLE_ARG,     DOUBLE_ARG,     INT_ARG,         INT_ARG,         INT_ARG,         INT_ARG,         CV_IMAGE_ARG},
         /* param_directions */      {OUTPUT_ARG,     OUTPUT_ARG,     OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      INOUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}
     };
@@ -792,7 +799,7 @@ namespace visual_ops
         /* vop_function = */        encode,
         /* num_params = */          1,
         /* param_names = */         {VOP_ARG_SOURCE},
-        /* param_types = */         {NODE_ID_ARG},
+        /* param_types = */         {CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG}
     };
@@ -802,7 +809,7 @@ namespace visual_ops
         /* vop_function = */        recognize,
         /* num_params = */          8,
         /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_CLASS1, VOP_ARG_CONF1,   VOP_ARG_CLASS2,  VOP_ARG_CONF2,   VOP_ARG_CLASS3,  VOP_ARG_CONF3, VOP_ARG_VLTM},
-        /* param_types = */         {NODE_ID_ARG,    STRING_ARG,     DOUBLE_ARG,      STRING_ARG,      DOUBLE_ARG,      STRING_ARG,      DOUBLE_ARG,    VLTM_ARG},
+        /* param_types = */         {CV_IMAGE_ARG,    STRING_ARG,     DOUBLE_ARG,      STRING_ARG,      DOUBLE_ARG,      STRING_ARG,      DOUBLE_ARG,    VLTM_ARG},
         /* param_directions */      {INPUT_ARG,      OUTPUT_ARG,     OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,      OUTPUT_ARG,    INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,  REQUIRED_ARG}
     };
@@ -812,7 +819,7 @@ namespace visual_ops
         /* vop_function = */        learn_from,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_CLASSNAME, VOP_ARG_VLTM},
-        /* param_types = */         {NODE_ID_ARG,    STRING_ARG,        VLTM_ARG},
+        /* param_types = */         {CV_IMAGE_ARG,    STRING_ARG,        VLTM_ARG},
         /* param_directions */      {INPUT_ARG,      INPUT_ARG,         INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,      REQUIRED_ARG}
     };
@@ -822,7 +829,7 @@ namespace visual_ops
         /* vop_function = */        generate,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_CLASSNAME, VOP_ARG_VLTM},
-        /* param_types = */         {NODE_ID_ARG,    STRING_ARG,        VLTM_ARG},
+        /* param_types = */         {CV_IMAGE_ARG,    STRING_ARG,        VLTM_ARG},
         /* param_directions */      {INOUT_ARG,      INPUT_ARG,         INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,      REQUIRED_ARG}
     };

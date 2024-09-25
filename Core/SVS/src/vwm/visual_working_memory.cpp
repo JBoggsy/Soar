@@ -153,13 +153,24 @@ visual_operation_node* visual_working_memory::get_node(int node_id) {
     return vop_nodes.at(node_id);
 }
 
-opencv_image* visual_working_memory::get_node_image(int node_id) {
+opencv_image* visual_working_memory::get_node_image(int node_id) { return get_node_image(node_id, std::string("source")); }
+opencv_image* visual_working_memory::get_node_image(int node_id, std::string param_name) {
     if (node_id == -1) { return new opencv_image(); }
     visual_operation_node* target_node = get_node(node_id);
     if (target_node == NULL) {
         return NULL;
     } else {
-        return target_node->get_node_image();
+        return target_node->get_node_image(param_name);
+    }
+}
+
+latent_representation* visual_working_memory::get_node_latent_rep(int node_id, std::string param_name) {
+    if (node_id == -1) { return new latent_representation(); }
+    visual_operation_node* target_node = get_node(node_id);
+    if (target_node == NULL) {
+        return NULL;
+    } else {
+        return target_node->get_node_latent_rep(param_name);
     }
 }
 

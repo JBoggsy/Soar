@@ -10,6 +10,7 @@
 #include "visual_operation_data_structs.h"
 #include "visual_operation.h"
 #include "image.h"
+#include "latent_representation.h"
 class visual_working_memory;
 
 
@@ -18,6 +19,7 @@ private:
     int id_;
     std::unordered_set<int> child_ids_;
     std::unordered_map<std::string, int> parent_ids_;
+    std::unordered_map<std::string, visual_ops::ArgType> parent_types_;
 
     std::string op_type_;
     data_dict parameters_;
@@ -59,6 +61,9 @@ public:
 
     bool evaluate();
     opencv_image* get_node_image();
+    opencv_image* get_node_image(std::string param_name);
+    latent_representation* get_node_latent_rep(std::string param_name);
+
 
     /**
      * @brief Return a DOT language representation of this vop node.

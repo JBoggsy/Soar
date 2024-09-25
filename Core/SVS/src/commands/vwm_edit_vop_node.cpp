@@ -82,11 +82,8 @@ bool edit_vop_node_command::update_sub() {
                     vop_node->edit_parameter(param_name, (int)*((long*)new_value));
                 }
                 break;
-            case visual_ops::NODE_ID_ARG:
-                new_value = new long;
-                if (si->get_const_attr(root, param_name, *((long*)new_value))) {
-                    vop_node->edit_parameter(param_name, (int)*((long*)new_value));
-                }
+            case visual_ops::CV_IMAGE_ARG:
+                set_status("cannot edit node-id arguments");
                 break;
             case visual_ops::DOUBLE_ARG:
                 new_value = new double;
