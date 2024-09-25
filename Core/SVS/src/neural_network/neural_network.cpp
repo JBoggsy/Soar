@@ -1,6 +1,5 @@
 // third-party includes
 #include <opencv2/opencv.hpp>
-#include <torch/torch.h>
 // local includes
 #include "neural_network.h"
 #include "torch_module_wrapper.h"

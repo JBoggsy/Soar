@@ -39,7 +39,7 @@ public:
     neural_network(std::string traced_script_path);
     ~neural_network();
     void load_traced_script(std::string traced_script_path);
-    cv::Mat neural_network::forward(cv::Mat input);
+    cv::Mat forward(cv::Mat input);
 };
 
 
@@ -49,12 +49,4 @@ public:
     vae_model(std::string traced_script_path) : neural_network(traced_script_path) {}
     ~vae_model() {}
 
-    cv::M encode(cv::Mat input) {
-        return module->encode(input);
-    }
-
-    at::Tensor decode(at::Tensor input)
-    {
-        return module->decode(input);
-    }
 };

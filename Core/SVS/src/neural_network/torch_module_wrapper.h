@@ -23,7 +23,7 @@
  */
 class torch_module_wrapper
 {
-private:
+protected:
     torch::jit::script::Module module;
 public:
     torch_module_wrapper();
@@ -34,18 +34,9 @@ public:
 };
 
 
-class vae_model_wrapper : torch_module_wrapper
+class vae_model_wrapper : public torch_module_wrapper
 {
 public:
     vae_model_wrapper(std::string traced_script_path) : torch_module_wrapper(traced_script_path) {}
     ~vae_model_wrapper() {}
-
-    at::Tensor encode(at::Tensor input) {
-        return module.encode(input);
-    }
-
-    at::Tensor decode(at::Tensor input)
-    {
-        return module.decode(input);
-    }
 };
