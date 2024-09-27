@@ -42,6 +42,7 @@ protected:
      */
     std::string _entity_id;
 public:
+    void get_id(std::string& result) { result.assign(_entity_id); }
     /**
      * @brief Store a new percept in the VCD.
      *

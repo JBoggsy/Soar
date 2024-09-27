@@ -11,13 +11,50 @@
 #include "visual_long_term_memory.h"
 #include "visual_concept_descriptor.h"
 #include "exact_visual_concept_descriptor.h"
+#ifdef ENABLE_TORCH
+#include "latent_representation.h"
+#include "vae_visual_concept_descriptor.h"
+#endif
+
+/////////////////////
+// TEMPLATE CLASS //
+///////////////////
 
 template <typename img_T, template<typename T> class atype_T>
 visual_long_term_memory<img_T, atype_T>::visual_long_term_memory(svs* svs_parent) {
     _svs = svs_parent;
     _archetypes = std::vector<archetype_T*>();
     _id_index_map = std::unordered_map<std::string, int>();
+    #ifdef ENABLE_TORCH
+    _vae_model = new vae_base_model();
+    #endif
 }
+
+
+// VAE METHODS
+//////////////
+
+#ifdef ENABLE_TORCH
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::load_vae_model(std::string traced_script_path) {
+    _vae_model->load_traced_script(traced_script_path);
+}
+
+#ifdef ENABLE_OPENCV
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::encode_image(opencv_image* input, latent_representation* latent) {
+    _vae_model->encode(*(input->get_image()), latent);
+}
+
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::decode_latent(latent_representation* latent, opencv_image* output) {
+    _vae_model->decode(latent, *(output->get_image()));
+}
+#endif
+#endif
+
+// MEMORY METHODS
+/////////////////
 
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::store_percept(img_T* percept, std::string entity_id) {
@@ -99,9 +136,17 @@ void visual_long_term_memory<img_T, atype_T>::search(img_T* percept, float thres
     throw "Not implemented yet";
 }
 
+
+// CLI PROXY METHODS
+////////////////////
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::proxy_get_children(std::map<std::string, cliproxy*>& c) {
     c["list"] = new memfunc_proxy<visual_long_term_memory<img_T, atype_T>>(this, &visual_long_term_memory<img_T, atype_T>::cli_list_vcd_ids);
+
+    #ifdef ENABLE_TORCH
+    c["load-vae"] = new memfunc_proxy<visual_long_term_memory<img_T, atype_T>>(this, &visual_long_term_memory<img_T, atype_T>::cli_load_vae);
+    c["load-vae"]->add_arg("TRACED_SCRIPT_PATH", "The path to the traced PyTorch script to load.");
+    #endif
 
     c["learn"] = new memfunc_proxy<visual_long_term_memory<img_T, atype_T>>(this, &visual_long_term_memory<img_T, atype_T>::cli_learn);
     c["learn"]->add_arg("CLASS_NAME", "The name of the class (aka VCD ID) to create/update.");
@@ -118,6 +163,9 @@ void visual_long_term_memory<img_T, atype_T>::proxy_use_sub(const std::vector<st
     os << "CLI USAGE:" << std::endl << std::endl;
     os << "svs vltm - Prints this message." << std::endl;
     os << "svs vltm.list - Prints a newline-separated list of the VCD IDs in VLTM." << std::endl;
+    #ifdef ENABLE_TORCH
+    os << "svs vltm.load-vae <TRACED_SCRIPT_PATH> - Loads a traced PyTorch script into the VAE model." << std::endl;
+    #endif
     os << "svs vltm.learn <CLASS_NAME> <IMG_DATA> - Uses the image represented in <IMAGE_DATA> to update (or create) the VCD with the given class name. <IMAGE_DATA> should be a base64 encoding of the image." << std::endl;
     os << "svs vltm.generate <CLASS_NAME> - Generates an image of the VCD with the given class name, outputting it in base64. Empty string means no VCD with that class name exists." << std::endl;
     os << "====================================" << std::endl;
@@ -137,6 +185,19 @@ void visual_long_term_memory<img_T, atype_T>::cli_list_vcd_ids(const std::vector
 
     return;
 }
+
+#ifdef ENABLE_TORCH
+template <typename img_T, template<typename T> class atype_T>
+void visual_long_term_memory<img_T, atype_T>::cli_load_vae(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "No traced script path specified." << std::endl;
+        return;
+    }
+
+    std::string traced_script_path(args[0]);
+    load_vae_model(traced_script_path);
+}
+#endif
 
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
@@ -177,9 +238,52 @@ void visual_long_term_memory<img_T, atype_T>::cli_generate(const std::vector<std
 }
 
 #ifdef ENABLE_OPENCV
-
 template class visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>;
 
+#ifdef ENABLE_TORCH
+template <>
+void visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.size() < 2) {
+        os << "Must specify class name and image data." << std::endl;
+        return;
+    }
 
+    std::string vcd_id(args[0]);
+    std::string img_data(args[1]);
+    std::string decoded_data = base64_decode(img_data);
+    std::vector<uchar> data(decoded_data.begin(), decoded_data.end());
+    cv::Mat raw_img = cv::imdecode(cv::Mat(data), -1);
+    opencv_image* image = new opencv_image();
+    image->update_image(raw_img);
 
+    latent_representation* latent = new latent_representation();
+    _vae_model->encode(*(image->get_image()), latent);
+
+    store_percept(latent, vcd_id);
+}
+
+template <>
+void visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>::cli_generate(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "No class name specified." << std::endl;
+        return;
+    }
+
+    std::string vcd_id(args[0]);
+
+    latent_representation* gened_latent = new latent_representation();
+    recall(vcd_id, gened_latent);
+
+    opencv_image* gened_image = new opencv_image();
+    _vae_model->decode(gened_latent, *(gened_image->get_image()));
+
+    std::vector<uchar> raw_png_data;
+    std::string b64_data;
+    cv::imencode(std::string(".png"), *(gened_image->get_image()), raw_png_data);
+    b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
+    os << b64_data << std::endl;
+}
+
+template class visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>;
+#endif
 #endif

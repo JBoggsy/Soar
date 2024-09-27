@@ -798,10 +798,10 @@ namespace visual_ops
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
         /* num_params = */          1,
-        /* param_names = */         {VOP_ARG_SOURCE},
-        /* param_types = */         {CV_IMAGE_ARG},
-        /* param_directions */      {INPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG}
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_LATENT, VOP_ARG_VLTM},
+        /* param_types = */         {CV_IMAGE_ARG, LATENT_REP_ARG, VLTM_ARG},
+        /* param_directions */      {INPUT_ARG, OUTPUT_ARG, INPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     // RECOGNIZE IMAGE

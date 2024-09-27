@@ -7,6 +7,9 @@
 #include <unordered_map>
 // SVS Includes
 #include "cliproxy.h"
+#ifdef ENABLE_TORCH
+#include "neural_network.h"
+#endif
 // Forward declarations
 class svs;  // "svs.h"
 class image_base;  // "image.h"
@@ -71,11 +74,14 @@ private:
      */
     svs* _svs;
 
+    #ifdef ENABLE_TORCH
+    vae_base_model* _vae_model;
+    #endif
+
 public:
     /**
      * @brief Convenient type reference for the archetypes held in this instance
      * of visual memory.
-     *
      */
     typedef atype_T<img_T> archetype_T;
 
@@ -84,9 +90,39 @@ public:
      *
      * @param svs_parent The svs instance which manages this visual memory
      * instance.
-     *
      */
     visual_long_term_memory(svs* svs_parent);
+
+    /////////////////
+    // VAE METHODS //
+    /////////////////
+
+    #ifdef ENABLE_TORCH
+    /**
+     * @brief Load a traced PyTorch script into the VAE model.
+     *
+     * @param traced_script_path The path to the traced PyTorch script to load.
+     */
+    void load_vae_model(std::string traced_script_path);
+
+    #ifdef ENABLE_OPENCV
+    /**
+     * @brief Encode an opencv_image into a latent representation.
+     *
+     * @param input The image to encode.
+     * @param latent The latent representation to write the result into.
+     */
+    void encode_image(opencv_image* input, latent_representation* latent);
+
+    /**
+     * @brief Decode a latent representation into an opencv_image.
+     *
+     * @param latent The latent representation to decode.
+     * @param output The opencv_image to write the result into.
+     */
+    void decode_latent(latent_representation* latent, opencv_image* output);
+    #endif
+    #endif
 
     ////////////////////
     // MEMORY METHODS //
@@ -183,6 +219,14 @@ public:
      * in VLTM.
      */
     void cli_list_vcd_ids(const std::vector<std::string>& args, std::ostream& os);
+
+
+    #ifdef ENABLE_TORCH
+    /**
+     * @brief Load a traced PyTorch script into the VAE model.
+     */
+    void cli_load_vae(const std::vector<std::string>& args, std::ostream& os);
+    #endif
 
     /**
      * @brief Given a class name and base64-encoded image data, update or create

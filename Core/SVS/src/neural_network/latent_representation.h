@@ -8,6 +8,9 @@
  * This class is used to store the latent representation of an image as a pair of
  * vectors, one for the mean and one for the standard deviation. It also provides
  * a method for sampling from the distribution defined by these two vectors.
+ *
+ * @note Sampling should be done only as-needed; the latent representation is
+ * explicitly meant to be a distribution, not a single value.
  */
 class latent_representation
 {
@@ -32,6 +35,8 @@ public:
 
     std::vector<double>* get_mu() { return _mu; }
     std::vector<double>* get_sigma() { return _sigma; }
+    void set_mu(std::vector<double>* mu) { _mu = mu; }
+    void set_sigma(std::vector<double>* sigma) { _sigma = sigma; }
     std::vector<double>* sample(std::vector<double>* sample);
 private:
     std::vector<double>* _mu;

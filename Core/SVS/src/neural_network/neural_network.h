@@ -3,14 +3,18 @@
 #include <string>
 // third-party includes
 #include <opencv2/opencv.hpp>
+// SVS includes
+#include "latent_representation.h"
 
 // forward declarations
 class torch_module_wrapper;
+class vae_base_model_wrapper;
+class vae_vcd_model_wrapper;
 
 
 /**
  * @brief An abstract class for interfacing with a PyTorch-based neural network.
- * 
+ *
  * This class is a base class for classes which wrap around PyTorch neural
  * networks that have been traced to TorchScript. Concrete sub-classes should be
  * very simple to implement, because all they need to do is have their methods
@@ -22,9 +26,9 @@ class torch_module_wrapper;
  * requires the PyTorch headers, we need to define this class and its subclasses
  * in a separate file (and thus as a separate class).
  */
-class neural_network 
+class neural_network
 {
-private:
+protected:
     /**
      * @brief The wrapper object for the PyTorch module underlying this model.
      *
@@ -35,18 +39,38 @@ private:
     torch_module_wrapper* module;
     bool module_loaded = false;
 public:
-    neural_network();
+    neural_network() {}
     neural_network(std::string traced_script_path);
     ~neural_network();
     void load_traced_script(std::string traced_script_path);
-    cv::Mat forward(cv::Mat input);
+    cv::Mat forward(cv::Mat& input);
 };
 
 
-class vae_model : neural_network
+class vae_base_model : public neural_network
 {
-public:
-    vae_model(std::string traced_script_path) : neural_network(traced_script_path) {}
-    ~vae_model() {}
+protected:
+    vae_base_model_wrapper* module;
 
+public:
+    vae_base_model() {}
+    vae_base_model(std::string traced_script_path) : neural_network(traced_script_path) {}
+    ~vae_base_model();
+
+    void encode(cv::Mat& input, latent_representation* latent);
+    void decode(latent_representation* latent, cv::Mat& output);
+};
+
+
+class vae_vcd_model : public neural_network
+{
+protected:
+    vae_vcd_model_wrapper* module;
+public:
+    vae_vcd_model() {}
+    vae_vcd_model(std::string traced_script_path) : neural_network(traced_script_path) {}
+    ~vae_vcd_model();
+
+    void encode(latent_representation* input, latent_representation* latent);
+    void decode(latent_representation* latent, latent_representation* output);
 };

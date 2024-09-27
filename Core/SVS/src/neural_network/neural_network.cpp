@@ -4,18 +4,14 @@
 #include "neural_network.h"
 #include "torch_module_wrapper.h"
 
-neural_network::neural_network()
-{
-}
 
-neural_network::neural_network(std::string traced_script_path)
-{
-    load_traced_script(traced_script_path);
-}
+/////////////////
+// BASE CLASS //
+///////////////
 
-neural_network::~neural_network()
-{
-}
+neural_network::neural_network(std::string traced_script_path) { load_traced_script(traced_script_path); }
+neural_network::~neural_network() { delete module; }
+
 
 void neural_network::load_traced_script(std::string traced_script_path)
 {
@@ -23,24 +19,44 @@ void neural_network::load_traced_script(std::string traced_script_path)
     module_loaded = true;
 }
 
-cv::Mat neural_network::forward(cv::Mat input)
+cv::Mat neural_network::forward(cv::Mat& input)
 {
-    // convert cv::Mat to torch::Tensor
-    torch::Tensor tensor = torch::from_blob(input.data, {input.rows, input.cols, 3}, torch::kByte);
-    tensor = tensor.permute({2, 0, 1});
-    tensor = tensor.toType(torch::kFloat);
-    tensor = tensor.div(255);
-    tensor = tensor.unsqueeze(0);
+    if (!module_loaded) {
+        throw std::runtime_error("Tried to forward through a neural network without loading a traced script first.");
+    }
+    return module->forward(input);
+}
 
-    // forward pass
-    torch::Tensor output = module->forward(tensor);
 
-    // convert torch::Tensor to cv::Mat
-    output = output.squeeze(0);
-    output = output.mul(255);
-    output = output.toType(torch::kByte);
-    output = output.permute({1, 2, 0});
-    cv::Mat result(output.size(0), output.size(1), CV_8UC3, output.data_ptr());
+/////////////////////
+// VAE BASE MODEL //
+///////////////////
 
-    return result;
+vae_base_model::~vae_base_model() { delete module; }
+
+void vae_base_model::encode(cv::Mat& input, latent_representation* latent)
+{
+    module->encode(input, latent);
+}
+
+void vae_base_model::decode(latent_representation* latent, cv::Mat& output)
+{
+    module->decode(latent, output);
+}
+
+
+////////////////////
+// VAE VCD MODEL //
+//////////////////
+
+vae_vcd_model::~vae_vcd_model() { delete module; }
+
+void vae_vcd_model::encode(latent_representation* input, latent_representation* latent)
+{
+    module->encode(input, latent);
+}
+
+void vae_vcd_model::decode(latent_representation* latent, latent_representation* output)
+{
+    module->decode(latent, output);
 }
