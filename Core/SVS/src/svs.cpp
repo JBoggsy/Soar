@@ -381,18 +381,19 @@ svs::svs(agent* a)
     si = new soar_interface(a);
     draw = new drawer();
 
-#ifdef ENABLE_OPENCV
-    v_mem_opencv = new exact_opencv_mem(this);
-#ifdef ENABLE_TORCH
-    vae_base = new neural_network();
-#endif
-#endif
+    #ifdef ENABLE_OPENCV
+    #ifdef ENABLE_TORCH
+    vltm = new vae_vltm(this);
+    #else
+    vltm = new opencv_vltm(this);
+    #endif
+    #endif
 
-#ifdef ENABLE_ROS
+    #ifdef ENABLE_ROS
     ros_interface::init_ros();
     ri = new ros_interface(this);
     ri->start_ros();
-#endif
+    #endif
 }
 
 bool svs::filter_dirty_bit = true;
@@ -602,16 +603,12 @@ void svs::proxy_get_children(std::map<std::string, cliproxy*>& c)
 #endif
 #ifdef ENABLE_OPENCV
     c["vibmgr"] = vib_manager;
-    c["vltm"] = v_mem_opencv;
+    c["vltm"] = vltm;
 
     for (size_t j = 0, jend = state_stack.size(); j < jend; ++j)
     {
         c[state_stack[j]->get_name()] = state_stack[j];
     }
-#ifdef ENABLE_TORCH
-    c["load-vae"] = new memfunc_proxy<svs>(this, &svs::cli_load_vae);
-    c["load-vae"]->add_arg("VAE-FILE", "The path to the .pt file containing the traced VAE model to load.");
-#endif
 #endif
 }
 
@@ -660,17 +657,4 @@ void svs::cli_connect_viewer(const std::vector<std::string>& args, std::ostream&
 void svs::cli_disconnect_viewer(const std::vector<std::string>& args, std::ostream& os)
 {
     draw->disconnect();
-}
-
-void svs::cli_load_vae(const std::vector<std::string>& args, std::ostream& os) {
-    if (args.empty()) {
-        os << "You must specify a path to the .pt file containing the VAE model." << std::endl;
-        return;
-    }
-
-    std::string vae_file_path = args[0];
-    os << "Loading VAE from " << vae_file_path << std::endl;
-
-    // Load the VAE model
-    vae_base->load_traced_script(vae_file_path);
 }

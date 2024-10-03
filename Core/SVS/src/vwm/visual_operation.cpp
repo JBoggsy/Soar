@@ -8,6 +8,7 @@
 #include "visual_input_buffer.h"
 #include "visual_long_term_memory.h"
 #include "exact_visual_concept_descriptor.h"
+#include "vae_visual_concept_descriptor.h"
 #include "image.h"
 #include "latent_representation.h"
 
@@ -477,14 +478,16 @@ namespace visual_ops
     // ENCODING AND DECODING //
     ///////////////////////////
 
+    #ifdef ENABLE_TORCH
     void encode(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         latent_representation* latent = (latent_representation*)args[VOP_ARG_LATENT];
-        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm;
-        vltm = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+        visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>* vltm;
+        vltm = (visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
 
-
+        vltm->encode_image(image, latent);
     }
+    #endif
 
     ///////////////////////////
     // VLTM-BASED OPERATIONS //

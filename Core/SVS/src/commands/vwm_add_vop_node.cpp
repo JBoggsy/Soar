@@ -101,7 +101,7 @@ bool add_vop_node_command::update_sub() {
                 param_present = true;
                 break;
             case visual_ops::VLTM_ARG:
-                node_data_dict[param_name] = state->get_svs()->get_v_mem_opencv();
+                node_data_dict[param_name] = state->get_svs()->get_vltm();
                 param_present = true;
                 break;
             case visual_ops::VIBMGR_ARG:

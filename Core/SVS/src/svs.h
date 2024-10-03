@@ -30,6 +30,11 @@ class pcl_image;
 #endif
 #ifdef ENABLE_OPENCV
 class opencv_image;
+#ifdef ENABLE_TORCH
+class latent_representation;
+template<typename img_t>
+class vae_visual_concept_descriptor;
+#endif
 #endif
 class basic_image;
 
@@ -253,18 +258,6 @@ public:
     svs_state* get_root_state() { return state_stack.at(0); }
     svs_state* get_last_state() { return state_stack.at(state_stack.size() - 1); }
 
-#ifdef ENABLE_OPENCV
-    void image_callback(const cv::Mat& new_img);
-    typedef visual_long_term_memory<opencv_image, exact_visual_concept_descriptor> exact_opencv_mem;
-    exact_opencv_mem* get_v_mem_opencv() { return v_mem_opencv; }
-    visual_input_buffer_manager* get_vib_manager() { return vib_manager; }
-#endif
-
-#ifdef ENABLE_ROS
-    void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
-    ros_interface* get_ros_interface() { return ri; }
-#endif
-
     soar_interface* get_soar_interface()
     {
         return si;
@@ -318,6 +311,26 @@ public:
         return svs::filter_dirty_bit;
     }
 
+    #ifdef ENABLE_OPENCV
+    // Create new image callback and visual input buffers
+    void image_callback(const cv::Mat& new_img);
+    visual_input_buffer_manager* get_vib_manager() { return vib_manager; }
+
+    // Create VLTM, either using opencv_images or, if possible, vae latents
+    #ifdef ENABLE_TORCH
+    typedef visual_long_term_memory<latent_representation, vae_visual_concept_descriptor> vae_vltm;
+    vae_vltm* get_vltm() { return vltm; }
+    #else
+    typedef visual_long_term_memory<opencv_image, exact_visual_concept_descriptor> opencv_vltm;
+    opencv_vltm* get_vltm() { return vltm; }
+    #endif
+    #endif
+
+    #ifdef ENABLE_ROS
+    void image_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& new_img);
+    ros_interface* get_ros_interface() { return ri; }
+    #endif
+
 private:
     void proc_input(svs_state* s);
 
@@ -326,21 +339,22 @@ private:
     void cli_disconnect_viewer(const std::vector<std::string>& args, std::ostream& os);
     void cli_load_vae(const std::vector<std::string>& args, std::ostream& os);
 
-#ifdef ENABLE_ROS
+    #ifdef ENABLE_ROS
     ros_interface*            ri;
     boost::mutex              input_mtx;
-#endif
+    #endif
 
-#ifdef ENABLE_OPENCV
-    exact_opencv_mem*               v_mem_opencv;
-    Symbol*                         vltm_link;
-
+    #ifdef ENABLE_OPENCV
     visual_input_buffer_manager*    vib_manager;
     Symbol*                         vib_link;
-#ifdef ENABLE_TORCH
-    neural_network*                 vae_base;
-#endif
-#endif
+    Symbol*                         vltm_link;
+
+    #ifdef ENABLE_TORCH
+    vae_vltm*       vltm;
+    #else
+    opencv_vltm*    vltm;
+    #endif
+    #endif
 
     soar_interface*           si;
     std::vector<svs_state*>   state_stack;
