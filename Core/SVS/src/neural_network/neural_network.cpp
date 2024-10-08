@@ -9,14 +9,29 @@
 // BASE CLASS //
 ///////////////
 
-neural_network::neural_network(std::string traced_script_path) { load_traced_script(traced_script_path); }
-neural_network::~neural_network() { delete module; }
+neural_network::neural_network()
+{
+    module = new torch_module_wrapper();
+    module_loaded = false;
+}
+
+neural_network::neural_network(std::string traced_script_path)
+{
+    module = new torch_module_wrapper(traced_script_path);
+    module_loaded = true;
+}
+
+neural_network::~neural_network()
+{
+    delete module;
+}
 
 
 void neural_network::load_traced_script(std::string traced_script_path)
 {
-    module = new torch_module_wrapper(traced_script_path);
+    module->load_traced_script(traced_script_path);
     module_loaded = true;
+    printf("neural_network: Loaded traced script from %s\n", traced_script_path.c_str());
 }
 
 cv::Mat neural_network::forward(cv::Mat& input)
@@ -32,7 +47,29 @@ cv::Mat neural_network::forward(cv::Mat& input)
 // VAE BASE MODEL //
 ///////////////////
 
-vae_base_model::~vae_base_model() { delete module; }
+vae_base_model::vae_base_model()
+{
+    module = new vae_base_model_wrapper();
+    module_loaded = false;
+}
+
+vae_base_model::vae_base_model(std::string traced_script_path)
+{
+    module = new vae_base_model_wrapper(traced_script_path);
+    module_loaded = true;
+}
+
+vae_base_model::~vae_base_model()
+{
+    delete module;
+}
+
+void vae_base_model::load_traced_script(std::string traced_script_path)
+{
+    module->load_traced_script(traced_script_path);
+    module_loaded = true;
+    printf("vae_base_model: Loaded traced script from %s\n", traced_script_path.c_str());
+}
 
 void vae_base_model::encode(cv::Mat& input, latent_representation* latent)
 {
@@ -49,7 +86,29 @@ void vae_base_model::decode(latent_representation* latent, cv::Mat& output)
 // VAE VCD MODEL //
 //////////////////
 
-vae_vcd_model::~vae_vcd_model() { delete module; }
+vae_vcd_model::vae_vcd_model()
+{
+    module = new vae_vcd_model_wrapper();
+    module_loaded = false;
+}
+
+vae_vcd_model::vae_vcd_model(std::string traced_script_path)
+{
+    module = new vae_vcd_model_wrapper(traced_script_path);
+    module_loaded = true;
+}
+
+vae_vcd_model::~vae_vcd_model()
+{
+    delete module;
+}
+
+void vae_vcd_model::load_traced_script(std::string traced_script_path)
+{
+    module->load_traced_script(traced_script_path);
+    module_loaded = true;
+    printf("vae_vcd_model: Loaded traced script from %s\n", traced_script_path.c_str());
+}
 
 void vae_vcd_model::encode(latent_representation* input, latent_representation* latent)
 {

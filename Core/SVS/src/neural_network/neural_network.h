@@ -28,7 +28,7 @@ class vae_vcd_model_wrapper;
  */
 class neural_network
 {
-protected:
+private:
     /**
      * @brief The wrapper object for the PyTorch module underlying this model.
      *
@@ -39,38 +39,46 @@ protected:
     torch_module_wrapper* module;
     bool module_loaded = false;
 public:
-    neural_network() {}
+    neural_network();
     neural_network(std::string traced_script_path);
     ~neural_network();
     void load_traced_script(std::string traced_script_path);
     cv::Mat forward(cv::Mat& input);
+
+    bool get_module_loaded() { return module_loaded; }
 };
 
 
 class vae_base_model : public neural_network
 {
-protected:
+private:
     vae_base_model_wrapper* module;
+    bool module_loaded = false;
 
 public:
-    vae_base_model() {}
-    vae_base_model(std::string traced_script_path) : neural_network(traced_script_path) {}
+    vae_base_model();
+    vae_base_model(std::string traced_script_path);
     ~vae_base_model();
+    void load_traced_script(std::string traced_script_path);
 
     void encode(cv::Mat& input, latent_representation* latent);
     void decode(latent_representation* latent, cv::Mat& output);
+    bool get_module_loaded() { return module_loaded; }
 };
 
 
 class vae_vcd_model : public neural_network
 {
-protected:
+private:
     vae_vcd_model_wrapper* module;
+    bool module_loaded = false;
 public:
-    vae_vcd_model() {}
-    vae_vcd_model(std::string traced_script_path) : neural_network(traced_script_path) {}
+    vae_vcd_model();
+    vae_vcd_model(std::string traced_script_path);
     ~vae_vcd_model();
+    void load_traced_script(std::string traced_script_path);
 
     void encode(latent_representation* input, latent_representation* latent);
     void decode(latent_representation* latent, latent_representation* output);
+    bool get_module_loaded() { return module_loaded; }
 };

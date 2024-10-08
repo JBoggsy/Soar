@@ -1,6 +1,6 @@
 #ifndef VISUAL_OPERATIONS_H
 #define VISUAL_OPERATIONS_H
-#include <unordered_map>
+#include <map>
 #include <vector>
 #include <string>
 
@@ -15,7 +15,7 @@ class opencv_image;
  * The `data_dict` type provides string-to-anything mapping for giving/getting
  * data from visual operations.
  */
-typedef std::unordered_map<std::string, void*> data_dict;
+typedef std::map<std::string, void*> data_dict;
 
 // Define operation names as strings
 #define VOP_GET_FROM_VIB            std::string("get-from-vib")
@@ -797,10 +797,20 @@ namespace visual_ops
     // ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
-        /* num_params = */          1,
+        /* num_params = */          3,
         /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_LATENT, VOP_ARG_VLTM},
         /* param_types = */         {CV_IMAGE_ARG, LATENT_REP_ARG, VLTM_ARG},
         /* param_directions */      {INPUT_ARG, OUTPUT_ARG, INPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    // DECODE IMAGE
+    inline vop_params_metadata decode_metadata = {
+        /* vop_function = */        decode,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_LATENT, VOP_ARG_VLTM},
+        /* param_types = */         {CV_IMAGE_ARG, LATENT_REP_ARG, VLTM_ARG},
+        /* param_directions */      {OUTPUT_ARG, INPUT_ARG, INPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
@@ -864,6 +874,7 @@ namespace visual_ops
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
         {VOP_ENCODE, encode_metadata},
+        {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
         {VOP_LEARN_FROM, learn_from_metadata},
         {VOP_GENERATE, generate_metadata}

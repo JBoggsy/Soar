@@ -487,6 +487,15 @@ namespace visual_ops
 
         vltm->encode_image(image, latent);
     }
+
+    void decode(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        latent_representation* latent = (latent_representation*)args[VOP_ARG_LATENT];
+        visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>* vltm;
+        vltm = (visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+
+        vltm->decode_latent(latent, image);
+    }
     #endif
 
     ///////////////////////////

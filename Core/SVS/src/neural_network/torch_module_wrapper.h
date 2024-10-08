@@ -93,12 +93,12 @@ protected:
      */
     void latent_to_tensor(latent_representation* latent, at::Tensor& output);
 
-    torch::jit::script::Module module;
+    torch::jit::script::Module* module;
 
 public:
-    torch_module_wrapper() {}
+    torch_module_wrapper();
     torch_module_wrapper(std::string traced_script_path);
-    ~torch_module_wrapper() {}
+    ~torch_module_wrapper();
     void load_traced_script(std::string traced_script_path);
 
     /**
@@ -111,8 +111,9 @@ public:
 class vae_base_model_wrapper : public torch_module_wrapper
 {
 public:
-    vae_base_model_wrapper(std::string traced_script_path) : torch_module_wrapper(traced_script_path) {}
-    ~vae_base_model_wrapper() {}
+    vae_base_model_wrapper();
+    vae_base_model_wrapper(std::string traced_script_path);
+    ~vae_base_model_wrapper();
 
     void encode(cv::Mat& input, latent_representation* latent);
     void decode(latent_representation* latent, cv::Mat& output);
@@ -121,8 +122,9 @@ public:
 class vae_vcd_model_wrapper : public torch_module_wrapper
 {
 public:
-    vae_vcd_model_wrapper(std::string traced_script_path) : torch_module_wrapper(traced_script_path) {}
-    ~vae_vcd_model_wrapper() {}
+    vae_vcd_model_wrapper();
+    vae_vcd_model_wrapper(std::string traced_script_path);
+    ~vae_vcd_model_wrapper();
 
     void encode(latent_representation* input, latent_representation* latent);
     void decode(latent_representation* latent, latent_representation* output);

@@ -193,10 +193,14 @@ bool visual_operation_node::evaluate() {
 
         switch (parent_param_type) {
             case visual_ops::CV_IMAGE_ARG:
-                parameters_[parent_param_name] = vwm_->get_node_image(parent_node_id, parent_param_name);
+                opencv_image* parent_image;
+                parent_image = vwm_->get_node_image(parent_node_id, parent_param_name);
+                parameters_[parent_param_name] = parent_image;
                 break;
             case visual_ops::LATENT_REP_ARG:
-                parameters_[parent_param_name] = vwm_->get_node_latent_rep(parent_node_id, parent_param_name);
+                latent_representation* parent_latent_rep;
+                parent_latent_rep = vwm_->get_node_latent_rep(parent_node_id, parent_param_name);
+                parameters_[parent_param_name] = parent_latent_rep;
                 break;
         }
         if (parameters_[parent_param_name] == NULL) { printf("ERROR: Node %d not found\n", parent_node_id); }

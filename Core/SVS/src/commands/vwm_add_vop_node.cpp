@@ -9,6 +9,7 @@
 #include "command.h"
 #include "command_table.h"
 #include "visual_operation.h"
+#include "latent_representation.h"
 
 
 /////////////////
@@ -134,6 +135,12 @@ bool add_vop_node_command::update_sub() {
                         break;
                     case visual_ops::STRING_ARG:
                         node_data_dict[param_name] = new std::string;
+                        break;
+                    case visual_ops::CV_IMAGE_ARG:
+                        node_data_dict[param_name] = new opencv_image();
+                        break;
+                    case visual_ops::LATENT_REP_ARG:
+                        node_data_dict[param_name] = new latent_representation();
                         break;
                 }
             } else {

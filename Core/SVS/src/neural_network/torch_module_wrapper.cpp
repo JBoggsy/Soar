@@ -5,17 +5,33 @@
 // TORCH_MODULE_WRAPPER //
 /////////////////////////
 
+torch_module_wrapper::torch_module_wrapper()
+{
+    module = NULL;
+}
+
 torch_module_wrapper::torch_module_wrapper(std::string traced_script_path)
 {
+    module = NULL;
     load_traced_script(traced_script_path);
 }
 
 void torch_module_wrapper::load_traced_script(std::string traced_script_path)
 {
-    module = torch::jit::load(traced_script_path);
-    module.eval();
+    if (module != NULL) {
+        delete module;
+    }
+
+    module = new torch::jit::Module(torch::jit::load(traced_script_path));
+
+    std::vector<torch::jit::Method> methods = module->get_methods();
+    module->eval();
 }
 
+torch_module_wrapper::~torch_module_wrapper()
+{
+    delete module;
+}
 
 void torch_module_wrapper::mat_to_tensor(cv::Mat& input, at::Tensor& output)
 {
@@ -72,7 +88,7 @@ cv::Mat torch_module_wrapper::forward(cv::Mat& input)
     mat_to_tensor(input, input_tensor);
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(input_tensor);
-    at::Tensor output_tensor = module.forward(inputs).toTensor();
+    at::Tensor output_tensor = module->forward(inputs).toTensor();
     cv::Mat output;
     tensor_to_mat(output_tensor, output);
     return output;
@@ -83,13 +99,30 @@ cv::Mat torch_module_wrapper::forward(cv::Mat& input)
 // VAE_BASE_MODEL_WRAPPER //
 ///////////////////////////
 
+vae_base_model_wrapper::vae_base_model_wrapper()
+{
+    module = NULL;
+}
+
+vae_base_model_wrapper::vae_base_model_wrapper(std::string traced_script_path)
+{
+    module = NULL;
+    load_traced_script(traced_script_path);
+}
+
+vae_base_model_wrapper::~vae_base_model_wrapper()
+{
+    delete module;
+}
+
 void vae_base_model_wrapper::encode(cv::Mat& input, latent_representation* latent)
 {
     at::Tensor input_tensor;
     mat_to_tensor(input, input_tensor);
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(input_tensor);
-    std::vector<torch::jit::IValue> output = module.get_method("encode")(inputs).toTuple()->elements();
+    torch::jit::Method encode_method = module->get_method("encode");
+    std::vector<torch::jit::IValue> output = encode_method(inputs).toTuple()->elements();
     at::Tensor mu_tensor = output[0].toTensor();
     at::Tensor sigma_tensor = output[1].toTensor();
     tensors_to_latent_dist(mu_tensor, sigma_tensor, latent);
@@ -101,7 +134,8 @@ void vae_base_model_wrapper::decode(latent_representation* latent, cv::Mat& outp
     latent_to_tensor(latent, latent_tensor);
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(latent_tensor);
-    at::Tensor output_tensor = module.get_method("decode")(inputs).toTensor();
+    torch::jit::Method decode_method = module->get_method("decode");
+    at::Tensor output_tensor = decode_method(inputs).toTensor();
     tensor_to_mat(output_tensor, output);
 }
 
@@ -110,12 +144,28 @@ void vae_base_model_wrapper::decode(latent_representation* latent, cv::Mat& outp
 // VAE_VCD_MODEL_WRAPPER //
 //////////////////////////
 
+vae_vcd_model_wrapper::vae_vcd_model_wrapper()
+{
+    module = NULL;
+}
+
+vae_vcd_model_wrapper::vae_vcd_model_wrapper(std::string traced_script_path)
+{
+    module = NULL;
+    load_traced_script(traced_script_path);
+}
+
+vae_vcd_model_wrapper::~vae_vcd_model_wrapper()
+{
+    delete module;
+}
+
 void vae_vcd_model_wrapper::encode(latent_representation* input, latent_representation* latent) {
     at::Tensor input_tensor;
     latent_to_tensor(input, input_tensor);
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(input_tensor);
-    std::vector<torch::jit::IValue> output = module.get_method("encode")(inputs).toTuple()->elements();
+    std::vector<torch::jit::IValue> output = module->get_method("encode")(inputs).toTuple()->elements();
     at::Tensor mu_tensor = output[0].toTensor();
     at::Tensor sigma_tensor = output[1].toTensor();
     tensors_to_latent_dist(mu_tensor, sigma_tensor, latent);
@@ -126,7 +176,7 @@ void vae_vcd_model_wrapper::decode(latent_representation* latent, latent_represe
     latent_to_tensor(latent, latent_tensor);
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(latent_tensor);
-    std::vector<torch::jit::IValue> latent_tensors = module.get_method("decode")(inputs).toTuple()->elements();
+    std::vector<torch::jit::IValue> latent_tensors = module->get_method("decode")(inputs).toTuple()->elements();
     at::Tensor mu_tensor = latent_tensors[0].toTensor();
     at::Tensor sigma_tensor = latent_tensors[1].toTensor();
     tensors_to_latent_dist(mu_tensor, sigma_tensor, output);

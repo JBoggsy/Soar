@@ -38,6 +38,9 @@ visual_long_term_memory<img_T, atype_T>::visual_long_term_memory(svs* svs_parent
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::load_vae_model(std::string traced_script_path) {
     _vae_model->load_traced_script(traced_script_path);
+    if (!_vae_model->get_module_loaded()) {
+        throw std::runtime_error("Failed to load VAE model.");
+    }
 }
 
 #ifdef ENABLE_OPENCV
@@ -48,7 +51,9 @@ void visual_long_term_memory<img_T, atype_T>::encode_image(opencv_image* input, 
 
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::decode_latent(latent_representation* latent, opencv_image* output) {
-    _vae_model->decode(latent, *(output->get_image()));
+    cv::Mat* output_image = new cv::Mat();
+    _vae_model->decode(latent, *output_image);
+    output->set_image(output_image);
 }
 #endif
 #endif
@@ -190,7 +195,7 @@ void visual_long_term_memory<img_T, atype_T>::cli_list_vcd_ids(const std::vector
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::cli_load_vae(const std::vector<std::string>& args, std::ostream& os) {
     if (args.empty()) {
-        os << "No traced script path specified." << std::endl;
+        os << "ERROR: No traced script path specified." << std::endl;
         return;
     }
 
@@ -202,7 +207,7 @@ void visual_long_term_memory<img_T, atype_T>::cli_load_vae(const std::vector<std
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
     if (args.size() < 2) {
-        os << "Must specify class name and image data." << std::endl;
+        os << "ERROR: Must specify class name and image data." << std::endl;
         return;
     }
 
@@ -220,7 +225,7 @@ void visual_long_term_memory<img_T, atype_T>::cli_learn(const std::vector<std::s
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::cli_generate(const std::vector<std::string>& args, std::ostream& os) {
     if (args.empty()) {
-        os << "No vib name specified." << std::endl;
+        os << "ERROR: No vcd class specified." << std::endl;
         return;
     }
 
@@ -240,11 +245,16 @@ void visual_long_term_memory<img_T, atype_T>::cli_generate(const std::vector<std
 #ifdef ENABLE_OPENCV
 template class visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>;
 
+
+////////////////////////
+// VAE SPECIALIZATION //
+////////////////////////
+
 #ifdef ENABLE_TORCH
 template <>
 void visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
     if (args.size() < 2) {
-        os << "Must specify class name and image data." << std::endl;
+        os << "ERROR: Must specify class name and image data." << std::endl;
         return;
     }
 
@@ -265,7 +275,7 @@ void visual_long_term_memory<latent_representation, vae_visual_concept_descripto
 template <>
 void visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>::cli_generate(const std::vector<std::string>& args, std::ostream& os) {
     if (args.empty()) {
-        os << "No class name specified." << std::endl;
+        os << "ERROR: No vcd class specified." << std::endl;
         return;
     }
 
