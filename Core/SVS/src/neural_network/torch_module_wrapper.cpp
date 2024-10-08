@@ -1,5 +1,5 @@
 #include "torch_module_wrapper.h"
-
+#include <cstdio>
 
 ///////////////////////////
 // TORCH_MODULE_WRAPPER //
@@ -50,9 +50,9 @@ void torch_module_wrapper::tensor_to_mat(at::Tensor& input, cv::Mat& output)
     tensor = tensor.squeeze();
     tensor = tensor.permute({1, 2, 0});
     tensor = tensor.contiguous();
-    cv::Mat result(tensor.size(0), tensor.size(1), CV_32FC(tensor.size(2)));
-    std::memcpy((void*)result.data, tensor.data_ptr(), sizeof(float) * tensor.numel());
-    output = result;
+    cv::Mat result(tensor.size(0), tensor.size(1), CV_32FC(tensor.size(2)), tensor.data_ptr());
+    result.copyTo(output);
+    output.convertTo(output, CV_32F, 255);
 }
 
 void torch_module_wrapper::latent_dist_to_tensors(latent_representation* latent, at::Tensor& mu, at::Tensor& sigma)
@@ -77,7 +77,8 @@ void torch_module_wrapper::latent_to_tensor(latent_representation* latent, at::T
 {
     at::Tensor sample_tensor;
     std::vector<double>* sample = latent->sample(new std::vector<double>());
-    sample_tensor = torch::from_blob(sample->data(), {1, sample->size()});
+    sample_tensor = torch::from_blob(sample->data(), {1, sample->size()}, {1, 1}, at::kDouble);
+    sample_tensor = sample_tensor.to(at::kFloat);
     output = sample_tensor.clone();
 }
 
@@ -92,6 +93,11 @@ cv::Mat torch_module_wrapper::forward(cv::Mat& input)
     cv::Mat output;
     tensor_to_mat(output_tensor, output);
     return output;
+}
+
+void torch_module_wrapper::print_tensor(at::Tensor& tensor)
+{
+    std::cout << "Tensor: " << tensor << std::endl;
 }
 
 

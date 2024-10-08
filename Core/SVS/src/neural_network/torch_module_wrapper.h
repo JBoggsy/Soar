@@ -93,6 +93,8 @@ protected:
      */
     void latent_to_tensor(latent_representation* latent, at::Tensor& output);
 
+    void print_tensor(at::Tensor& tensor);
+
     torch::jit::script::Module* module;
 
 public:

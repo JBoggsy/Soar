@@ -270,7 +270,7 @@ if compiler == 'g++':
         libs += ['roscpp', 'libpcl_common']
     if GetOption('usetorch'):
         cflags.append('-DENABLE_TORCH')
-        libs += ['torch', 'torch_cpu', 'torch_cuda', 'c10']
+        libs += ['torch', 'torch_cpu', 'torch_cuda', 'torch_global_deps']
     if GetOption('useopencv') and GetOption('useros'):
         libs += ['cv_bridge']
     if GetOption('defflags'):

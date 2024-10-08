@@ -33,11 +33,14 @@ public:
 
     void copy_from(latent_representation* other);
 
+    size_t get_size() const { return _mu->size(); }
     std::vector<double>* get_mu() { return _mu; }
     std::vector<double>* get_sigma() { return _sigma; }
     void set_mu(std::vector<double>* mu) { _mu = mu; }
     void set_sigma(std::vector<double>* sigma) { _sigma = sigma; }
     std::vector<double>* sample(std::vector<double>* sample);
+    void print_latent();
+
 private:
     std::vector<double>* _mu;
     std::vector<double>* _sigma;

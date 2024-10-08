@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "latent_representation.h"
 
 
@@ -15,4 +16,11 @@ std::vector<double>* latent_representation::sample(std::vector<double>* sample) 
         sample->push_back(_mu->at(i) + (_sigma->at(i) * ((double)rand() / RAND_MAX)));
     }
     return sample;
+}
+
+void latent_representation::print_latent() {
+    printf("Latent:\n");
+    for (int i = 0; i < _mu->size(); i++) {
+        printf("  %f (%f)\n", _mu->at(i), _sigma->at(i));
+    }
 }

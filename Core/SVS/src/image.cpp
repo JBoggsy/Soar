@@ -80,7 +80,7 @@ bool basic_image::operator==(basic_image& other) {
                 this_pixel.b != other_pixel.b) { return false; }
         }
     }
-    
+
     return true;
 }
 
@@ -116,10 +116,10 @@ float basic_image::compare(basic_image* other) {
 #ifdef ENABLE_OPENCV
 opencv_image::opencv_image() { source = "none"; }
 
-void opencv_image::set_image(cv::Mat* image) { 
+void opencv_image::set_image(cv::Mat* image) {
     if (_img == NULL) {
         _img = new cv::Mat();
-        } 
+        }
     image->copyTo(*_img);
     // _img->convertTo(*_img, CV_32FC4);
 }
