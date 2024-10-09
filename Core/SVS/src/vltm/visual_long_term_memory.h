@@ -246,7 +246,7 @@ public:
 
 #ifdef ENABLE_OPENCV
 #ifdef ENABLE_TORCH
-    #define VLTM_TYPE visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>
+    #define VLTM_TYPE visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>
 #else
     #define VLTM_TYPE visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>
 #endif

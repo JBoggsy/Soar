@@ -13,6 +13,7 @@
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "visual_working_memory.h"
+#include "visual_long_term_memory.h"
 #endif
 #ifdef ENABLE_ROS
 #include <boost/thread.hpp>
@@ -316,14 +317,8 @@ public:
     void image_callback(const cv::Mat& new_img);
     visual_input_buffer_manager* get_vib_manager() { return vib_manager; }
 
-    // Create VLTM, either using opencv_images or, if possible, vae latents
-    #ifdef ENABLE_TORCH
-    typedef visual_long_term_memory<latent_representation, vae_visual_concept_descriptor> vae_vltm;
-    vae_vltm* get_vltm() { return vltm; }
-    #else
-    typedef visual_long_term_memory<opencv_image, exact_visual_concept_descriptor> opencv_vltm;
-    opencv_vltm* get_vltm() { return vltm; }
-    #endif
+    // Create VLTM
+    VLTM_TYPE* get_vltm() { return vltm; }
     #endif
 
     #ifdef ENABLE_ROS
@@ -348,12 +343,7 @@ private:
     visual_input_buffer_manager*    vib_manager;
     Symbol*                         vib_link;
     Symbol*                         vltm_link;
-
-    #ifdef ENABLE_TORCH
-    vae_vltm*       vltm;
-    #else
-    opencv_vltm*    vltm;
-    #endif
+    VLTM_TYPE*                      vltm;
     #endif
 
     soar_interface*           si;

@@ -219,7 +219,9 @@ bool visual_operation_node::evaluate() {
         param_type = op_metadata_.param_types[param_i];
         param_dir = op_metadata_.param_direction[param_i];
         if (parameters_[param_name] == NULL) { continue; }
-        if (param_dir == visual_ops::INPUT_ARG || param_type == visual_ops::CV_IMAGE_ARG) { continue; }
+        if (param_dir == visual_ops::INPUT_ARG ||
+           param_type == visual_ops::CV_IMAGE_ARG ||
+           param_type == visual_ops::LATENT_REP_ARG) { continue; }
 
         // si_->del_sym(param_syms_[param_name]);
         si_->remove_wme(param_wmes_[param_name]);

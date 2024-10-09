@@ -7,7 +7,11 @@
 #include "visual_concept_descriptor.h"
 #include "exact_visual_concept_descriptor.h"
 #include "image.h"
+#include "latent_representation.h"
 
+/////////////////////////////////////
+// GENERIC TEMPLATE IMPLEMENTATION //
+/////////////////////////////////////
 
 template<typename img_t>
 exact_visual_concept_descriptor<img_t>::exact_visual_concept_descriptor(std::string entity_id) {
@@ -31,6 +35,10 @@ void exact_visual_concept_descriptor<img_t>::generate(img_t* output) {
     output->copy_from(&archetype);
 }
 
+
+///////////////////////////
+// OPENCV IMPLEMENTATION //
+///////////////////////////
 
 #ifdef ENABLE_OPENCV
 template<>
@@ -69,7 +77,17 @@ void exact_visual_concept_descriptor<opencv_image>::generate(opencv_image* outpu
     output->copy_from(&archetype);
 }
 
+//////////////////////////////////////////
+// LATENT REPRESENTATION IMPLEMENTATION //
+//////////////////////////////////////////
 
+#ifdef ENABLE_TORCH
+template<>
+double exact_visual_concept_descriptor<latent_representation>::recognize(latent_representation percept) {
+    return percept.wasser_distance(&archetype);
+}
+template class exact_visual_concept_descriptor<latent_representation>;
+#endif
 #endif
 
 // Explicit instantiations of other EVCDs
@@ -77,3 +95,5 @@ template class exact_visual_concept_descriptor<basic_image>;
 #ifdef ENABLE_ROS
 template class exact_visual_archetype<pcl_image>;
 #endif
+
+

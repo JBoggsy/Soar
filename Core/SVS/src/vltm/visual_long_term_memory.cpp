@@ -245,12 +245,62 @@ void visual_long_term_memory<img_T, atype_T>::cli_generate(const std::vector<std
 #ifdef ENABLE_OPENCV
 template class visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>;
 
-
-////////////////////////
-// VAE SPECIALIZATION //
-////////////////////////
-
 #ifdef ENABLE_TORCH
+
+/////////////////////////////////
+// EXACT LATENT SPECIALIZATION //
+/////////////////////////////////
+
+template <>
+void visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.size() < 2) {
+        os << "ERROR: Must specify class name and image data." << std::endl;
+        return;
+    }
+
+    std::string vcd_id(args[0]);
+    std::string img_data(args[1]);
+    std::string decoded_data = base64_decode(img_data);
+    std::vector<uchar> data(decoded_data.begin(), decoded_data.end());
+    cv::Mat raw_img = cv::imdecode(cv::Mat(data), -1);
+    opencv_image* image = new opencv_image();
+    image->update_image(raw_img);
+
+    latent_representation* latent = new latent_representation();
+    _vae_model->encode(*(image->get_image()), latent);
+
+    store_percept(latent, vcd_id);
+}
+
+template <>
+void visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>::cli_generate(const std::vector<std::string>& args, std::ostream& os) {
+    if (args.empty()) {
+        os << "ERROR: No vcd class specified." << std::endl;
+        return;
+    }
+
+    std::string vcd_id(args[0]);
+
+    latent_representation* gened_latent = new latent_representation();
+    recall(vcd_id, gened_latent);
+
+    cv::Mat* gened_image_mat = new cv::Mat();
+    _vae_model->decode(gened_latent, *(gened_image_mat));
+    opencv_image* gened_image = new opencv_image();
+    gened_image->set_image(gened_image_mat);
+
+
+    std::vector<uchar> raw_png_data;
+    std::string b64_data;
+    cv::imencode(std::string(".png"), *(gened_image->get_image()), raw_png_data);
+    b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
+    os << b64_data << std::endl;
+}
+
+////////////////////////////
+// VAE-VCD SPECIALIZATION //
+////////////////////////////
+
 template <>
 void visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>::cli_learn(const std::vector<std::string>& args, std::ostream& os) {
     if (args.size() < 2) {
@@ -294,6 +344,7 @@ void visual_long_term_memory<latent_representation, vae_visual_concept_descripto
     os << b64_data << std::endl;
 }
 
+template class visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>;
 template class visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>;
 #endif
 #endif

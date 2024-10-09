@@ -114,7 +114,10 @@ float basic_image::compare(basic_image* other) {
 // OPENCV_IMAGE //
 //////////////////
 #ifdef ENABLE_OPENCV
-opencv_image::opencv_image() { source = "none"; }
+opencv_image::opencv_image() {
+    source = "none";
+    _img = NULL;
+}
 
 void opencv_image::set_image(cv::Mat* image) {
     if (_img == NULL) {

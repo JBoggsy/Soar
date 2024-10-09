@@ -382,11 +382,7 @@ svs::svs(agent* a)
     draw = new drawer();
 
     #ifdef ENABLE_OPENCV
-    #ifdef ENABLE_TORCH
-    vltm = new vae_vltm(this);
-    #else
-    vltm = new opencv_vltm(this);
-    #endif
+    vltm = new VLTM_TYPE(this);
     #endif
 
     #ifdef ENABLE_ROS
