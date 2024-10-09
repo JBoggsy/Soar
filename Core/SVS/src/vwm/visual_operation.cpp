@@ -482,8 +482,7 @@ namespace visual_ops
     void encode(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         latent_representation* latent = (latent_representation*)args[VOP_ARG_LATENT];
-        visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>* vltm;
-        vltm = (visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
         vltm->encode_image(image, latent);
     }
@@ -491,8 +490,7 @@ namespace visual_ops
     void decode(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         latent_representation* latent = (latent_representation*)args[VOP_ARG_LATENT];
-        visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>* vltm;
-        vltm = (visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
         vltm->decode_latent(latent, image);
     }
@@ -504,11 +502,16 @@ namespace visual_ops
 
     void recognize(data_dict args) {
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
-        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm;
-        vltm = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
         vmem_match** matches = new vmem_match*[3];
+        #ifdef ENABLE_TORCH
+        latent_representation* latent = new latent_representation();
+        vltm->encode_image(source, latent);
+        vltm->match(latent, matches, 3);
+        #else
         vltm->match(source, matches, 3);
+        #endif
 
         ((std::string*)args[VOP_ARG_CLASS1])->assign(matches[0]->entity_id);
         ((std::string*)args[VOP_ARG_CLASS2])->assign(matches[1]->entity_id);
@@ -525,18 +528,28 @@ namespace visual_ops
     void learn_from(data_dict args) {
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
         std::string class_name = *(std::string*)args[VOP_ARG_CLASSNAME];
-        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm
-            = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
+        #ifdef ENABLE_TORCH
+        latent_representation* latent = new latent_representation();
+        vltm->encode_image(source, latent);
+        vltm->store_percept(latent, class_name);
+        #else
         vltm->store_percept(source, class_name);
+        #endif
     }
 
     void generate(data_dict args) {
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
         std::string class_name = *(std::string*)args[VOP_ARG_CLASSNAME];
-        visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>* vltm
-            = (visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>*)args[VOP_ARG_VLTM];
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
+        #ifdef ENABLE_TORCH
+        latent_representation* latent = new latent_representation();
+        vltm->recall(class_name, latent);
+        vltm->decode_latent(latent, source);
+        #else
         vltm->recall(class_name, source);
+        #endif
     }
 } // namespace visual_ops

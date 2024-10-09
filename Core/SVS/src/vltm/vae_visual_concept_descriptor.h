@@ -9,6 +9,8 @@ class vae_visual_concept_descriptor : public visual_concept_descriptor <img_t> {
 protected:
     vae_vcd_model* archetype_model;
     std::string _entity_id;
+
+    img_t* _example;
 public:
     vae_visual_concept_descriptor(std::string entity_id);
     ~vae_visual_concept_descriptor();

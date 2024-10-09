@@ -5,6 +5,7 @@ template<typename img_t>
 vae_visual_concept_descriptor<img_t>::vae_visual_concept_descriptor(std::string entity_id) {
     _entity_id = entity_id;
     archetype_model = new vae_vcd_model();
+    _example = new img_t();
 }
 
 template<typename img_t>
