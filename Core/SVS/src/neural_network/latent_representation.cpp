@@ -42,7 +42,7 @@ void latent_representation::copy_from(latent_representation* other) {
 }
 
 void latent_representation::set_mu(std::vector<double>* mu) {
-    delete _mu;
+    if (_mu != NULL) delete _mu;
     _mu = new std::vector<double>(*mu);
 
     _mu_vec.resize(_mu->size());
@@ -52,7 +52,7 @@ void latent_representation::set_mu(std::vector<double>* mu) {
 }
 
 void latent_representation::set_sigma(std::vector<double>* sigma) {
-    delete _sigma;
+    if (_sigma != NULL) delete _sigma;
     _sigma = new std::vector<double>(*sigma);
 
     _sigma_vec.resize(_sigma->size());

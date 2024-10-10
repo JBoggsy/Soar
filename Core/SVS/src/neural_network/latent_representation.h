@@ -35,8 +35,15 @@ public:
     latent_representation();
     latent_representation(std::vector<double>* mu, std::vector<double>* sigma);
     ~latent_representation() {
-        delete _mu;
-        delete _sigma;
+        if (_mu != NULL) {
+            delete _mu;
+            _mu = NULL;
+        }
+
+        if (_sigma != NULL) {
+            delete _sigma;
+            _sigma = NULL;
+        }
     }
 
     void copy_from(latent_representation* other);
