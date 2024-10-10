@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <limits>
 #include <unordered_map>
 #include <exception>
 // Third-party Includes
@@ -94,7 +95,7 @@ void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match**
 template <typename img_T, template<typename T> class atype_T>
 void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match** output, int n) {
     std::list<std::pair<double, std::string>> best_matches;
-    best_matches.insert(best_matches.begin(), std::pair<double, std::string>(0.0, "NOMATCH"));
+    best_matches.insert(best_matches.begin(), std::pair<double, std::string>(-1*std::numeric_limits<double>::infinity(), "NOMATCH"));
 
     std::string current_id;
     double current_similarity;

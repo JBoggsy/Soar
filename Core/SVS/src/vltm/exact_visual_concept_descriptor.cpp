@@ -84,7 +84,7 @@ void exact_visual_concept_descriptor<opencv_image>::generate(opencv_image* outpu
 #ifdef ENABLE_TORCH
 template<>
 double exact_visual_concept_descriptor<latent_representation>::recognize(latent_representation percept) {
-    return percept.wasser_distance(&archetype);
+    return -1 * percept.wasser_distance(&archetype);
 }
 template class exact_visual_concept_descriptor<latent_representation>;
 #endif
