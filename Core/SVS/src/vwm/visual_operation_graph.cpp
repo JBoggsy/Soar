@@ -234,7 +234,6 @@ bool visual_operation_node::evaluate() {
             case visual_ops::DOUBLE_ARG:
                 param_val_dbl = *(double*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_dbl);
-                printf("Param %s: %f\n", param_name.c_str(), param_val_dbl);
                 break;
             case visual_ops::STRING_ARG:
                 param_val_str = *(std::string*)parameters_[param_name];

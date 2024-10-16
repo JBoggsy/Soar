@@ -129,7 +129,7 @@ void visual_long_term_memory<img_T, atype_T>::match(img_T* percept, vmem_match**
         match = best_matches.front();
         match_confidence = match.first;
         match_id = match.second;
-        printf("Match %d: %s (%f)\n", i, match_id.c_str(), match_confidence);
+        // printf("Match %d: %s (%f)\n", i, match_id.c_str(), match_confidence);
         vmatch = new vmem_match(match_id, match_confidence);
         output[i] = vmatch;
         best_matches.pop_front();

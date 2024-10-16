@@ -517,11 +517,11 @@ namespace visual_ops
         ((std::string*)args[VOP_ARG_CLASS2])->assign(matches[1]->entity_id);
         ((std::string*)args[VOP_ARG_CLASS3])->assign(matches[2]->entity_id);
 
-        printf("Conf1: %f\n", matches[0]->confidence);
+        // printf("Conf1: %f\n", matches[0]->confidence);
         *((double*)args[VOP_ARG_CONF1]) = matches[0]->confidence;
         *((double*)args[VOP_ARG_CONF2]) = matches[1]->confidence;
         *((double*)args[VOP_ARG_CONF3]) = matches[2]->confidence;
-        printf("Arg Conf1: %f\n", *((double*)args[VOP_ARG_CONF1]));
+        // printf("Arg Conf1: %f\n", *((double*)args[VOP_ARG_CONF1]));
 
     }
 
