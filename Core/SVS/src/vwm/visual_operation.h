@@ -165,7 +165,7 @@ namespace visual_ops
      *        `int size-y`: Blurring kernel size along the y dimension
      *        `int anchor-x`: Anchor point x coordinate; default value of-1 means that the anchor is at the kernel's center
      *        `int anchor-y`: Anchor point y coordinate; default value of-1 means that the anchor is at the kernel's center
-     *        `int borderType`: Border mode used to extrapolate pixels outside of the image
+     *        `int borderType`: Border mode used to extrapolate pixels outside of the image, has a default value of cv::BORDER_DEFAULT
      *        `opencv_image* source`: The image to blur
      */
     void blur(data_dict args);
@@ -173,7 +173,7 @@ namespace visual_ops
     /**
      * @brief Blur the single source image using a Gaussian filter.
      *
-     * @note ksize-x and ksize-yt can differ but they both must be positive and odd. Alternatively, they can be zeroes and
+     * @note ksize-x and ksize-y can differ but they both must be positive and odd. Alternatively, they can be zeroes and
      *       then they are computed from sigma.
      * @param args
      *        `int ksize-x`: Gaussian kernel width
@@ -197,7 +197,13 @@ namespace visual_ops
      * @param args
      *        `double thresh`: The threshold value.
      *        `double maxval`: maximum value to use with the THRESH_BINARY and THRESH_BINARY_INV thresholding types.
-     *        `int type`: The thresholding type.
+     *        `int type`: The thresholding type. One of:
+     *           - cv::THRESH_BINARY = 0
+     *           - cv::THRESH_BINARY_INV = 1
+     *           - cv::THRESH_TRUNC = 2
+     *           - cv::THRESH_TOZERO = 3
+     *           - cv::THRESH_TOZERO_INV = 4
+     *           - cv::THRESH_MASK = 7
      *        `opencv_image* source`: The image to greyscale
      */
     void threshold(data_dict args);
