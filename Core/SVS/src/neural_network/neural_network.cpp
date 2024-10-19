@@ -1,3 +1,4 @@
+#ifdef ENABLE_TORCH
 // third-party includes
 #include <opencv2/opencv.hpp>
 // local includes
@@ -119,3 +120,5 @@ void vae_vcd_model::decode(latent_representation* latent, latent_representation*
 {
     module->decode(latent, output);
 }
+
+#endif

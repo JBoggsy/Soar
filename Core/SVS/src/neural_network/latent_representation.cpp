@@ -1,3 +1,4 @@
+#ifdef ENABLE_TORCH
 #include <random>
 #include <math.h>
 #include <stdio.h>
@@ -91,3 +92,4 @@ void latent_representation::print_latent() {
         printf("  %f (%f)\n", _mu->at(i), _sigma->at(i));
     }
 }
+#endif

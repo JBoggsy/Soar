@@ -1,3 +1,4 @@
+#ifdef ENABLE_TORCH
 #pragma once
 // SVS includes
 #include "visual_concept_descriptor.h"
@@ -20,3 +21,4 @@ public:
     double recognize(img_t percept) override;
     void generate(img_t* output) override;
 };
+#endif

@@ -139,9 +139,11 @@ bool add_vop_node_command::update_sub() {
                     case visual_ops::CV_IMAGE_ARG:
                         node_data_dict[param_name] = new opencv_image();
                         break;
+                    #ifdef ENABLE_TORCH
                     case visual_ops::LATENT_REP_ARG:
                         node_data_dict[param_name] = new latent_representation();
                         break;
+                    #endif
                 }
             } else {
                 node_data_dict[param_name] = NULL;

@@ -1,3 +1,4 @@
+#ifdef ENABLE_TORCH
 #include "torch_module_wrapper.h"
 #include <cstdio>
 
@@ -187,3 +188,4 @@ void vae_vcd_model_wrapper::decode(latent_representation* latent, latent_represe
     at::Tensor sigma_tensor = latent_tensors[1].toTensor();
     tensors_to_latent_dist(mu_tensor, sigma_tensor, output);
 }
+#endif

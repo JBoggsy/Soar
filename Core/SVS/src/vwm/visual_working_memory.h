@@ -142,6 +142,7 @@ public:
     opencv_image* get_node_image(int node_id);
     opencv_image* get_node_image(int node_id, std::string param_name);
 
+    #ifdef ENABLE_TORCH
     /**
      * @brief Gets a latent representation from the VOp node with the given ID.
      *
@@ -156,6 +157,7 @@ public:
      *        node, or NULL if such a node doesn't exist or cannot be evaluated.
      */
     latent_representation* get_node_latent_rep(int node_id, std::string param_name);
+    #endif
 
     /**
      * @brief Generate a DOT language representation of the visual operations graph.

@@ -1,4 +1,5 @@
 #pragma once
+#ifdef ENABLE_TORCH
 // standard includes
 #include <string>
 // third-party includes
@@ -131,3 +132,4 @@ public:
     void encode(latent_representation* input, latent_representation* latent);
     void decode(latent_representation* latent, latent_representation* output);
 };
+#endif

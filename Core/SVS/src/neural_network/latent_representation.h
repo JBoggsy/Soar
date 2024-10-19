@@ -1,4 +1,5 @@
 #pragma once
+#ifdef ENABLE_TORCH
 // c++ includes
 #include <vector>
 // SVS includes
@@ -50,3 +51,4 @@ public:
     void print_latent();
 
 };
+#endif

@@ -198,9 +198,15 @@ bool visual_operation_node::evaluate() {
                 parameters_[parent_param_name] = parent_image;
                 break;
             case visual_ops::LATENT_REP_ARG:
+                #ifdef ENABLE_TORCH
                 latent_representation* parent_latent_rep;
                 parent_latent_rep = vwm_->get_node_latent_rep(parent_node_id, parent_param_name);
                 parameters_[parent_param_name] = parent_latent_rep;
+                #else
+                opencv_image* latent_image;
+                latent_image = vwm_->get_node_image(parent_node_id, parent_param_name);
+                parameters_[parent_param_name] = latent_image;
+                #endif
                 break;
         }
         if (parameters_[parent_param_name] == NULL) { printf("ERROR: Node %d not found\n", parent_node_id); }
@@ -259,9 +265,11 @@ opencv_image* visual_operation_node::get_node_image(std::string param_name) {
     return (opencv_image*)parameters_[param_name];
 }
 
+#ifdef ENABLE_TORCH
 latent_representation* visual_operation_node::get_node_latent_rep(std::string param_name) {
     return (latent_representation*)parameters_[param_name];
 }
+#endif
 
 std::string visual_operation_node::get_dot_string() {
     std::string ret_str = std::string();

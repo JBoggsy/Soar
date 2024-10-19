@@ -1,3 +1,4 @@
+#ifdef ENABLE_TORCH
 #include "vae_visual_concept_descriptor.h"
 
 
@@ -42,3 +43,4 @@ void vae_visual_concept_descriptor<latent_representation>::generate(latent_repre
 }
 
 template class vae_visual_concept_descriptor<latent_representation>;
+#endif

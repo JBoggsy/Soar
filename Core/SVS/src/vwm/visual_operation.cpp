@@ -494,6 +494,22 @@ namespace visual_ops
 
         vltm->decode_latent(latent, image);
     }
+    #else
+    void encode(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        opencv_image* latent = (opencv_image*)args[VOP_ARG_LATENT];
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
+
+        latent->update_image(*image->get_image());
+    }
+
+    void decode(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        opencv_image* latent = (opencv_image*)args[VOP_ARG_LATENT];
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
+
+        image->update_image(*latent->get_image());
+    }
     #endif
 
     ///////////////////////////

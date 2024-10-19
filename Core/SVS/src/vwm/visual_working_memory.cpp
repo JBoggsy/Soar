@@ -164,6 +164,7 @@ opencv_image* visual_working_memory::get_node_image(int node_id, std::string par
     }
 }
 
+#ifdef ENABLE_TORCH
 latent_representation* visual_working_memory::get_node_latent_rep(int node_id, std::string param_name) {
     if (node_id == -1) { return new latent_representation(); }
     visual_operation_node* target_node = get_node(node_id);
@@ -173,6 +174,7 @@ latent_representation* visual_working_memory::get_node_latent_rep(int node_id, s
         return target_node->get_node_latent_rep(param_name);
     }
 }
+#endif
 
 int visual_working_memory::assign_new_node_id() {
     return next_vop_node_id++;
