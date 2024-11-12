@@ -16,6 +16,7 @@ public:
     vae_visual_concept_descriptor(std::string entity_id);
     ~vae_visual_concept_descriptor();
     void load_archetype_model(std::string traced_script_path);
+    void get_id(std::string& result) { result.assign(_entity_id); }
 
     void store_percept(img_t example) override;
     double recognize(img_t percept) override;

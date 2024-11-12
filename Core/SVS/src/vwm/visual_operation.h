@@ -596,8 +596,8 @@ namespace visual_ops
         /* num_params = */          6,
         /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_ANCHORX, VOP_ARG_ANCHORY, VOP_ARG_BORDERTYPE, VOP_ARG_SOURCE},
         /* param_types = */         {INT_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, CV_IMAGE_ARG},
-        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, OPTIONAL_ARG, OPTIONAL_ARG, OPTIONAL_ARG, REQUIRED_ARG}
     };
 
     // GAUSSIAN BLUR
