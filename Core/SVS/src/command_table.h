@@ -1,3 +1,10 @@
+/**
+ * NOTE TO THE FUTURE
+ * ------------------
+ * See the note in `command_table.cpp` for an overview of how agent SVS commands
+ * via the ^svs.command link work and how to create new ones.
+ */
+
 #ifndef COMMAND_TABLE_H
 #define COMMAND_TABLE_H
 
@@ -18,11 +25,11 @@ class command_table_entry : public cliproxy
     public:
         command_table_entry();
         command* (*create)(svs_state*, Symbol*);
-        
+
         std::string name;
         std::string description;
         std::map<std::string, std::string> parameters;
-        
+
         void proxy_use_sub(const std::vector<std::string>& args, std::ostream& os);
 };
 
@@ -34,9 +41,9 @@ class command_table : public cliproxy
 {
     public:
         command_table();
-        
+
         command* make_command(svs_state* state, wme* w);
-        
+
     private:
         void add(command_table_entry* e);
         void proxy_get_children(std::map<std::string, cliproxy*>& c);

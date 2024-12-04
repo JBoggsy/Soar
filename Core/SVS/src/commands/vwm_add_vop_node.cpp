@@ -1,9 +1,16 @@
+/**
+ * add_vop_node_command
+ *
+ * Soar command to add a visual operation node to the visual operation graph.
+ * Parameters:
+ *     ^op-type <string> - the type of visual operation to add
+ *     various other parameters depending on the type of visual operation
+ *
+ * See `visual_operation.h` for more information on the visual operations,
+ * including which operations are available and what parameters they take.
+ */
+
 #ifdef ENABLE_OPENCV
-
-// C++ standard library
-
-// Soar kernal
-
 // SVS includes
 #include "svs.h"
 #include "command.h"
@@ -34,7 +41,6 @@ public:
 /////////////////
 // DEFINITIONS //
 /////////////////
-
 add_vop_node_command::add_vop_node_command(svs_state* state, Symbol* root)
     : command(state, root), state(state), root(root) {
     si = state->get_svs()->get_soar_interface();
