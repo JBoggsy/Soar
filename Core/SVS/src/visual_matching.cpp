@@ -15,7 +15,7 @@ double visual_matching::opencv::ssim_compare(opencv_image* a, opencv_image* b) {
     cv::Mat I1, I2;
     a->get_image()->convertTo(I1, d);            // cannot calculate on one byte large values
     b->get_image()->convertTo(I2, d);
-    
+
     // Ensure I1 and I2 are the same size by padding with 0s
     int max_height = cv::max(I1.size[0], I2.size[0]);
     int max_width = cv::max(I1.size[1], I2.size[1]);

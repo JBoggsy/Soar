@@ -10,11 +10,13 @@
 #include "svs_interface.h"
 #include "cliproxy.h"
 #include "forward.h"
+
 #ifdef ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include "visual_working_memory.h"
 #include "visual_long_term_memory.h"
 #endif
+
 #ifdef ENABLE_ROS
 #include <boost/thread.hpp>
 #include "ros_interface.h"
@@ -25,19 +27,21 @@ class command;
 class scene;
 class drawer;
 class image_descriptor;
+class basic_image;
 
 #ifdef ENABLE_ROS
 class pcl_image;
 #endif
+
 #ifdef ENABLE_OPENCV
 class opencv_image;
+#endif
+
 #ifdef ENABLE_TORCH
 class latent_representation;
 template<typename img_t>
 class vae_visual_concept_descriptor;
 #endif
-#endif
-class basic_image;
 
 template<typename img_t>
 class exact_visual_concept_descriptor;

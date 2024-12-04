@@ -128,7 +128,7 @@ command_table_entry* delete_tag_command_entry();
 /////////////////////////////////
 command_table_entry* add_vop_node_command_entry();
 command_table_entry* edit_vop_node_command_entry();
-
+command_table_entry* learn_percept_command_entry();
 
 ////////////////////////
 // COMMAND TABLE INIT //
@@ -151,6 +151,7 @@ command_table::command_table()
     // Visual Working Memory
     add(add_vop_node_command_entry());
     add(edit_vop_node_command_entry());
+    add(learn_percept_command_entry());
 }
 
 command* command_table::make_command(svs_state* state, wme* w)
