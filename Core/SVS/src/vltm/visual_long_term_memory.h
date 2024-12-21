@@ -121,6 +121,14 @@ public:
      * @param output The opencv_image to write the result into.
      */
     void decode_latent(latent_representation* latent, opencv_image* output);
+
+    /**
+     * @brief Load a VCD model from a given filepath.
+     * 
+     * @param vcd_id The string identifier of the VCD to load the model into.
+     * @param model_filepath The path to the model file to load.
+     */
+    void load_vae_vcd_model(std::string vcd_id, std::string model_filepath);
     #endif
     #endif
 
@@ -226,6 +234,12 @@ public:
      * @brief Load a traced PyTorch script into the VAE model.
      */
     void cli_load_vae(const std::vector<std::string>& args, std::ostream& os);
+
+    /**
+     * @brief Given a class name and a filepath to a torch model, create a vae
+     * vcd with the given class name and load the model from the given filepath.
+     */
+    void cli_load_vae_vcd_model(const std::vector<std::string>& args, std::ostream& os);
     #endif
 
     /**
@@ -246,7 +260,8 @@ public:
 
 #ifdef ENABLE_OPENCV
 #ifdef ENABLE_TORCH
-    #define VLTM_TYPE visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>
+    // #define VLTM_TYPE visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>
+    #define VLTM_TYPE visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>
 #else
     #define VLTM_TYPE visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>
 #endif

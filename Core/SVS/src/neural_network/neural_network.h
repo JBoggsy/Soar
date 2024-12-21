@@ -79,7 +79,16 @@ public:
     ~vae_vcd_model();
     void load_traced_script(std::string traced_script_path);
 
+    /**
+     * @brief "Encodes" a single-element probability latent into a latent
+     * representation in the base VAE's latent space. Used for generation.
+     */
     void encode(latent_representation* input, latent_representation* latent);
+
+    /**
+     * @brief "Decodes" a latent representation in the base VAE's latent space
+     * into a single-element probability latent. Used for recognition.
+     */
     void decode(latent_representation* latent, latent_representation* output);
     bool get_module_loaded() { return module_loaded; }
 };

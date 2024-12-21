@@ -8,6 +8,7 @@
 #include "exact_visual_concept_descriptor.h"
 #include "image.h"
 #include "latent_representation.h"
+#include "visual_matching.h"
 
 /////////////////////////////////////
 // GENERIC TEMPLATE IMPLEMENTATION //
@@ -60,16 +61,19 @@ double exact_visual_concept_descriptor<opencv_image>::recognize(opencv_image per
     cv::Mat result;
     result.create(result_rows, result_cols, CV_32FC1);
 
-    cv::matchTemplate(*(percept.get_image()), *(archetype.get_image()), result, cv::TM_CCOEFF);
+    // cv::matchTemplate(*(percept.get_image()), *(archetype.get_image()), result, cv::TM_CCOEFF);
+    // double min, max;
+    // cv::Point minloc;
+    // cv::Point maxloc;
+    // cv::minMaxLoc(result, &min, &max, &minloc, &maxloc);
+    
+    double score = visual_matching::opencv::simple_template_compare(&percept, &archetype);
+    // double score = visual_matching::opencv::ssim_compare(&percept, &archetype);
+    // double score = visual_matching::opencv::psnr_compare(&percept, &archetype);
+
     // cv::imwrite("/home/boggsj/Coding/research/svs_experiments/recognize_test.png", result);
 
-    double min, max;
-    cv::Point minloc;
-    cv::Point maxloc;
-
-    cv::minMaxLoc(result, &min, &max, &minloc, &maxloc);
-
-    return max;
+    return score;
 }
 
 template<>
