@@ -101,6 +101,8 @@ bool learn_percept_command::update_sub() {
     vltm->store_percept(percept, name);
     #endif
 
+    set_status("success");
+
     return true;
 }
 

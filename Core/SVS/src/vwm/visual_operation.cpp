@@ -15,9 +15,9 @@
 
 namespace visual_ops
 {
-    ///////////////////
-    // IMAGE SOURCES //
-    ///////////////////
+    ///////////////////////////
+    // SECTION IMAGE SOURCES //
+    ///////////////////////////
 
     void get_from_vib(data_dict args) {
         std::string vib_id;
@@ -72,11 +72,12 @@ namespace visual_ops
         cv::imshow(window_name, image);
         cv::waitKey(1);
     }
+    //!SECTION VISUAL INPUTS/OUTPUTS
 
 
-    ////////////////////////////
-    // VISUAL TRANSFORMATIONS //
-    ////////////////////////////
+    ////////////////////////////////////
+    // SECTION VISUAL TRANSFORMATIONS //
+    ////////////////////////////////////
 
     void identity(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
@@ -184,10 +185,11 @@ namespace visual_ops
         cv::warpAffine(*(image->get_image()), result, rot_mat, image->get_image()->size());
         image->set_image(&result);
     }
+    //!SECTION
 
-    /////////////////////
-    // MATRIX CREATION //
-    /////////////////////
+    //////////////////////////////
+    // SECTION  MATRIX CREATION //
+    //////////////////////////////
 
     void create_int_filled_mat(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
@@ -231,6 +233,7 @@ namespace visual_ops
         });
         image->set_image(&new_mat);
     }
+    //!SECTION MATRIX CREATION
 
     //////////////////////
     // MATRIX ACCESSING //

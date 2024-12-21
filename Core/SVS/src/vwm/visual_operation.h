@@ -18,37 +18,50 @@ class opencv_image;
 typedef std::map<std::string, void*> data_dict;
 
 // Define operation names as strings
+// INPUTS & OUTPUTS
 #define VOP_GET_FROM_VIB            std::string("get-from-vib")
 #define VOP_LOAD_FROM_FILE          std::string("load-from-file")
 #define VOP_SAVE_TO_FILE            std::string("save-to-file")
-#define VOP_BLUR                    std::string("blur")
 #define VOP_DISPLAY_IMAGE           std::string("display-image")
+// TRANSFORMATIONS
 #define VOP_IDENTITY                std::string("identity")
+#define VOP_BLUR                    std::string("blur")
 #define VOP_GAUSSIANBLUR            std::string("gaussian-blur")
 #define VOP_GREYSCALE               std::string("greyscale")
 #define VOP_THRESHOLD               std::string("threshold")
-#define VOP_ROTATE_IMAGE            std::string("rotate-image")
 #define VOP_FLIP_IMAGE              std::string("flip-image")
+#define VOP_ROTATE_IMAGE            std::string("rotate-image")
+// CLASSIC FEATURE DETECTION
+#define VOP_CANNY                   std::string("canny")
+#define VOP_HOUGH_LINES             std::string("hough-lines")
+#define VOP_HOUGH_CIRCLES           std::string("hough-circles")
+#define VOP_CONTOURS                std::string("contours")
+// MATRIX CREATION
 #define VOP_CREATE_INT_FILLED_MAT   std::string("create-int-filled-mat")
 #define VOP_CREATE_FLOAT_FILLED_MAT std::string("create-float-filled-mat")
 #define VOP_CREATE_X_COORD_MAT      std::string("create-x-coord-mat")
 #define VOP_CREATE_Y_COORD_MAT      std::string("create-y-coord-mat")
+// MATRIX MODIFICATION
 #define VOP_EXTRACT_CHANNEL         std::string("extract-channel")
 #define VOP_EXTRACT_CHANNELS        std::string("extract-channels")
 #define VOP_STACK_MATRICES          std::string("stack-matrices")
+// MATHEMATICAL PRIMITIVES
 #define VOP_ADD_MATS                std::string("add-mats")
 #define VOP_SUB_MATS                std::string("sub-mats")
 #define VOP_MUL_MATS                std::string("mul-mats")
 #define VOP_DIV_MATS                std::string("div-mats")
 #define VOP_APPLY_UNARY_OP          std::string("apply-unary-op")
+// OBJECT DETECTION
 #define VOP_MATCH_TEMPLATE          std::string("match-template")
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
+// ENCODING AND DECODING
+#define VOP_ENCODE                  std::string("encode")
+#define VOP_DECODE                  std::string("decode")
+// VLTM-BASED OPERATIONS
 #define VOP_RECOGNIZE               std::string("recognize")
 #define VOP_LEARN_FROM              std::string("learn-from")
 #define VOP_GENERATE                std::string("generate")
-#define VOP_ENCODE                  std::string("encode")
-#define VOP_DECODE                  std::string("decode")
 
 // Define argument names as strings
 #define VOP_ARG_A           std::string("a")
@@ -107,11 +120,12 @@ typedef std::map<std::string, void*> data_dict;
  */
 namespace visual_ops
 {
-    ///////////////////////////
-    // VISUAL INPUTS/OUTPUTS //
-    ///////////////////////////
+    //////////////////////////////////
+    // SECTION VISUAL INPUTS/OUTPUTS //
+    ///////////////////////////////////
 
     /**
+     * ANCHOR get_from_vib
      * @brief Pull an image from a visual input buffer. The root node always has
      *        this operation.
      * @param args
@@ -123,6 +137,7 @@ namespace visual_ops
     void get_from_vib(data_dict args);
 
     /**
+     * ANCHOR load_from_file
      * @brief Load an image from a file
      * @param args
      *        `std::string filepath`: The absolute path to the source file
@@ -131,6 +146,7 @@ namespace visual_ops
     void load_from_file(data_dict args);
 
     /**
+     * ANCHOR save_to_file
      * @brief Save an image to a file
      * @param args
      *        `std::string filepath`: The absolute path to save location
@@ -139,19 +155,22 @@ namespace visual_ops
     void save_to_file(data_dict args);
 
     /**
+     * ANCHOR display_image
      * @brief Display the source image, opening a new window if needed.
      * @param args
      *        `std::string windowName`: The name to give the display window
      *        `opencv_image* source`: The image to display
      */
     void display_image(data_dict args);
+    //!SECTION VISUAL INPUTS/OUTPUTS
 
 
-    ////////////////////////////
-    // VISUAL TRANSFORMATIONS //
-    ////////////////////////////
+    ////////////////////////////////////
+    // SECTION VISUAL TRANSFORMATIONS //
+    ////////////////////////////////////
 
     /**
+     * ANCHOR identity
      * @brief Returns the input image without changes, used to add a no-op node.
      * @param args
      *        `opencv_image* source`: Image to do nothing with
@@ -159,6 +178,7 @@ namespace visual_ops
     void identity(data_dict args);
 
     /**
+     * ANCHOR blur
      * @brief Blur the single source image
      * @param args
      *        `int size-x`: Blurring kernel size along the x dimension
@@ -171,6 +191,7 @@ namespace visual_ops
     void blur(data_dict args);
 
     /**
+     * ANCHOR gaussian_blur
      * @brief Blur the single source image using a Gaussian filter.
      *
      * @note ksize-x and ksize-y can differ but they both must be positive and odd. Alternatively, they can be zeroes and
@@ -179,13 +200,14 @@ namespace visual_ops
      *        `int ksize-x`: Gaussian kernel width
      *        `int ksize-y`: Gaussian kernel height
      *        `double sigmaX`: Gaussian kernel standard deviation in X direction.
-     *        `double sigmaY`: Gaussian kernel standard deviation in Y direction; if sigmaY is zero, it is set to be equal to sigmaX, if both sigmas are zeros, they are computed from ksize.width and ksize.height, respectively (see getGaussianKernel for details); to fully control the result regardless of possible future modifications of all this semantics, it is recommended to specify all of ksize, sigmaX, and sigmaY.
+     *        `double sigmaY`: Gaussian kernel standard deviation in Y direction; if sigmaY is zero, it is set to be equal  to sigmaX, if both sigmas are zeros, they are computed from ksize.width and ksize.height, respectively (see getGaussianKernel for details); to fully control the result regardless of possible future modifications of all this semantics, it is recommended to specify all of ksize, sigmaX, and sigmaY.
      *        `int borderType`: Border mode used to extrapolate pixels outside of the image
      *        `opencv_image* source`: The image to blur
      */
     void gaussian_blur(data_dict args);
 
     /**
+     * ANCHOR greyscale
      * @brief Converts the source image into greyscale.
      * @param args
      *        `opencv_image* source`: The image to convert to greyscale
@@ -193,6 +215,7 @@ namespace visual_ops
     void greyscale(data_dict args);
 
     /**
+     * ANCHOR threshold
      * @brief Binarize a grayscale image according to a threshold
      * @param args
      *        `double thresh`: The threshold value.
@@ -209,6 +232,7 @@ namespace visual_ops
     void threshold(data_dict args);
 
     /**
+     * ANCHOR flip_image
      * @brief Flip the image across the x or y axis, or both.
      *
      * @param args
@@ -218,6 +242,7 @@ namespace visual_ops
     void flip_image(data_dict args);
 
     /**
+     * ANCHOR rotate_image
      * @brief Rotate the image by the given amount, in degrees.
      *
      * @param args
@@ -225,13 +250,14 @@ namespace visual_ops
      *        rotate. Positive values mean counter-clockwise rotation.
      */
     void rotate_image(data_dict args);
+    //!SECTION VISUAL TRANSFORMATIONS
 
-
-    /////////////////////
-    // MATRIX CREATION //
-    /////////////////////
+    /////////////////////////////
+    // SECTION MATRIX CREATION //
+    /////////////////////////////
 
     /**
+     * ANCHOR create_int_filled_mat
      * @brief Create a matrix of the given size filled with the given value.
      *
      * @param args
@@ -243,6 +269,7 @@ namespace visual_ops
     void create_int_filled_mat(data_dict args);
 
     /**
+     * ANCHOR create_float_filled_mat
      * @brief Create a matrix of the given size filled with the given value.
      *
      * @param args
@@ -254,6 +281,7 @@ namespace visual_ops
     void create_float_filled_mat(data_dict args);
 
     /**
+     * ANCHOR create_x_coord_mat
      * @brief Create a matrix of the given size where the value of a each cell is its x coordinate.
      *
      * @param args
@@ -264,6 +292,7 @@ namespace visual_ops
     void create_x_coord_mat(data_dict args);
 
     /**
+     * ANCHOR create_y_coord_mat
      * @brief Create a matrix of the given size where the value of a each cell is its y coordinate.
      *
      * @param args
@@ -272,13 +301,15 @@ namespace visual_ops
      *      `opencv_image* source`: Filled matrix
      */
     void create_y_coord_mat(data_dict args);
+    //!SECTION MATRIX CREATION
 
 
-    ////////////////////////
-    // MATRIX MODIFICTION //
-    ////////////////////////
+    ////////////////////////////////
+    // SECTION MATRIX MODIFICTION //
+    ////////////////////////////////
 
     /**
+     * ANCHOR stack_matrices
      * @brief Combine two matrices by stacking them channel-wise.
      *
      * @details This is essentially the cv::merge method, but slightly more limited. It allows the
@@ -294,6 +325,7 @@ namespace visual_ops
     void stack_matrices(data_dict args);
 
     /**
+     * ANCHOR extract_channel
      * @brief Extract a single channel from the source image into a new matrix.
      *
      * @param args
@@ -303,6 +335,7 @@ namespace visual_ops
     void extract_channel(data_dict args);
 
     /**
+     * ANCHOR extract_channels
      * @brief Extract one or more sequential channels from the source image into a new matrix.
      *
      * @param args
@@ -311,13 +344,15 @@ namespace visual_ops
      *      `opencv_image* source`: The image to extract channels from
      */
     void extract_channels(data_dict args);
+    //!SECTION MATRIX MODIFICTION
 
 
-    /////////////////////////////
-    // MATHEMATICAL PRIMITIVES //
-    /////////////////////////////
+    /////////////////////////////////////
+    // SECTION MATHEMATICAL PRIMITIVES //
+    /////////////////////////////////////
 
     /**
+     * ANCHOR add_mats
      * @brief Add two matrices together element-wise as `c[x,y] = a[x,y]+b[x,y]`.
      *
      * @param args
@@ -328,6 +363,7 @@ namespace visual_ops
     void add_mats(data_dict args);
 
     /**
+     * ANCHOR sub_mats
      * @brief Subtract matrix `a` from matrix `b` element-wise as `c[x,y] = a[x,y]-b[x,y]`.
      *
      * @param args
@@ -338,6 +374,7 @@ namespace visual_ops
     void sub_mats(data_dict args);
 
     /**
+     * ANCHOR mul_mats
      * @brief Multiply matrix `a` by matrix `b` element-wise as `c[x,y] = a[x,y]*b[x,y]`.
      *
      * @param args
@@ -348,6 +385,7 @@ namespace visual_ops
     void mul_mats(data_dict args);
 
     /**
+     * ANCHOR div_mats
      * @brief Divide matrix `a` by matrix `b` element-wise as `c[x,y] = a[x,y]/b[x,y]`.
      *
      * @param args
@@ -358,6 +396,7 @@ namespace visual_ops
     void div_mats(data_dict args);
 
     /**
+     * ANCHOR apply_unary_op
      * @brief Apply the specifid unary operation elementwise across the source.
      *
      * @note Presently only applicable to single-channel arrays.
@@ -370,13 +409,15 @@ namespace visual_ops
      *          "sin"
      */
     void apply_unary_op(data_dict args);
+    //!SECTION MATHEMATICAL PRIMITIVES
 
 
-    //////////////////////
-    // OBJECT DETECTION //
-    //////////////////////
+    //////////////////////////////
+    // SECTION OBJECT DETECTION //
+    //////////////////////////////
 
     /**
+     * ANCHOR match_template
      * @brief Match a template image and return a new, single-channel image of
      *        comparison results. The returned image will be a single-channel
      *        32-bit floating-point image. If the source image is W×H and template
@@ -389,6 +430,7 @@ namespace visual_ops
     void match_template(data_dict args);
 
     /**
+     * ANCHOR crop_to_ROI
      * @brief Crop the source image to the specified rectangle.
      * @param args
      *        `int x`: x-coord of the top-left corner of the rectangle
@@ -400,6 +442,7 @@ namespace visual_ops
     void crop_to_ROI(data_dict args);
 
     /**
+     * ANCHOR min_max_loc
      * @brief Finds the global minimum and maximum in an array.
      * @param args Map of arguments to method:
      *
@@ -423,12 +466,14 @@ namespace visual_ops
      *   of
      */
     void min_max_loc(data_dict args);
+    //!SECTION OBJECT DETECTION
 
-    ///////////////////////////
-    // ENCODING AND DECODING //
-    ///////////////////////////
+    ///////////////////////////////////
+    // SECTION ENCODING AND DECODING //
+    ///////////////////////////////////
 
     /**
+     * ANCHOR encode
      * @brief Encode the source image into a latent representation.
      *
      * @param args
@@ -438,6 +483,7 @@ namespace visual_ops
     void encode(data_dict args);
 
     /**
+     * ANCHOR decode
      * @brief Decode a latent representation into an image.
      *
      * @param args
@@ -445,13 +491,15 @@ namespace visual_ops
      *      `latent_representation* latent`: The latent representation to decode.
      */
     void decode(data_dict args);
+    //!SECTION ENCODING AND DECODING
 
 
-    ///////////////////////////
-    // VLTM-BASED OPERATIONS //
-    ///////////////////////////
+    ///////////////////////////////////
+    // SECTION VLTM-BASED OPERATIONS //
+    ///////////////////////////////////
 
     /**
+     * ANCHOR recognize
      * @brief Query VLTM with the source image in order to get a class label and
      * confidence value.
      *
@@ -477,6 +525,7 @@ namespace visual_ops
     void recognize(data_dict args);
 
     /**
+     * ANCHOR learn_from
      * @brief Use a source image to update the VCD with the specified class
      * label.
      *
@@ -491,6 +540,7 @@ namespace visual_ops
     void learn_from(data_dict args);
 
     /**
+     * ANCHOR generate
      * @brief Generate an image of the designated class.
      *
      * @param args
@@ -499,8 +549,11 @@ namespace visual_ops
      *   generated.
      */
     void generate(data_dict args);
+    //!SECTION VLTM-BASED OPERATIONS
+
 
     ////////////////////////////////////////////////////////////
+    // SECTION VOP METADATA AND LUT                           //
     // DEFINE METADATA AND LOOKUP TABLE FOR VISUAL OPERATIONS //
     ////////////////////////////////////////////////////////////
 
