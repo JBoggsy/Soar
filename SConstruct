@@ -264,7 +264,7 @@ if compiler == 'g++':
         cflags.append('-DNO_SVS')
     if GetOption('useopencv'):
         cflags.append('-DENABLE_OPENCV')
-        libs += ['opencv_core', 'opencv_imgproc', 'opencv_highgui', 'opencv_imgcodecs']
+        libs += ['opencv_core', 'opencv_imgproc', 'opencv_highgui', 'opencv_imgcodecs', 'opencv_ximgproc']
     if GetOption('useros'):
         cflags.append('-DENABLE_ROS')
         libs += ['roscpp', 'libpcl_common']

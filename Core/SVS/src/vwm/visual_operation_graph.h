@@ -11,6 +11,10 @@
 #include "visual_operation.h"
 #include "image.h"
 #include "latent_representation.h"
+#include "object_representation.h"
+#define OBJ_REP_TYPE hand_crafted_object_representation
+
+
 class visual_working_memory;
 
 
@@ -28,6 +32,7 @@ private:
 
     visual_working_memory* vwm_;
     opencv_image* node_image_;
+    std::vector<OBJ_REP_TYPE*> object_reps_;
 
     soar_interface* si_;
     Symbol* node_link_;
@@ -62,6 +67,7 @@ public:
     bool evaluate();
     opencv_image* get_node_image();
     opencv_image* get_node_image(std::string param_name);
+    object_representation* get_node_object_rep(int obj_index);
     #ifdef ENABLE_TORCH
     latent_representation* get_node_latent_rep(std::string param_name);
     #endif

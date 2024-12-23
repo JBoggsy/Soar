@@ -94,16 +94,16 @@ namespace visual_ops
         cv::Size ksize(size_x, size_y);
 
         cv::Point anchor;
-        if (args[VOP_ARG_ANCHORX] != NULL) {
-            anchor.x = -1;
-        } else {
+        if (args[VOP_ARG_ANCHORX] = NULL) {
             anchor.x = *(int*)args[VOP_ARG_ANCHORX];
+        } else {
+            anchor.x = -1;
         }
 
         if (args[VOP_ARG_ANCHORY] != NULL) {
-            anchor.y = -1;
-        } else {
             anchor.y = *(int*)args[VOP_ARG_ANCHORY];
+        } else {
+            anchor.y = -1;
         }
 
         int borderType;

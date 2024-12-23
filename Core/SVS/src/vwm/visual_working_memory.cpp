@@ -153,6 +153,7 @@ visual_operation_node* visual_working_memory::get_node(int node_id) {
     return vop_nodes.at(node_id);
 }
 
+// TODO: `get_node_image` and `get_node_latent_rep` are likely memory leaks
 opencv_image* visual_working_memory::get_node_image(int node_id) { return get_node_image(node_id, std::string("source")); }
 opencv_image* visual_working_memory::get_node_image(int node_id, std::string param_name) {
     if (node_id == -1) { return new opencv_image(); }
@@ -160,7 +161,9 @@ opencv_image* visual_working_memory::get_node_image(int node_id, std::string par
     if (target_node == NULL) {
         return NULL;
     } else {
-        return target_node->get_node_image(param_name);
+        opencv_image* ret_image = new opencv_image();
+        ret_image->copy_from(target_node->get_node_image(param_name));
+        return ret_image;
     }
 }
 
@@ -171,7 +174,9 @@ latent_representation* visual_working_memory::get_node_latent_rep(int node_id, s
     if (target_node == NULL) {
         return NULL;
     } else {
-        return target_node->get_node_latent_rep(param_name);
+        latent_representation* ret_latent_rep = new latent_representation();
+        ret_latent_rep->copy_from(target_node->get_node_latent_rep(param_name));
+        return ret_latent_rep;
     }
 }
 #endif

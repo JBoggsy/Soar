@@ -16,6 +16,9 @@
 #include "visual_operation_graph.h"
 #include "visual_input_buffer.h"
 #include "visual_operation.h"
+#ifdef ENABLE_OPENCV
+#include "object_representation.h"
+#endif
 // Third-party includes
 ////////////////////////
 #ifdef ENABLE_TORCH
@@ -47,6 +50,7 @@ private:
     int                 next_vop_node_id;
     id_node_map         vop_nodes;
     str_nodes_map       vib_vop_node_ids;
+
 
 public:
     visual_working_memory(svs* svs_ptr, soar_interface* si, Symbol* vwm_link);

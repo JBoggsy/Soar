@@ -197,11 +197,11 @@ namespace visual_ops
      * @note ksize-x and ksize-y can differ but they both must be positive and odd. Alternatively, they can be zeroes and
      *       then they are computed from sigma.
      * @param args
-     *        `int ksize-x`: Gaussian kernel width
-     *        `int ksize-y`: Gaussian kernel height
-     *        `double sigmaX`: Gaussian kernel standard deviation in X direction.
-     *        `double sigmaY`: Gaussian kernel standard deviation in Y direction; if sigmaY is zero, it is set to be equal  to sigmaX, if both sigmas are zeros, they are computed from ksize.width and ksize.height, respectively (see getGaussianKernel for details); to fully control the result regardless of possible future modifications of all this semantics, it is recommended to specify all of ksize, sigmaX, and sigmaY.
-     *        `int borderType`: Border mode used to extrapolate pixels outside of the image
+     *        `int size-x`: Gaussian kernel width
+     *        `int size-y`: Gaussian kernel height
+     *        `double sigma-x`: Gaussian kernel standard deviation in X direction.
+     *        `double sigma-y`: Gaussian kernel standard deviation in Y direction; if sigmaY is zero, it is set to be equal  to sigmaX, if both sigmas are zeros, they are computed from ksize.width and ksize.height, respectively (see getGaussianKernel for details); to fully control the result regardless of possible future modifications of all this semantics, it is recommended to specify all of ksize, sigmaX, and sigmaY.
+     *        `int border-type`: Border mode used to extrapolate pixels outside of the image
      *        `opencv_image* source`: The image to blur
      */
     void gaussian_blur(data_dict args);

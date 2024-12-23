@@ -212,6 +212,12 @@ bool visual_operation_node::evaluate() {
         if (parameters_[parent_param_name] == NULL) { printf("ERROR: Node %d not found\n", parent_node_id); }
     }
     operation_(parameters_);
+    // std::vector<OBJ_REP_TYPE*>::iterator object_reps_itr = object_reps_.begin();
+    // for (; object_reps_itr!=object_reps_.end(); object_reps_itr++) {
+    //     delete *object_reps_itr;
+    // }
+    // object_reps_.clear();
+    // object_reps_ = OBJ_REP_TYPE::get_object_representations(get_node_image());
 
     // Update WM outputs
     std::string param_name;
