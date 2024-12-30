@@ -1,3 +1,4 @@
+#ifdef ENABLE_OPENCV
 #ifndef VISUAL_OPERATIONS_H
 #define VISUAL_OPERATIONS_H
 #include <map>
@@ -55,6 +56,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_MATCH_TEMPLATE          std::string("match-template")
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
+#define VOP_EXTRACT_OBJECTS         std::string("extract-objects")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -94,6 +96,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_MINLOCX     std::string("minloc-x")
 #define VOP_ARG_MINLOCY     std::string("minloc-y")
 #define VOP_ARG_MINVAL      std::string("minval")
+#define VOP_ARG_OBJECTS     std::string("objects")
 #define VOP_ARG_OP          std::string("unary-op")
 #define VOP_ARG_SIGMAX      std::string("sigma-x")
 #define VOP_ARG_SIGMAY      std::string("sigma-y")
@@ -466,6 +469,17 @@ namespace visual_ops
      *   of
      */
     void min_max_loc(data_dict args);
+
+    /**
+     * ANCHOR extract_objects
+     * @brief Extract objects from the source image using Canny edge detection
+     * and Watershed segmentation.
+     *
+     * @param args
+     *        `opencv_image* source`: The image to extract objects from.
+     *        `std::vector<OBJ_REP_TYPE*>* objects`: The extracted objects.
+     */
+    void extract_objects(data_dict args);
     //!SECTION OBJECT DETECTION
 
     ///////////////////////////////////
@@ -563,6 +577,9 @@ namespace visual_ops
         INT_ARG,
         DOUBLE_ARG,
         STRING_ARG,
+        // OBJECT TYPES:
+        OBJECT_VEC_ARG,
+        OBJECT_ARG,
         // IMAGE TYPES: integer ID parent VOp node, or -1 for no parent
         CV_IMAGE_ARG,
         LATENT_REP_ARG,
@@ -853,6 +870,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}
     };
 
+    // EXTRACT OBJECTS
+    inline vop_params_metadata extract_objects_metadata = {
+        /* vop_function = */        extract_objects,
+        /* num_params = */          2,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_OBJECTS},
+        /* param_types = */         {CV_IMAGE_ARG, OBJECT_VEC_ARG},
+        /* param_directions */      {INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     // ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
@@ -932,6 +959,7 @@ namespace visual_ops
         {VOP_MATCH_TEMPLATE, match_template_metadata},
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
+        {VOP_EXTRACT_OBJECTS, extract_objects_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
@@ -941,4 +969,5 @@ namespace visual_ops
 
 } // namespace visual_ops
 
+#endif
 #endif

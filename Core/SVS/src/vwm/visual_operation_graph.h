@@ -12,7 +12,6 @@
 #include "image.h"
 #include "latent_representation.h"
 #include "object_representation.h"
-#define OBJ_REP_TYPE hand_crafted_object_representation
 
 
 class visual_working_memory;
@@ -32,7 +31,6 @@ private:
 
     visual_working_memory* vwm_;
     opencv_image* node_image_;
-    std::vector<OBJ_REP_TYPE*> object_reps_;
 
     soar_interface* si_;
     Symbol* node_link_;
@@ -52,6 +50,8 @@ public:
     std::unordered_set<int>* get_child_ids() { return &child_ids_; }
     std::unordered_map<std::string, int>* get_parent_ids() { return &parent_ids_; }
 
+    void create_obj_vec_param_wmes(std::string param_name, std::vector<OBJ_REP_TYPE*> obj_vec);
+
     std::map<std::string, int> get_param_names_and_types();
     int get_int_parameter(std::string param_name) { return *((int*)parameters_[param_name]); }
     double get_dbl_parameter(std::string param_name) { return *((double*)parameters_[param_name]); }
@@ -67,7 +67,6 @@ public:
     bool evaluate();
     opencv_image* get_node_image();
     opencv_image* get_node_image(std::string param_name);
-    object_representation* get_node_object_rep(int obj_index);
     #ifdef ENABLE_TORCH
     latent_representation* get_node_latent_rep(std::string param_name);
     #endif

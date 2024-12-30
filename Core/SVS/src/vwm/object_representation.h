@@ -14,39 +14,125 @@ class object_representation
 {
 public:
     virtual ~object_representation() {}
-    static std::vector<object_representation*> get_object_representations(opencv_image* image);
+    static int get_object_representations(opencv_image* image, std::vector<object_representation*> &object_representations);
+    virtual cv::Mat get_mask() = 0;
+    virtual cv::Rect2d get_mask_bbox() = 0;
 };
 
 
 class hand_crafted_object_representation : public object_representation
 {
 public:
-    hand_crafted_object_representation(opencv_image* _base_image, cv::Mat* _mask);
+    hand_crafted_object_representation(cv::Mat _base_image, cv::Mat _mask, int border_size);
     ~hand_crafted_object_representation() {}
-    static cv::Mat get_edges(cv::Mat image, int low_thresh, float ratio, int ksize, int blur_ksize, bool invert);
-    static std::pair<cv::Mat, cv::Mat> get_regions(cv::Mat edge_mask);
-    static std::pair<cv::Mat, cv::Mat> get_watershed_markers(cv::Mat product_image, cv::Mat seed_regions, cv::Mat unknown_regions);
-    static std::map<int, cv::Mat> get_watershed_object_masks(cv::Mat watershed_markers);
-    static std::vector<hand_crafted_object_representation*> get_object_representations(opencv_image* image);
-    static std::pair<std::map<int, cv::Mat>, std::vector<cv::Mat>> segment_product_image(cv::Mat product_img);
+
+    /**
+     * @brief Extracts object representations from the given image.
+     *
+     * @param image The image to extract object representations from.
+     * @param object_representations The resulting object representations.
+     *
+     * @return The number of object representations extracted.
+     */
+    static int get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations);
+
+    cv::Mat get_base_image() { return base_image; }
+    cv::Mat get_mask() { return mask; }
+    cv::Vec4i get_border_size() { return border_size; }
+    cv::Size2d get_shape() { return shape; }
+    double get_diagonal_size() { return diagonal_size; }
+
+    cv::Mat get_object_image() {if (!object_image_generated) generate_object_image(); return object_image;}
+    cv::Mat get_object_image_gray() {if (!object_image_generated) generate_object_image(); return object_image_gray;}
+
+    std::vector<std::vector<cv::Point>> get_contours() {if (!contours_calculated) calculate_contours(); return contours;}
+    cv::Mat get_contour_image() {if (!contour_image_generated) generate_contour_image(); return contour_image;}
+    cv::Rect2d get_mask_bbox() {if (!mask_bbox_calculated) calculate_mask_bbox(); return mask_bbox;}
+    cv::RotatedRect get_min_area_rect() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect;}
+    std::vector<cv::Vec4f> get_line_segments() {if (!line_segments_calculated) calculate_line_segments(); return line_segments;}
+    std::vector<cv::Vec2f> get_corners() {if (!corners_calculated) calculate_corners(); return corners;}
+    std::vector<cv::KeyPoint> get_corner_keypoints() {if (!corners_calculated) calculate_corners(); return corner_keypoints;}
+    std::vector<std::vector<int>> get_corner_descriptors() {if (!corner_descriptors_calculated) calculate_corner_descriptors(); return corner_descriptors;}
+    cv::Moments get_moments() {if (!moments_calculated) calculate_moments(); return moments;}
+    double* get_hu_moments() {if (!moments_calculated) calculate_moments(); return hu_moments;}
+
 private:
     static const int MIN_CONTOUR_POINTS = 32;
 
-    opencv_image base_image;
+    // Basic image and mask data, computed in constructor
+    cv::Mat base_image;
     cv::Mat mask;
+    int border_size;
     cv::Size2d shape;
-    std::vector<std::vector<cv::Point>> contours;
-    cv::Rect2d mask_bbox;
+    double diagonal_size;
+
+    // Object image, lazy-computed
     cv::Mat object_image;
     cv::Mat object_image_gray;
-    double diagonal_size;
-    cv::Mat contour_image;
+    bool object_image_generated = false;
+
+    // Contours and related, lazy-computed
+    std::vector<std::vector<cv::Point>> contours;
+    bool contours_calculated = false;
+    std::vector<cv::Point> contour;
+    bool contour_calculated = false;
+    cv::Rect2d mask_bbox;
+    bool mask_bbox_calculated = false;
     cv::RotatedRect min_area_rect;
+    bool min_area_rect_calculated = false;
+    cv::Mat contour_image;
+    bool contour_image_generated = false;
+
+    // Line segments, corners, and their descriptors, lazy-computed
     std::vector<cv::Vec4f> line_segments;
+    bool line_segments_calculated = false;
     std::vector<cv::Vec2f> corners;
     std::vector<cv::KeyPoint> corner_keypoints;
+    bool corners_calculated = false;
     std::vector<std::vector<int>> corner_descriptors;
+    bool corner_descriptors_calculated = false;
+
+    // Moments and Hu moments, lazy-computed
     cv::Moments moments;
     double hu_moments[7];
+    bool moments_calculated = false;
+
+    void generate_object_image();
+
+    void calculate_contours();
+    void generate_contour_image();
+    void calculate_mask_bbox();
+    void calculate_min_area_rect();
+
+    void calculate_line_segments();
+    void calculate_corners();
+    void calculate_corner_descriptors();
+
+    void calculate_moments();
+
+    /**
+     * @brief Subdivides the contours of the object mask.
+     *
+     * This helper function subdivides the contours of the object mask into
+     * smaller segments by adding new points halfway between each pair of points
+     * in the contour. This is useful for "adding resolution" to the contours,
+     * and is necessary for using shape context distance metrics for certain
+     * simple shapes.
+    */
+    void _subdivide_contours();
+
+    /**
+     * @brief Segments the given product image into object masks via color-based
+     * segmentation.
+     *
+     * @param product_img The product image to segment.
+     * @param masks The resulting object masks.
+     *
+     * @return The number of object masks extracted
+     */
+    static int segment_image(cv::Mat image, std::vector<cv::Mat> &masks);
 };
+
+
+#define OBJ_REP_TYPE hand_crafted_object_representation
 #endif

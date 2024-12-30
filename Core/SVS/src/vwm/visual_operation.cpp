@@ -11,6 +11,7 @@
 #include "vae_visual_concept_descriptor.h"
 #include "image.h"
 #include "latent_representation.h"
+#include "object_representation.h"
 
 
 namespace visual_ops
@@ -474,7 +475,13 @@ namespace visual_ops
 
         printf("Result min %f at (%d, %d)\n", *((double*)args[VOP_ARG_MINVAL]), minloc.x, minloc.y);
         printf("Result max %f at (%d, %d)\n", *((double*)args[VOP_ARG_MAXVAL]), maxloc.x, maxloc.y);
+    }
 
+    void extract_objects(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        std::vector<OBJ_REP_TYPE*>* objects = (std::vector<OBJ_REP_TYPE*>*)args[VOP_ARG_OBJECTS];
+
+        OBJ_REP_TYPE::get_object_representations(image, *objects);
     }
 
     ///////////////////////////

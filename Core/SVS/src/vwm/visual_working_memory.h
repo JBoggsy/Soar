@@ -16,9 +16,6 @@
 #include "visual_operation_graph.h"
 #include "visual_input_buffer.h"
 #include "visual_operation.h"
-#ifdef ENABLE_OPENCV
-#include "object_representation.h"
-#endif
 // Third-party includes
 ////////////////////////
 #ifdef ENABLE_TORCH

@@ -97,7 +97,6 @@ int visual_working_memory::remove_visual_operation(int node_id) {
             parent->remove_child_id(node_id);
         }
 
-    delete &source_node;
     num_operations--;
     return num_operations;
 
@@ -211,6 +210,11 @@ void visual_working_memory::proxy_get_children(std::map<std::string, cliproxy*>&
     c["ninfo"]->add_arg("NID", "The id of the node whose image should be retrieved.");
     c["ninfo"]->add_arg("ARG", "The argument of the VOp whose image should be retrieved. Optional, defaults to 'source'.");
 
+    // c["nobj-mask"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_get_node_object_mask);
+    // c["nobj-mask"]->add_arg("NID", "The id of the node whose object mask should be retrieved.");
+    // c["nobj-mask"]->add_arg("OBJ-INDEX", "The index of the object mask to retrieve.");
+
+
     c["vogdot"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_get_vog_dot);
 }
 
@@ -222,6 +226,7 @@ void visual_working_memory::proxy_use_sub(const std::vector<std::string>& args, 
     os << "svs vwm.nlist - Prints a list of all of the VOp nodes in the VOG. Nodes are printed one per line, with the format <node-id> - <vop-type>."<< std::endl;
     os << "svs vwm.ninfo <NID> - Prints detailed information about the VOp node with the specified ID." << std::endl;
     os << "svs vwm.nimg <NID> <ARG-NAME> - Prints the image corresponding to the given argument of the VOp node with the specified ID. The image is printed as a base64-encoded .png. <ARG-NAME> is optional and defaults to 'source'." << std::endl;
+    // os << "svs vwm.nobj-mask <NID> <OBJ-INDEX> - Prints the object mask corresponding to the given object index of the VOp node with the specified ID. The mask is printed as a base64-encoded .png." << std::endl;
     os << "svs vwm.vogdot - Recursively generates a DOT representation of the VOG and prints it. Used to display the VOG using a GraphViz renderer."<< std::endl;
     os << "========================================================" << std::endl;
 }
@@ -321,6 +326,44 @@ void visual_working_memory::cli_get_node_image(const std::vector<std::string>& a
     b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
     os << b64_data << std::endl;
 }
+
+// void visual_working_memory::cli_get_node_object_mask(const std::vector<std::string>& args, std::ostream& os) {
+//     int node_id, obj_index;
+//     visual_operation_node* vop_node;
+//     cv::Mat node_obj_mask;
+//     std::vector<uchar> raw_png_data;
+//     std::string b64_data;
+
+//     if (args.empty()) {
+//         os << "You must specify a node id." << std::endl;
+//         return;
+//     } else {
+//         node_id = std::stoi(args[0]);
+//     }
+
+//     if (args.size() < 2) {
+//         os << "You must specify an object index." << std::endl;
+//         return;
+//     } else {
+//         obj_index = std::stoi(args[1]);
+//     }
+
+//     if (vop_nodes.find(node_id) == vop_nodes.end()) {
+//         os << "Node " << node_id << " not found." << std::endl;
+//         return;
+//     }
+
+//     if (vop_nodes[node_id]->get_node_num_objects() <= obj_index) {
+//         os << "Object index " << obj_index << " not found." << std::endl;
+//         return;
+//     }
+
+//     vop_node = vop_nodes[node_id];
+//     node_obj_mask = vop_node->get_node_object_rep(obj_index)->get_object_image();
+//     cv::imencode(std::string(".png"), node_obj_mask, raw_png_data);
+//     b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
+//     os << b64_data << std::endl;
+// }
 
 void visual_working_memory::cli_get_vog_dot(const std::vector<std::string>& args, std::ostream& os) {
     os << get_vog_dot_string() << std::endl;

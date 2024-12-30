@@ -1,135 +1,150 @@
 #include "object_representation.h"
 
-
-std::vector<hand_crafted_object_representation*> hand_crafted_object_representation::get_object_representations(opencv_image* image) {
-    std::vector<hand_crafted_object_representation*> object_representations = std::vector<hand_crafted_object_representation*>();
-    cv::Mat image_mat = *image->get_image();
-    auto [obj_masks, obj_layers] = segment_product_image(image_mat);
-    std::map<int, cv::Mat>::iterator obj_mask_itr = obj_masks.begin();
-    for (obj_mask_itr; obj_mask_itr != obj_masks.end(); obj_mask_itr++) {
-        if (obj_mask_itr->first == 1) continue;
-        hand_crafted_object_representation* object_representation = new hand_crafted_object_representation(image, &obj_mask_itr->second);
-        object_representations.push_back(object_representation);
-    }
-
-    return object_representations;
+//////////////////////////////////////
+//SECTION: `object_representation` //
+//////////////////////////////////////
+int get_object_representations(opencv_image* image, std::vector<object_representation*> &object_representations) {
+    throw std::runtime_error("Not implemented");
 }
 
-cv::Mat hand_crafted_object_representation::get_edges(cv::Mat image, int low_thresh, float ratio, int ksize, int blur_ksize, bool invert) {
+//!SECTION
+
+
+//////////////////////////////////////////////////
+//SECTION: `hand_crafted_object_representation` //
+//////////////////////////////////////////////////
+
+int hand_crafted_object_representation::get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations) {
     // Ensure the input image is valid
-    if (image.empty() || image.cols <= 0 || image.rows <= 0) {
+    if (image == NULL || image->get_image()->empty() || image->get_image()->cols <= 0 || image->get_image()->rows <= 0) {
         throw std::invalid_argument("Invalid input image");
     }
 
-    // Ensure blur_ksize is positive and odd
-    if (blur_ksize <= 0) {
-        blur_ksize = 3; // Default to 3 if invalid
-    } else if (blur_ksize % 2 == 0) {
-        blur_ksize += 1; // Make it odd if even
+    // Create a bordered version of the image, since various computer vision
+    // algorithms get confused by objects that are too close to the edge of the
+    // image.
+    int border_size = 32;
+    cv::Mat bordered_image;
+    cv::copyMakeBorder(*image->get_image(), bordered_image, border_size, border_size, border_size, border_size, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+
+    // Segment the image into object masks
+    std::vector<cv::Mat> masks;
+    segment_image(bordered_image, masks);
+
+    // Create object representations for each mask
+    for (int i = 1; i < masks.size(); i++) {
+        hand_crafted_object_representation* object_rep = new hand_crafted_object_representation(bordered_image, masks[i], border_size);
+        object_representations.push_back(object_rep);
     }
 
+    return masks.size();
+}
+
+int hand_crafted_object_representation::segment_image(cv::Mat image, std::vector<cv::Mat> &masks) {
+    // get_edges()
+    // Get inverted edge mask
+    cv::Mat image_copy;
+    image.copyTo(image_copy);
+    image_copy.convertTo(image_copy, CV_8U, 255.0);
     cv::Mat blurred_img;
-    cv::blur(image, blurred_img, cv::Size(blur_ksize, blur_ksize), cv::Point(-1, -1));
+    cv::blur(image_copy, blurred_img, cv::Size(3, 3), cv::Point(-1, -1));
     cv::Mat detected_edges;
-    cv::Canny(blurred_img, detected_edges, low_thresh, low_thresh * ratio, ksize);
+    cv::Canny(blurred_img, detected_edges, 75, 75 * 4, 3);
     cv::Mat edge_mask;
-    if (invert) {
-        edge_mask = detected_edges == 0;
-    } else {
-        edge_mask = detected_edges != 0;
-    }
-    edge_mask = edge_mask.mul(image != 0);
-    return edge_mask;
-}
+    edge_mask = detected_edges == 0;
+    // Multiply it by the alpha channel of the image to mask background regions
+    cv::Mat image_alpha_mask;
+    cv::extractChannel(image_copy, image_alpha_mask, 3);
+    image_alpha_mask = image_alpha_mask > 0;
+    edge_mask = edge_mask.mul(image_alpha_mask);
 
-std::pair<cv::Mat, cv::Mat> hand_crafted_object_representation::get_regions(cv::Mat edge_mask) {
-    cv::Mat dists_to_edge;
-    cv::distanceTransform(edge_mask, dists_to_edge, cv::DIST_L2, 5);
-    double minVal, maxVal;
-    cv::minMaxLoc(dists_to_edge, &minVal, &maxVal);
+    // get_regions()
+    // Generate the seed and unknown regions for the watershed algorithm
     cv::Mat seed_regions;
-    cv::threshold(dists_to_edge, seed_regions, 0.05 * maxVal, 255, 0);
-    cv::Mat sure_bg;
-    cv::dilate(edge_mask, sure_bg, cv::Mat::ones(3, 3, CV_8U), cv::Point(-1, -1), 1);
     cv::Mat unknown_regions;
-    cv::subtract(sure_bg, seed_regions, unknown_regions);
-    cv::dilate(unknown_regions, unknown_regions, cv::Mat::ones(3, 3, CV_8U), cv::Point(-1, -1), 1);
-    return std::make_pair(seed_regions, unknown_regions);
-}
+    cv::erode(edge_mask, seed_regions, cv::Mat(), cv::Point(-1, -1), 1);
+    cv::dilate(edge_mask, unknown_regions, cv::Mat(), cv::Point(-1, -1), 3);
+    unknown_regions = unknown_regions - edge_mask;
+    cv::dilate(unknown_regions, unknown_regions, cv::Mat(), cv::Point(-1, -1), 1);
 
-std::pair<cv::Mat, cv::Mat> hand_crafted_object_representation::get_watershed_markers(cv::Mat product_image, cv::Mat seed_regions, cv::Mat unknown_regions) {
-    cv::Mat marker_seeds;
-    cv::connectedComponents(seed_regions, marker_seeds);
-    marker_seeds = marker_seeds + 1;
-    marker_seeds.setTo(0, unknown_regions > 0);
-
-    cv::Mat flat_prod_img;
-    cv::cvtColor(product_image, flat_prod_img, cv::COLOR_RGBA2RGB);
+    // get_watershed_markers()
+    // Apply the watershed algorithm to segment the image
     cv::Mat watershed_markers;
-    cv::watershed(flat_prod_img, marker_seeds);
-    return std::make_pair(marker_seeds, watershed_markers);
-}
+    int num_masks = cv::connectedComponents(seed_regions, watershed_markers, 8, CV_32S, cv::CCL_DEFAULT);
+    watershed_markers += 1;
+    watershed_markers.setTo(0, unknown_regions);
 
-std::map<int, cv::Mat> hand_crafted_object_representation::get_watershed_object_masks(cv::Mat watershed_markers) {
-    std::map<int, cv::Mat> obj_masks;
-    for (int obj_id = 0; obj_id < watershed_markers.rows; ++obj_id) {
-        if (obj_id == -1) continue;
-        cv::Mat mask = (watershed_markers == obj_id);
-        obj_masks[obj_id] = mask;
+    cv::Mat image_copy_flat;
+    if (image_copy.channels() == 4) {
+        cv::cvtColor(image_copy, image_copy_flat, cv::COLOR_RGBA2RGB);
+    } else {
+        image_copy.copyTo(image_copy_flat);
     }
-    return obj_masks;
-}
+    cv::watershed(image_copy_flat, watershed_markers);
 
-std::pair<std::map<int, cv::Mat>, std::vector<cv::Mat>> hand_crafted_object_representation::segment_product_image(cv::Mat product_img) {
-    cv::Mat edge_mask = get_edges(product_img, 75, 4.0f, 3, 3, true);
-    auto [seed_regions, unknown_regions] = get_regions(edge_mask);
-    auto [marker_seeds, watershed_markers] = get_watershed_markers(product_img, seed_regions, unknown_regions);
-    std::map<int, cv::Mat> obj_masks = get_watershed_object_masks(watershed_markers);
-    std::vector<cv::Mat> img_layers;
-    for (const auto& [obj_id, obj_mask] : obj_masks) {
-        cv::Mat img_layer;
-        product_img.copyTo(img_layer, obj_mask);
-        img_layers.push_back(img_layer);
+    // get_watershed_object_masks()
+    // Extract the object masks from the watershed markers
+    for (int i = 1; i <= num_masks; i++) {
+        cv::Mat mask = cv::Mat::zeros(image_copy.size(), CV_8UC1);
+        cv::Mat marker_mask = watershed_markers == i;
+        mask.setTo(255, watershed_markers == i);
+        masks.push_back(mask);
     }
-    return std::make_pair(obj_masks, img_layers);
+
+    return num_masks;
 }
 
-hand_crafted_object_representation::hand_crafted_object_representation(opencv_image* _base_image, cv::Mat* _mask) {
+hand_crafted_object_representation::hand_crafted_object_representation(cv::Mat _base_image, cv::Mat _mask, int _border_size) {
     // Initialize the basic image and mask data
-    base_image.copy_from(_base_image);
-    _mask->copyTo(mask);
-    object_image = mask * (*base_image.get_image());
-    cv::cvtColor(object_image, object_image_gray, cv::COLOR_RGBA2GRAY);
+    _base_image.copyTo(base_image);
+    _mask.copyTo(mask);
+    border_size = _border_size;
     shape = mask.size();
-    mask_bbox = cv::boundingRect(contours[0]);
     diagonal_size = sqrt(pow(shape.width, 2) + pow(shape.height, 2));
+}
 
-    // Calculate the contours of the mask
+void hand_crafted_object_representation::generate_object_image() {
+    cv::Mat mask_full_sized;
+    cv::cvtColor(mask, mask_full_sized, cv::COLOR_GRAY2BGRA);
+    mask_full_sized.convertTo(mask_full_sized, CV_32FC4, 1.0 / 255.0);
+    object_image = cv::Mat::zeros(base_image.size(), CV_32FC4);
+    object_image = base_image.mul(mask_full_sized);
+    cv::cvtColor(object_image, object_image_gray, cv::COLOR_RGBA2GRAY);
+    object_image_generated = true;
+}
+
+void hand_crafted_object_representation::calculate_contours() {
     cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-    while (contours.size() < MIN_CONTOUR_POINTS) {
-        std::vector<std::vector<cv::Point>> new_contours = std::vector<std::vector<cv::Point>>();
-        cv::Point point_a = contours[0][contours[0].size() - 1];
-        std::vector<cv::Point>::iterator point_b_itr = contours[0].begin();
-        for (point_b_itr; point_b_itr != contours[0].end(); point_b_itr++) {
-            cv::Point point_b = *point_b_itr;
-            cv::Point new_point = cv::Point((point_a.x + point_b.x) / 2, (point_a.y + point_b.y) / 2);
-            new_contours.push_back(std::vector<cv::Point>{point_a, new_point});
-            point_a = point_b;
-        }
+    contours_calculated = true;
+}
 
-    }
+void hand_crafted_object_representation::generate_contour_image() {
+    if (!contours_calculated) calculate_contours();
     contour_image = cv::Mat::zeros(shape, CV_8UC3);
     cv::drawContours(contour_image, contours, 0, cv::Scalar(255, 255, 255), 1);
-    min_area_rect = cv::minAreaRect(contours[0]);
+    contour_image_generated = true;
+}
 
-    // Calculate the line segments of the mask
+void hand_crafted_object_representation::calculate_mask_bbox() {
+    if (!contours_calculated) calculate_contours();
+    mask_bbox = cv::boundingRect(contours[0]);
+    mask_bbox_calculated = true;
+}
+
+void hand_crafted_object_representation::calculate_min_area_rect() {
+    if (!contours_calculated) calculate_contours();
+    min_area_rect = cv::minAreaRect(contours[0]);
+    min_area_rect_calculated = true;
+}
+
+void hand_crafted_object_representation::calculate_line_segments() {
     int length_threshold = 10;
     float distance_threshold = 1.41421356f;
     double canny_th1 = 50.0;
     double canny_th2 = 50.0;
     int canny_aperture_size = 0;
     bool do_merge = true;
-    
+
     cv::Ptr<cv::ximgproc::FastLineDetector> fld = cv::ximgproc::createFastLineDetector(
         length_threshold,
         distance_threshold,
@@ -139,9 +154,10 @@ hand_crafted_object_representation::hand_crafted_object_representation(opencv_im
         do_merge
     );
     fld->detect(mask, line_segments);
+}
 
-    // Calculate the track points of the mask, as well as their ORB keypoints
-    // and descriptors
+void hand_crafted_object_representation::calculate_corners() {
+    if (!line_segments_calculated) calculate_line_segments();
     int max_corners = line_segments.size();
     double quality_level = 0.05;
     double min_distance = diagonal_size / 10;
@@ -150,7 +166,7 @@ hand_crafted_object_representation::hand_crafted_object_representation(opencv_im
     bool use_harris_detector = true;
     double k = 0.04;
     cv::goodFeaturesToTrack(
-        mask, 
+        mask,
         corners,
         max_corners,
         quality_level,
@@ -164,10 +180,34 @@ hand_crafted_object_representation::hand_crafted_object_representation(opencv_im
         cv::KeyPoint keypoint = cv::KeyPoint(corners[i], 16.0);
         corner_keypoints.push_back(keypoint);
     }
-    cv::Ptr<cv::ORB> orb = cv::ORB::create();
-    orb->compute(object_image_gray, corner_keypoints, corner_descriptors);
+    corners_calculated = true;
+}
 
-    // Calculate the moments of the mask
+void hand_crafted_object_representation::calculate_corner_descriptors() {
+    if (!corners_calculated) calculate_corners();
+    cv::Ptr<cv::ORB> orb = cv::ORB::create();
+    orb->compute(object_image, corner_keypoints, corner_descriptors);
+    corner_descriptors_calculated = true;
+}
+
+void hand_crafted_object_representation::calculate_moments() {
     moments = cv::moments(contours[0]);
     cv::HuMoments(moments, hu_moments);
+    moments_calculated = true;
 }
+
+void hand_crafted_object_representation::_subdivide_contours() {
+    std::vector<cv::Point> new_contour = std::vector<cv::Point>();
+    cv::Point point_a = contours[0][contours[0].size() - 1];
+    std::vector<cv::Point>::iterator point_b_itr = contours[0].begin();
+    for (point_b_itr; point_b_itr != contours[0].end(); point_b_itr++) {
+        cv::Point point_b = *point_b_itr;
+        cv::Point new_point = cv::Point((point_a.x + point_b.x) / 2, (point_a.y + point_b.y) / 2);
+        new_contour.push_back(point_a);
+        new_contour.push_back(new_point);
+        point_a = point_b;
+    }
+    contours[0] = new_contour;
+}
+
+//!SECTION
