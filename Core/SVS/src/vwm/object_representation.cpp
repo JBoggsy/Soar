@@ -1,4 +1,6 @@
 #include "object_representation.h"
+#include <math.h>
+#include <algorithm>
 
 //////////////////////////////////////
 //SECTION: `object_representation` //
@@ -23,7 +25,7 @@ int hand_crafted_object_representation::get_object_representations(opencv_image*
     // Create a bordered version of the image, since various computer vision
     // algorithms get confused by objects that are too close to the edge of the
     // image.
-    int border_size = 32;
+    int border_size = 64;
     cv::Mat bordered_image;
     cv::copyMakeBorder(*image->get_image(), bordered_image, border_size, border_size, border_size, border_size, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
 
@@ -137,11 +139,46 @@ void hand_crafted_object_representation::calculate_min_area_rect() {
     min_area_rect_calculated = true;
 }
 
+void hand_crafted_object_representation::calculate_ellipsity() {
+    if (!min_area_rect_calculated) calculate_min_area_rect();
+    cv::Point2f elliptic_center = min_area_rect.center;
+    cv::Size2f elliptic_size = min_area_rect.size;
+    double elliptic_theta = min_area_rect.angle;
+
+    double h = elliptic_center.x;
+    double k = elliptic_center.y;
+
+    double rect_width = elliptic_size.width / 2;
+    double rect_height = elliptic_size.height / 2;
+
+    if (rect_height > rect_height) {
+        elliptic_theta = elliptic_theta + 90;
+    }
+    elliptic_theta = elliptic_theta * 3.14159265 / 180;
+
+    double semimajor_axis = std::max(rect_width, rect_height);
+    double semiminor_axis = std::min(rect_width, rect_height);
+
+    double elliptic_points = 0.0;
+    for (int i = 0; i < contours[0].size(); i++) {
+        cv::Point contour_point = contours[0][i];
+        double distance = (pow((contour_point.x - h) * cos(elliptic_theta) +
+                               (contour_point.y - k) * sin(elliptic_theta), 2) / pow(semimajor_axis, 2)) +
+                          (pow((contour_point.x - h) * sin(elliptic_theta) -
+                               (contour_point.y - k) * cos(elliptic_theta), 2) / pow(semiminor_axis, 2));
+        if ((1-distance) < 0.025) {
+            elliptic_points += 1;
+        }
+    }
+    ellipsity = elliptic_points / contours[0].size();
+    ellipsity_calculated = true;
+}
+
 void hand_crafted_object_representation::calculate_line_segments() {
     int length_threshold = 10;
     float distance_threshold = 1.41421356f;
-    double canny_th1 = 50.0;
-    double canny_th2 = 50.0;
+    double canny_th1 = 1.0;
+    double canny_th2 = 255.0;
     int canny_aperture_size = 0;
     bool do_merge = true;
 
@@ -153,14 +190,16 @@ void hand_crafted_object_representation::calculate_line_segments() {
         canny_aperture_size,
         do_merge
     );
-    fld->detect(mask, line_segments);
+    cv::Mat contour_image_copy = get_contour_image().clone();
+    cv::cvtColor(contour_image_copy, contour_image_copy, cv::COLOR_BGR2GRAY);
+    fld->detect(contour_image_copy, line_segments);
 }
 
 void hand_crafted_object_representation::calculate_corners() {
     if (!line_segments_calculated) calculate_line_segments();
     int max_corners = line_segments.size();
     double quality_level = 0.05;
-    double min_distance = diagonal_size / 10;
+    double min_distance = diagonal_size / 100;
     cv::InputArray mask_input = cv::noArray();
     int block_size = 3;
     bool use_harris_detector = true;
@@ -194,6 +233,10 @@ void hand_crafted_object_representation::calculate_moments() {
     moments = cv::moments(contours[0]);
     cv::HuMoments(moments, hu_moments);
     moments_calculated = true;
+}
+
+double hand_crafted_object_representation::get_shape_distance(hand_crafted_object_representation* other) {
+    return cv::matchShapes(this->get_contours()[0], other->get_contours()[0], cv::CONTOURS_MATCH_I2, 0.0);
 }
 
 void hand_crafted_object_representation::_subdivide_contours() {

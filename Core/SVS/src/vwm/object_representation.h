@@ -36,6 +36,17 @@ public:
      */
     static int get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations);
 
+    /**
+     * @brief Segments the given product image into object masks via color-based
+     * segmentation.
+     *
+     * @param product_img The product image to segment.
+     * @param masks The resulting object masks.
+     *
+     * @return The number of object masks extracted
+     */
+    static int segment_image(cv::Mat image, std::vector<cv::Mat> &masks);
+
     cv::Mat get_base_image() { return base_image; }
     cv::Mat get_mask() { return mask; }
     cv::Vec4i get_border_size() { return border_size; }
@@ -49,12 +60,29 @@ public:
     cv::Mat get_contour_image() {if (!contour_image_generated) generate_contour_image(); return contour_image;}
     cv::Rect2d get_mask_bbox() {if (!mask_bbox_calculated) calculate_mask_bbox(); return mask_bbox;}
     cv::RotatedRect get_min_area_rect() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect;}
+    double get_ellipsity() { return ellipsity; }
+
     std::vector<cv::Vec4f> get_line_segments() {if (!line_segments_calculated) calculate_line_segments(); return line_segments;}
+    int get_num_sides() {if (!line_segments_calculated) calculate_line_segments(); return line_segments.size();}
     std::vector<cv::Vec2f> get_corners() {if (!corners_calculated) calculate_corners(); return corners;}
+    int get_num_corners() {if (!corners_calculated) calculate_corners(); return corners.size();}
     std::vector<cv::KeyPoint> get_corner_keypoints() {if (!corners_calculated) calculate_corners(); return corner_keypoints;}
     std::vector<std::vector<int>> get_corner_descriptors() {if (!corner_descriptors_calculated) calculate_corner_descriptors(); return corner_descriptors;}
+
     cv::Moments get_moments() {if (!moments_calculated) calculate_moments(); return moments;}
     double* get_hu_moments() {if (!moments_calculated) calculate_moments(); return hu_moments;}
+
+    /**
+     * @brief Uses the `cv::matchShapes` method to compute how similar the shape
+     * of this object is to the shape of another object.
+     *
+     * The `cv::matchShapes` method computes a similarity metric between two
+     * shapes by comparing their contours. The metric is based on the Hu moments
+     * of the two shapes, which are invariant to translation, rotation, and scale.
+     *
+     * @param other The other object to compare to.
+     */
+    double get_shape_distance(hand_crafted_object_representation* other);
 
 private:
     static const int MIN_CONTOUR_POINTS = 32;
@@ -82,6 +110,8 @@ private:
     bool min_area_rect_calculated = false;
     cv::Mat contour_image;
     bool contour_image_generated = false;
+    double ellipsity;
+    bool ellipsity_calculated = false;
 
     // Line segments, corners, and their descriptors, lazy-computed
     std::vector<cv::Vec4f> line_segments;
@@ -103,6 +133,7 @@ private:
     void generate_contour_image();
     void calculate_mask_bbox();
     void calculate_min_area_rect();
+    void calculate_ellipsity();
 
     void calculate_line_segments();
     void calculate_corners();
@@ -120,17 +151,6 @@ private:
      * simple shapes.
     */
     void _subdivide_contours();
-
-    /**
-     * @brief Segments the given product image into object masks via color-based
-     * segmentation.
-     *
-     * @param product_img The product image to segment.
-     * @param masks The resulting object masks.
-     *
-     * @return The number of object masks extracted
-     */
-    static int segment_image(cv::Mat image, std::vector<cv::Mat> &masks);
 };
 
 
