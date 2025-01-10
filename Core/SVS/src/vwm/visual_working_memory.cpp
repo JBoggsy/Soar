@@ -180,6 +180,15 @@ latent_representation* visual_working_memory::get_node_latent_rep(int node_id, s
 }
 #endif
 
+OBJ_REP_TYPE* visual_working_memory::get_object_rep(int node_id, int object_index) {
+    visual_operation_node* target_node = get_node(node_id);
+    if (target_node == NULL) {
+        return NULL;
+    } else {
+        return target_node->get_object_rep(object_index);
+    }
+}
+
 int visual_working_memory::assign_new_node_id() {
     return next_vop_node_id++;
 }
@@ -207,8 +216,8 @@ void visual_working_memory::proxy_get_children(std::map<std::string, cliproxy*>&
     c["ninfo"]->add_arg("NID", "The id of the node to inspect.");
 
     c["nimg"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_get_node_image);
-    c["ninfo"]->add_arg("NID", "The id of the node whose image should be retrieved.");
-    c["ninfo"]->add_arg("ARG", "The argument of the VOp whose image should be retrieved. Optional, defaults to 'source'.");
+    c["nimg"]->add_arg("NID", "The id of the node whose image should be retrieved.");
+    c["nimg"]->add_arg("ARG", "The argument of the VOp whose image should be retrieved. Optional, defaults to 'source'.");
 
     // c["nobj-mask"] = new memfunc_proxy<visual_working_memory>(this, &visual_working_memory::cli_get_node_object_mask);
     // c["nobj-mask"]->add_arg("NID", "The id of the node whose object mask should be retrieved.");
@@ -271,7 +280,7 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
     os << "Parents: ";
     i = 0;
     for (std::pair<std::string, int> parent : *(vop_node->get_parent_ids())) {
-        os << parent.second;
+        os << "(" << parent.first << ", " << parent.second << ")";
         if (i < (vop_node->get_parent_ids()->size()-1)) {
             os << ",";
         }
@@ -282,13 +291,17 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
     params_info = vop_node->get_param_names_and_types();
     for (std::pair<std::string, int> param_info : params_info) {
         os << param_info.first << ": ";
-        if (param_info.second == 0) {
+        if (param_info.second == (int)visual_ops::INT_ARG) {
             os << vop_node->get_int_parameter(param_info.first);
-        } else if (param_info.second == 1) {
+        } else if (param_info.second == (int)visual_ops::DOUBLE_ARG) {
             os << vop_node->get_dbl_parameter(param_info.first);
-        } else if (param_info.second == 2) {
+        } else if (param_info.second == (int)visual_ops::STRING_ARG) {
             os << vop_node->get_str_parameter(param_info.first);
-        } else if (param_info.second == 3) {
+        } else if (param_info.second == (int)visual_ops::OBJECT_VEC_ARG) {
+            os << vop_node->get_obj_vec_parameter(param_info.first).size();
+        } else if (param_info.second == (int)visual_ops::CV_IMAGE_ARG) {
+            os << vop_node->get_parent_ids()->at(param_info.first);
+        } else if (param_info.second == (int)visual_ops::LATENT_REP_ARG) {
             os << vop_node->get_parent_ids()->at(param_info.first);
         } else {
             os << "MEMORY ARG";

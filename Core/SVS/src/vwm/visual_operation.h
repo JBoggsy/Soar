@@ -9,6 +9,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include "visual_operation_data_structs.h"
+#include "object_representation.h"
 
 class opencv_image;
 
@@ -57,6 +58,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
 #define VOP_EXTRACT_OBJECTS         std::string("extract-objects")
+#define VOP_FIND_OBJECT_IN_IMAGE    std::string("find-object-in-image")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -89,6 +91,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_FOV_HORIZ   std::string("fov-horiz")
 #define VOP_ARG_HEIGHT      std::string("height")
 #define VOP_ARG_LATENT      std::string("latent")
+#define VOP_ARG_MATCHES     std::string("matches")
 #define VOP_ARG_MAXLOCX     std::string("maxloc-x")
 #define VOP_ARG_MAXLOCY     std::string("maxloc-y")
 #define VOP_ARG_MAXVAL      std::string("maxval")
@@ -98,6 +101,10 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_MINVAL      std::string("minval")
 #define VOP_ARG_OBJECTS     std::string("objects")
 #define VOP_ARG_OP          std::string("unary-op")
+#define VOP_ARG_QUERY_NODE  std::string("query-node")
+#define VOP_ARG_ROTATION    std::string("rotation")
+#define VOP_ARG_SCALEX      std::string("scale-x")
+#define VOP_ARG_SCALEY      std::string("scale-y")
 #define VOP_ARG_SIGMAX      std::string("sigma-x")
 #define VOP_ARG_SIGMAY      std::string("sigma-y")
 #define VOP_ARG_SIZEX       std::string("size-x")
@@ -107,6 +114,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_SOURCE      std::string("source")
 #define VOP_ARG_THRESH      std::string("thresh")
 #define VOP_ARG_TYPE        std::string("type")
+#define VOP_ARG_VEC_INDEX   std::string("vector-index")
 #define VOP_ARG_VIBID       std::string("vib-id")
 #define VOP_ARG_VIBMGR      std::string("vib-manager")
 #define VOP_ARG_VLTM        std::string("vltm")
@@ -435,12 +443,17 @@ namespace visual_ops
     /**
      * ANCHOR crop_to_ROI
      * @brief Crop the source image to the specified rectangle.
-     * @param args
-     *        `int x`: x-coord of the top-left corner of the rectangle
-     *        `int y`: y-coord of the top-left corner of the rectangle
-     *        `int width`: width of the rectangle
-     *        `int height`: height of the rectangle
-     *        `opencv_image* source`: The source imager to crop
+     * @param args Map of arguments to method:
+     *
+     * - `int x`: x-coord of the top-left corner of the rectangle
+     *
+     * - `int y`: y-coord of the top-left corner of the rectangle
+     *
+     * - `int width`: width of the rectangle
+     *
+     * - `int height`: height of the rectangle
+     *
+     * - `opencv_image* source`: The source imager to crop
      */
     void crop_to_ROI(data_dict args);
 
@@ -475,11 +488,34 @@ namespace visual_ops
      * @brief Extract objects from the source image using Canny edge detection
      * and Watershed segmentation.
      *
-     * @param args
-     *        `opencv_image* source`: The image to extract objects from.
-     *        `std::vector<OBJ_REP_TYPE*>* objects`: The extracted objects.
+     * @param args Map of arguments to method:
+     *
+     * - `opencv_image* source`: The image to extract objects from.
+     *
+     * - `std::vector<OBJ_REP_TYPE*>* objects`: The extracted objects.
      */
     void extract_objects(data_dict args);
+
+    /**
+     * ANCHOR find_object_in_image
+     * @brief Find the specified object in the source image, returning a
+     * centroid and the rotation and scaling needed to transform the input
+     * object into the found object.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `opencv_image* source`: The image to search for the object in.
+     *
+     * - `OBJECT_SOURCE_ARG query-node`: The node ID of the VOp node which
+     *   contains the query object.
+     *
+     * - `int* object-index`: The index of the query object in the vector of
+     *   objects in the query node.
+     *
+     * - `std::vector<object_match*>* matches`: The matches found in the image.
+     */
+    void find_object_in_image(data_dict args);
+
     //!SECTION OBJECT DETECTION
 
     ///////////////////////////////////
@@ -565,6 +601,23 @@ namespace visual_ops
     void generate(data_dict args);
     //!SECTION VLTM-BASED OPERATIONS
 
+    /////////////////////////////////////
+    // SECTION SPECIAL DATA STRUCTURES //
+    /////////////////////////////////////
+
+    struct object_match {
+        double score;
+        int x;
+        int y;
+        double rotation;
+        double scale_x;
+        double scale_y;
+        OBJ_REP_TYPE* query_object;
+        OBJ_REP_TYPE* match_object;
+        int match_object_index;
+    };
+
+    // !SECTION SPECIAL DATA STRUCTURES
 
     ////////////////////////////////////////////////////////////
     // SECTION VOP METADATA AND LUT                           //
@@ -579,7 +632,9 @@ namespace visual_ops
         STRING_ARG,
         // OBJECT TYPES:
         OBJECT_VEC_ARG,
-        OBJECT_ARG,
+        OBJECT_SOURCE_ARG,
+        OBJECT_MATCH_VEC_ARG,
+        OBJECT_MATCH_SOURCE_ARG,
         // IMAGE TYPES: integer ID parent VOp node, or -1 for no parent
         CV_IMAGE_ARG,
         LATENT_REP_ARG,
@@ -880,6 +935,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    // FIND OBJECT IN IMAGE
+    inline vop_params_metadata find_object_in_image_metadata = {
+        /* vop_function = */        find_object_in_image,
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_QUERY_NODE, VOP_ARG_VEC_INDEX, VOP_ARG_MATCHES},
+        /* param_types = */         {CV_IMAGE_ARG, OBJECT_SOURCE_ARG, INT_ARG, OBJECT_MATCH_VEC_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     // ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
@@ -960,6 +1025,7 @@ namespace visual_ops
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
         {VOP_EXTRACT_OBJECTS, extract_objects_metadata},
+        {VOP_FIND_OBJECT_IN_IMAGE, find_object_in_image_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},

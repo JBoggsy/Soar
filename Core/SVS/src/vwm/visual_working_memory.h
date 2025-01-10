@@ -161,6 +161,15 @@ public:
     #endif
 
     /**
+     * @brief Get the object representation from the given node.
+     *
+     * @param node_id The id of the node whose object representation is
+     * requested.
+     * @param object_index The index of the object in the node's object vector.
+     */
+    OBJ_REP_TYPE* get_object_rep(int node_id, int object_index);
+
+    /**
      * @brief Generate a DOT language representation of the visual operations graph.
      */
     std::string get_vog_dot_string();

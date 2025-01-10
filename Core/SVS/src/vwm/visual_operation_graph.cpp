@@ -34,6 +34,7 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
     double      param_val_dbl;
     std::string param_val_str;
     std::vector<OBJ_REP_TYPE*> param_val_obj_vec;
+    std::vector<visual_ops::object_match*> param_val_obj_match_vec;
     for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
         param_name = op_metadata_.param_names[param_i];
         param_type = op_metadata_.param_types[param_i];
@@ -56,8 +57,16 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                 param_val_obj_vec = *(std::vector<OBJ_REP_TYPE*>*)parameters_[param_name];
                 param_val_int = param_val_obj_vec.size();
                 param_syms_[param_name] = si_->make_sym(param_val_int);
+                break;
+            case visual_ops::OBJECT_MATCH_VEC_ARG:
+                param_val_obj_match_vec = *(std::vector<visual_ops::object_match*>*)parameters_[param_name];
+                param_val_int = param_val_obj_match_vec.size();
+                param_syms_[param_name] = si_->make_sym(param_val_int);
+                break;
             case visual_ops::CV_IMAGE_ARG:
             case visual_ops::LATENT_REP_ARG:
+            case visual_ops::OBJECT_SOURCE_ARG:
+            case visual_ops::OBJECT_MATCH_SOURCE_ARG:
                 param_val_int = *(int*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 parent_ids_[param_name] = param_val_int;
@@ -241,6 +250,11 @@ bool visual_operation_node::evaluate() {
                 parameters_[parent_param_name] = latent_image;
                 #endif
                 break;
+            case visual_ops::OBJECT_SOURCE_ARG:
+                int object_index = (int)*(long*)parameters_[VOP_ARG_VEC_INDEX];
+                parameters_[parent_param_name] = vwm_->get_object_rep(parent_node_id, object_index);
+                break;
+
         }
         if (parameters_[parent_param_name] == NULL) { printf("ERROR: Node %d not found\n", parent_node_id); }
     }
@@ -270,22 +284,29 @@ bool visual_operation_node::evaluate() {
             case visual_ops::INT_ARG:
                 param_val_int = *(int*)(parameters_[param_name]);
                 param_syms_[param_name] = si_->make_sym(param_val_int);
+                param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
                 break;
             case visual_ops::DOUBLE_ARG:
                 param_val_dbl = *(double*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_dbl);
+                param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
                 break;
             case visual_ops::STRING_ARG:
                 param_val_str = *(std::string*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_str);
+                param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
                 break;
             case visual_ops::OBJECT_VEC_ARG:
                 param_val_obj_vec = *(std::vector<OBJ_REP_TYPE*>*)parameters_[param_name];
-                param_val_int = param_val_obj_vec.size();
-                param_syms_[param_name] = si_->make_sym(param_val_int);
+                param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                for (int obj_i=0; obj_i<param_val_obj_vec.size(); obj_i++) {
+                    wme* object_wme = si_->make_id_wme(param_wmes_[param_name]->value, std::string("object"));
+                    wme* obj_index_wme = si_->make_wme(object_wme->value, std::string("index"), si_->make_sym(obj_i));
+                    wme* obj_num_sides_wme = si_->make_wme(object_wme->value, std::string("num-sides"), si_->make_sym(param_val_obj_vec[obj_i]->get_num_sides()));
+                    wme* obj_num_corners_wme = si_->make_wme(object_wme->value, std::string("num-corners"), si_->make_sym(param_val_obj_vec[obj_i]->get_num_corners()));
+                }
                 break;
         }
-        param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
     }
 
     // printf("Done with node %d\n", id_);
@@ -309,6 +330,10 @@ latent_representation* visual_operation_node::get_node_latent_rep(std::string pa
     return (latent_representation*)parameters_[param_name];
 }
 #endif
+
+OBJ_REP_TYPE* visual_operation_node::get_object_rep(int object_index) {
+    return ((std::vector<OBJ_REP_TYPE*>*)parameters_[VOP_ARG_OBJECTS])->at(object_index);
+}
 
 std::string visual_operation_node::get_dot_string() {
     std::string ret_str = std::string();

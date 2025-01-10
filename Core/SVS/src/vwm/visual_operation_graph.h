@@ -50,12 +50,11 @@ public:
     std::unordered_set<int>* get_child_ids() { return &child_ids_; }
     std::unordered_map<std::string, int>* get_parent_ids() { return &parent_ids_; }
 
-    void create_obj_vec_param_wmes(std::string param_name, std::vector<OBJ_REP_TYPE*> obj_vec);
-
     std::map<std::string, int> get_param_names_and_types();
     int get_int_parameter(std::string param_name) { return *((int*)parameters_[param_name]); }
     double get_dbl_parameter(std::string param_name) { return *((double*)parameters_[param_name]); }
     std::string get_str_parameter(std::string param_name) { return *((std::string*)parameters_[param_name]); }
+    std::vector<OBJ_REP_TYPE*> get_obj_vec_parameter(std::string param_name) { return *((std::vector<OBJ_REP_TYPE*>*)parameters_[param_name]); }
 
     bool edit_parameter(std::string param_name, int new_value);
     bool edit_parameter(std::string param_name, double new_value);
@@ -70,6 +69,7 @@ public:
     #ifdef ENABLE_TORCH
     latent_representation* get_node_latent_rep(std::string param_name);
     #endif
+    OBJ_REP_TYPE* get_object_rep(int object_index);
 
 
     /**
