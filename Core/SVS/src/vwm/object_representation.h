@@ -85,6 +85,18 @@ public:
      */
     double get_shape_distance(hand_crafted_object_representation* other);
 
+    /**
+     * @brief Computes the best affine transformation to align this object with
+     * another object.
+     *
+     * This method uses the `cv::getAffineTransform` method to compute the best
+     * affine transformation to align this object with another object.
+     *
+     * @param other The other object to align with.
+     */
+    cv::Mat get_best_affine_transform(hand_crafted_object_representation* other);
+
+
 private:
     static const int MIN_CONTOUR_POINTS = 32;
 

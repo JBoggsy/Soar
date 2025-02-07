@@ -503,6 +503,7 @@ namespace visual_ops
                 match->score = match_score;
                 match->query_object = query_object;
                 match->match_object = source_objects[i];
+                match->affine_transform = query_object->get_best_affine_transform(source_objects[i]);
                 match->match_object_index = i;
                 match_queue.push(match);
             }
@@ -511,8 +512,8 @@ namespace visual_ops
         while (!match_queue.empty()) {
             matches->push_back(match_queue.top());
             match_queue.pop();
-            }
         }
+    }
 
     void generate_object_image(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];

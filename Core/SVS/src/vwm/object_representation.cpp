@@ -241,6 +241,27 @@ double hand_crafted_object_representation::get_shape_distance(hand_crafted_objec
     return cv::matchShapes(this->get_contours()[0], other->get_contours()[0], cv::CONTOURS_MATCH_I2, 0.0);
 }
 
+cv::Mat hand_crafted_object_representation::get_best_affine_transform(hand_crafted_object_representation* other) {
+    cv::Ptr<cv::BFMatcher> matcher = cv::BFMatcher::create(cv::NORM_HAMMING, true);
+    std::vector<cv::DMatch> matches;
+    matcher->match(this->get_corner_descriptors(), other->get_corner_descriptors(), matches);
+
+    std::sort(matches.begin(), matches.end(), [](const cv::DMatch &a, const cv::DMatch &b) {
+        return a.distance < b.distance;
+    });
+
+    std::vector<cv::Point2f> this_points;
+    std::vector<cv::Point2f> other_points;
+    for (int i = 0; i < std::min(3, (int)matches.size()); i++) {
+        cv::DMatch match = matches[i];
+        this_points.push_back(this->get_corners()[match.queryIdx]);
+        other_points.push_back(other->get_corners()[match.trainIdx]);
+    }
+
+    cv::Mat affine_transform = cv::estimateAffine2D(this_points, other_points);
+    return affine_transform;
+}
+
 void hand_crafted_object_representation::_subdivide_contours() {
     std::vector<cv::Point> new_contour = std::vector<cv::Point>();
     cv::Point point_a = contours[0][contours[0].size() - 1];

@@ -510,7 +510,7 @@ namespace visual_ops
      * - `OBJECT_SOURCE_ARG query-node`: The node ID of the VOp node which
      *   contains the query object.
      *
-     * - `int* object-index`: The index of the query object in the vector of
+     * - `int* vector-index`: The index of the query object in the vector of
      *   objects in the query node.
      *
      * - `std::vector<object_match*>* matches`: The matches found in the image.
@@ -629,6 +629,7 @@ namespace visual_ops
         double rotation;
         double scale_x;
         double scale_y;
+        cv::Mat affine_transform;
         OBJ_REP_TYPE* query_object;
         OBJ_REP_TYPE* match_object;
         int match_object_index;
