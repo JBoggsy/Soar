@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <queue>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -487,23 +488,38 @@ namespace visual_ops
     void find_object_in_image(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
         OBJ_REP_TYPE* query_object = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY_NODE];
-        std::vector<object_match>* matches = (std::vector<object_match>*)args[VOP_ARG_MATCHES];
+        std::vector<object_match*>* matches = (std::vector<object_match*>*)args[VOP_ARG_MATCHES];
 
         std::vector<OBJ_REP_TYPE*> source_objects;
         OBJ_REP_TYPE::get_object_representations(image, source_objects);
 
+        std::priority_queue<object_match*, std::vector<object_match*>, std::greater<object_match*>> match_queue;
         double match_score;
-        object_match match;
+        object_match* match;
         for (int i = 0; i < source_objects.size(); i++) {
+            match = new object_match();
             match_score = query_object->get_shape_distance(source_objects[i]);
             if (match_score < 0.1) {
-                match.score = match_score;
-                match.query_object = query_object;
-                match.match_object = source_objects[i];
-                match.match_object_index = i;
-                matches->push_back(match);
+                match->score = match_score;
+                match->query_object = query_object;
+                match->match_object = source_objects[i];
+                match->match_object_index = i;
+                match_queue.push(match);
             }
         }
+
+        while (!match_queue.empty()) {
+            matches->push_back(match_queue.top());
+            match_queue.pop();
+            }
+        }
+
+    void generate_object_image(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        OBJ_REP_TYPE* query_object = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY_NODE];
+
+        cv::Mat obj_img = query_object->get_object_image();
+        obj_img.copyTo(*image->get_image());
     }
 
     ///////////////////////////

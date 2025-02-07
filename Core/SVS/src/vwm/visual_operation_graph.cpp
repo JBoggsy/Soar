@@ -268,6 +268,7 @@ bool visual_operation_node::evaluate() {
     double      param_val_dbl;
     std::string param_val_str;
     std::vector<OBJ_REP_TYPE*> param_val_obj_vec;
+    std::vector<visual_ops::object_match*> param_val_obj_match_vec;
     for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
         param_name = op_metadata_.param_names[param_i];
         param_type = op_metadata_.param_types[param_i];
@@ -306,6 +307,19 @@ bool visual_operation_node::evaluate() {
                     wme* obj_num_corners_wme = si_->make_wme(object_wme->value, std::string("num-corners"), si_->make_sym(param_val_obj_vec[obj_i]->get_num_corners()));
                 }
                 break;
+            case visual_ops::OBJECT_MATCH_VEC_ARG:
+                param_val_obj_match_vec = *(std::vector<visual_ops::object_match*>*)parameters_[param_name];
+                param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                for (int match_i=0; match_i<param_val_obj_match_vec.size(); match_i++) {
+                    wme* match_wme = si_->make_id_wme(param_wmes_[param_name]->value, std::string("match"));
+                    wme* match_score_wme = si_->make_wme(match_wme->value, std::string("score"), si_->make_sym(param_val_obj_match_vec[match_i]->score));
+                    wme* match_x = si_->make_wme(match_wme->value, std::string("x"), si_->make_sym(param_val_obj_match_vec[match_i]->x));
+                    wme* match_y = si_->make_wme(match_wme->value, std::string("y"), si_->make_sym(param_val_obj_match_vec[match_i]->y));
+                    wme* match_rot = si_->make_wme(match_wme->value, std::string("rotation"), si_->make_sym(param_val_obj_match_vec[match_i]->rotation));
+                    wme* match_scale_x = si_->make_wme(match_wme->value, std::string("scale-x"), si_->make_sym(param_val_obj_match_vec[match_i]->scale_x));
+                    wme* match_scale_y = si_->make_wme(match_wme->value, std::string("scale-y"), si_->make_sym(param_val_obj_match_vec[match_i]->scale_y));
+                    wme* match_index = si_->make_wme(match_wme->value, std::string("index"), si_->make_sym(param_val_obj_match_vec[match_i]->match_object_index));
+                }
         }
     }
 

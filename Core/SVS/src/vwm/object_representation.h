@@ -57,6 +57,7 @@ public:
     cv::Mat get_object_image_gray() {if (!object_image_generated) generate_object_image(); return object_image_gray;}
 
     std::vector<std::vector<cv::Point>> get_contours() {if (!contours_calculated) calculate_contours(); return contours;}
+    std::vector<cv::Point> get_contour() {if (!contour_calculated) calculate_contours(); return contour;}
     cv::Mat get_contour_image() {if (!contour_image_generated) generate_contour_image(); return contour_image;}
     cv::Rect2d get_mask_bbox() {if (!mask_bbox_calculated) calculate_mask_bbox(); return mask_bbox;}
     cv::RotatedRect get_min_area_rect() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect;}

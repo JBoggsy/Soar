@@ -59,6 +59,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
 #define VOP_EXTRACT_OBJECTS         std::string("extract-objects")
 #define VOP_FIND_OBJECT_IN_IMAGE    std::string("find-object-in-image")
+#define VOP_GEN_OBJ_IMAGE           std::string("generate-object-image")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -516,6 +517,22 @@ namespace visual_ops
      */
     void find_object_in_image(data_dict args);
 
+    /**
+     * ANCHOR generate_object_image
+     * @brief Generate an image of the specified object.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `OBJECT_SOURCE_ARG query-node`: The node ID of the VOp node which
+     *   contains the query object.
+     *
+     * - `int* vector-index`: The index of the query object in the vector of
+     *   objects in the query node.
+     *
+     * - `opencv_image* source`: The generated object image.
+     */
+    void generate_object_image(data_dict args);
+
     //!SECTION OBJECT DETECTION
 
     ///////////////////////////////////
@@ -615,6 +632,12 @@ namespace visual_ops
         OBJ_REP_TYPE* query_object;
         OBJ_REP_TYPE* match_object;
         int match_object_index;
+        bool operator<(const object_match& other) const {
+            return score < other.score;
+        }
+        bool operator>(const object_match& other) const {
+            return score > other.score;
+        }
     };
 
     // !SECTION SPECIAL DATA STRUCTURES
@@ -945,6 +968,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    // GENERATE OBJECT IMAGE
+    inline vop_params_metadata generate_object_image_metadata = {
+        /* vop_function = */        generate_object_image,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_QUERY_NODE, VOP_ARG_VEC_INDEX, VOP_ARG_SOURCE},
+        /* param_types = */         {OBJECT_SOURCE_ARG, INT_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     // ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
@@ -1026,6 +1059,7 @@ namespace visual_ops
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
         {VOP_EXTRACT_OBJECTS, extract_objects_metadata},
         {VOP_FIND_OBJECT_IN_IMAGE, find_object_in_image_metadata},
+        {VOP_GEN_OBJ_IMAGE, generate_object_image_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},

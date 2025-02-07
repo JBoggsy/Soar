@@ -117,7 +117,9 @@ void hand_crafted_object_representation::generate_object_image() {
 
 void hand_crafted_object_representation::calculate_contours() {
     cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    contour = contours[0];
     contours_calculated = true;
+    contour_calculated = true;
 }
 
 void hand_crafted_object_representation::generate_contour_image() {
