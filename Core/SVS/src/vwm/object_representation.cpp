@@ -2,53 +2,10 @@
 #include <math.h>
 #include <algorithm>
 
-//////////////////////////////////////
-//SECTION: `object_representation` //
-//////////////////////////////////////
-int get_object_representations(opencv_image* image, std::vector<object_representation*> &object_representations) {
-    throw std::runtime_error("Not implemented");
-}
-
-//!SECTION
-
 
 //////////////////////////////////////////////////
 //SECTION: `hand_crafted_object_representation` //
 //////////////////////////////////////////////////
-
-int hand_crafted_object_representation::get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations, bool do_segment) {
-    // Ensure the input image is valid
-    if (image == NULL || image->get_image()->empty() || image->get_image()->cols <= 0 || image->get_image()->rows <= 0) {
-        throw std::invalid_argument("Invalid input image");
-    }
-
-    // Create a bordered version of the image, since various computer vision
-    // algorithms get confused by objects that are too close to the edge of the
-    // image.
-    int border_size = 64;
-    cv::Mat bordered_image;
-    cv::copyMakeBorder(*image->get_image(), bordered_image, border_size, border_size, border_size, border_size, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
-
-    // Segment the image into object masks if needed
-    std::vector<cv::Mat> masks;
-    if (do_segment) {
-        segment_image(bordered_image, masks);
-    } else {
-        cv::Mat mask;
-        cv::extractChannel(bordered_image, mask, 3);
-        mask = mask > 0;
-        masks.push_back(mask);
-        masks.push_back(mask);
-    }
-
-    // Create object representations for each mask
-    for (int i = 1; i < masks.size(); i++) {
-        hand_crafted_object_representation* object_rep = new hand_crafted_object_representation(bordered_image, masks[i], border_size);
-        object_representations.push_back(object_rep);
-    }
-
-    return masks.size();
-}
 
 int hand_crafted_object_representation::segment_image(cv::Mat image, std::vector<cv::Mat> &masks) {
     // get_edges()
@@ -104,13 +61,13 @@ int hand_crafted_object_representation::segment_image(cv::Mat image, std::vector
     return num_masks;
 }
 
-hand_crafted_object_representation::hand_crafted_object_representation(cv::Mat _base_image, cv::Mat _mask, int _border_size) {
+hand_crafted_object_representation::hand_crafted_object_representation(opencv_image* image, int _border_size) {
     // Initialize the basic image and mask data
-    _base_image.copyTo(base_image);
-    _mask.copyTo(mask);
-    cv::extractChannel(base_image, base_image_mask, 3);
-    base_image_mask = base_image_mask > 0;
+    image->get_image()->copyTo(base_image);
     border_size = _border_size;
+    cv::copyMakeBorder(base_image, base_image, _border_size, _border_size, _border_size, _border_size, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+    cv::extractChannel(base_image, mask, 3);
+    mask = mask > 0;
     shape = mask.size();
     diagonal_size = sqrt(pow(shape.width, 2) + pow(shape.height, 2));
 }

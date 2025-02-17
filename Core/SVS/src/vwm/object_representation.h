@@ -15,7 +15,6 @@ class object_representation
 {
 public:
     virtual ~object_representation() {}
-    static int get_object_representations(opencv_image* image, std::vector<object_representation*> &object_representations);
     virtual cv::Mat get_mask() = 0;
     virtual cv::Rect2d get_mask_bbox() = 0;
 };
@@ -24,18 +23,8 @@ public:
 class hand_crafted_object_representation : public object_representation
 {
 public:
-    hand_crafted_object_representation(cv::Mat _base_image, cv::Mat _mask, int border_size);
+    hand_crafted_object_representation(opencv_image* image, int border_size);
     ~hand_crafted_object_representation() {}
-
-    /**
-     * @brief Extracts object representations from the given image.
-     *
-     * @param image The image to extract object representations from.
-     * @param object_representations The resulting object representations.
-     *
-     * @return The number of object representations extracted.
-     */
-    static int get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations, bool do_segment = true);
 
     /**
      * @brief Segments the given product image into object masks via color-based
@@ -50,7 +39,6 @@ public:
 
     cv::Mat get_base_image() { return base_image; }
     cv::Mat get_mask() { return mask; }
-    cv::Mat get_base_image_mask() { return base_image_mask; }
     cv::Vec4i get_border_size() { return border_size; }
     cv::Size2d get_shape() { return shape; }
     double get_diagonal_size() { return diagonal_size; }
@@ -106,7 +94,6 @@ private:
     // Basic image and mask data, computed in constructor
     cv::Mat base_image;
     cv::Mat mask;
-    cv::Mat base_image_mask;
     int border_size;
     cv::Size2d shape;
     double diagonal_size;
