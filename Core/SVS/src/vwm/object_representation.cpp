@@ -61,6 +61,12 @@ int hand_crafted_object_representation::segment_image(cv::Mat image, std::vector
     return num_masks;
 }
 
+hand_crafted_object_representation::hand_crafted_object_representation(int _border_size) {
+    border_size = _border_size;
+    shape = cv::Size2d(0, 0);
+    diagonal_size = 0;
+}
+
 hand_crafted_object_representation::hand_crafted_object_representation(opencv_image* image, int _border_size) {
     // Initialize the basic image and mask data
     image->get_image()->copyTo(base_image);
@@ -70,6 +76,29 @@ hand_crafted_object_representation::hand_crafted_object_representation(opencv_im
     mask = mask > 0;
     shape = mask.size();
     diagonal_size = sqrt(pow(shape.width, 2) + pow(shape.height, 2));
+}
+
+void hand_crafted_object_representation::update_image(opencv_image* image) {
+    // Update the basic image and mask data
+    image->get_image()->copyTo(base_image);
+    cv::copyMakeBorder(base_image, base_image, border_size, border_size, border_size, border_size, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+    cv::extractChannel(base_image, mask, 3);
+    mask = mask > 0;
+    shape = mask.size();
+    diagonal_size = sqrt(pow(shape.width, 2) + pow(shape.height, 2));
+
+    // Reset the lazy-computed properties
+    object_image_generated = false;
+    contours_calculated = false;
+    contour_calculated = false;
+    mask_bbox_calculated = false;
+    min_area_rect_calculated = false;
+    contour_image_generated = false;
+    ellipsity_calculated = false;
+    line_segments_calculated = false;
+    corners_calculated = false;
+    corner_descriptors_calculated = false;
+    moments_calculated = false;
 }
 
 void hand_crafted_object_representation::generate_object_image() {

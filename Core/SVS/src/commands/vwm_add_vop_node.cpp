@@ -146,6 +146,9 @@ bool add_vop_node_command::update_sub() {
                     case visual_ops::CV_IMAGE_ARG:
                         node_data_dict[param_name] = new opencv_image();
                         break;
+                    case visual_ops::OBJECT_ARG:
+                        node_data_dict[param_name] = new OBJ_REP_TYPE();
+                        break;
                     #ifdef ENABLE_TORCH
                     case visual_ops::LATENT_REP_ARG:
                         node_data_dict[param_name] = new latent_representation();

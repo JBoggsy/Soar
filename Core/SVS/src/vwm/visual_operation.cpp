@@ -486,7 +486,7 @@ namespace visual_ops
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
         OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
 
-        object = new OBJ_REP_TYPE(source);
+        object->update_image(source);
     }
 
     void object_distance(data_dict args) {
@@ -496,6 +496,7 @@ namespace visual_ops
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
 
         *distance = query->get_shape_distance(target);
+        source->update_image(query->get_base_image());
     }
 
     //!SECTION OBJECT DETECTION

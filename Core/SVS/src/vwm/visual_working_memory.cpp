@@ -182,6 +182,7 @@ latent_representation* visual_working_memory::get_node_latent_rep(int node_id, s
 
 OBJ_REP_TYPE* visual_working_memory::get_object_rep(int node_id) {
     visual_operation_node* target_node = get_node(node_id);
+    if (node_id == -1) { return new OBJ_REP_TYPE(); }
     if (target_node == NULL) {
         return NULL;
     } else {

@@ -957,7 +957,7 @@ namespace visual_ops
     //ANCHOR - OBJECT DISTANCE
     inline vop_params_metadata object_distance_metadata = {
         /* vop_function = */        object_distance,
-        /* num_params = */          3,
+        /* num_params = */          4,
         /* param_names = */         {VOP_ARG_QUERY, VOP_ARG_TARGET, VOP_ARG_DISTANCE, VOP_ARG_SOURCE},
         /* param_types = */         {OBJECT_ARG, OBJECT_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},

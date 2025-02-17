@@ -23,8 +23,11 @@ public:
 class hand_crafted_object_representation : public object_representation
 {
 public:
+    hand_crafted_object_representation(int border_size=16);
     hand_crafted_object_representation(opencv_image* image, int border_size=16);
     ~hand_crafted_object_representation() {}
+
+    void update_image(opencv_image* image);
 
     /**
      * @brief Segments the given product image into object masks via color-based
