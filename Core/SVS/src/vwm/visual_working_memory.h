@@ -167,7 +167,7 @@ public:
      * requested.
      * @param object_index The index of the object in the node's object vector.
      */
-    OBJ_REP_TYPE* get_object_rep(int node_id, int object_index);
+    OBJ_REP_TYPE* get_object_rep(int node_id);
 
     /**
      * @brief Generate a DOT language representation of the visual operations graph.

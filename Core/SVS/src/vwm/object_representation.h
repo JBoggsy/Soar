@@ -88,6 +88,14 @@ public:
      */
     std::vector<cv::Mat*> get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms);
 
+    /**
+     * @brief Converts the object representation to a string.
+     *
+     * This method converts the object representation to a string by concatenating
+     * the string representations of the object's properties.
+     */
+    std::string to_string();
+
 private:
     static const int MIN_CONTOUR_POINTS = 32;
 

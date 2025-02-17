@@ -297,8 +297,8 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
             os << vop_node->get_dbl_parameter(param_info.first);
         } else if (param_info.second == (int)visual_ops::STRING_ARG) {
             os << vop_node->get_str_parameter(param_info.first);
-        } else if (param_info.second == (int)visual_ops::OBJECT_VEC_ARG) {
-            os << vop_node->get_obj_vec_parameter(param_info.first).size();
+        } else if (param_info.second == (int)visual_ops::OBJECT_ARG) {
+            os << vop_node->get_obj_parameter(param_info.first)->to_string();
         } else if (param_info.second == (int)visual_ops::CV_IMAGE_ARG) {
             os << vop_node->get_parent_ids()->at(param_info.first);
         } else if (param_info.second == (int)visual_ops::LATENT_REP_ARG) {

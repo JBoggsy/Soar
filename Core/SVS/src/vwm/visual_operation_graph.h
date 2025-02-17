@@ -55,7 +55,7 @@ public:
     int get_int_parameter(std::string param_name) { return *((int*)parameters_[param_name]); }
     double get_dbl_parameter(std::string param_name) { return *((double*)parameters_[param_name]); }
     std::string get_str_parameter(std::string param_name) { return *((std::string*)parameters_[param_name]); }
-    std::vector<OBJ_REP_TYPE*> get_obj_vec_parameter(std::string param_name) { return *((std::vector<OBJ_REP_TYPE*>*)parameters_[param_name]); }
+    OBJ_REP_TYPE* get_obj_parameter(std::string param_name) { return (OBJ_REP_TYPE*)parameters_[param_name]; }
 
     bool edit_parameter(std::string param_name, int new_value);
     bool edit_parameter(std::string param_name, double new_value);

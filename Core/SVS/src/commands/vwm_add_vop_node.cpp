@@ -129,7 +129,7 @@ bool add_vop_node_command::update_sub() {
                 sprintf(status_buffer, "missing req'd param %s\n", param_name.c_str());
                 set_status(std::string(status_buffer));
                 return false;
-            } else if (param_type == visual_ops::CV_IMAGE_ARG || param_type == visual_ops::LATENT_REP_ARG) {
+            } else if (param_type == visual_ops::CV_IMAGE_ARG || param_type == visual_ops::LATENT_REP_ARG || param_type == visual_ops::OBJECT_ARG) {
                 node_data_dict[param_name] = new long(-1);
                 node_parents[param_name] = -1;
             } else if (param_dir != visual_ops::INPUT_ARG) {  // outputs must be allocated for later use
@@ -145,9 +145,6 @@ bool add_vop_node_command::update_sub() {
                         break;
                     case visual_ops::CV_IMAGE_ARG:
                         node_data_dict[param_name] = new opencv_image();
-                        break;
-                    case visual_ops::OBJECT_ARG:
-                        node_data_dict[param_name] = NULL;
                         break;
                     #ifdef ENABLE_TORCH
                     case visual_ops::LATENT_REP_ARG:
