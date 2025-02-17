@@ -61,7 +61,7 @@ int hand_crafted_object_representation::segment_image(cv::Mat image, std::vector
     return num_masks;
 }
 
-hand_crafted_object_representation::hand_crafted_object_representation(opencv_image* image, int _border_size) {
+hand_crafted_object_representation::hand_crafted_object_representation(opencv_image* image, int _border_size=16) {
     // Initialize the basic image and mask data
     image->get_image()->copyTo(base_image);
     border_size = _border_size;

@@ -482,6 +482,13 @@ namespace visual_ops
         printf("Result max %f at (%d, %d)\n", *((double*)args[VOP_ARG_MAXVAL]), maxloc.x, maxloc.y);
     }
 
+    void get_object(data_dict args) {
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
+
+        object = new OBJ_REP_TYPE(source);
+    }
+
     void object_distance(data_dict args) {
         OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
         OBJ_REP_TYPE* target = (OBJ_REP_TYPE*)args[VOP_ARG_TARGET];

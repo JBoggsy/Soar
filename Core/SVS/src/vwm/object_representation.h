@@ -23,7 +23,7 @@ public:
 class hand_crafted_object_representation : public object_representation
 {
 public:
-    hand_crafted_object_representation(opencv_image* image, int border_size);
+    hand_crafted_object_representation(opencv_image* image, int border_size=16);
     ~hand_crafted_object_representation() {}
 
     /**

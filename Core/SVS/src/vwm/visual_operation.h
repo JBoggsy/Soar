@@ -57,6 +57,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_MATCH_TEMPLATE          std::string("match-template")
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
+#define VOP_GET_OBJECT              std::string("get-object")
 #define VOP_OBJECT_DISTANCE         std::string("object-distance")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
@@ -99,7 +100,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_MINLOCX     std::string("minloc-x")
 #define VOP_ARG_MINLOCY     std::string("minloc-y")
 #define VOP_ARG_MINVAL      std::string("minval")
-#define VOP_ARG_OBJECTS     std::string("objects")
+#define VOP_ARG_OBJECT      std::string("object")
 #define VOP_ARG_OP          std::string("unary-op")
 #define VOP_ARG_QUERY       std::string("query")
 #define VOP_ARG_ROTATION    std::string("rotation")
@@ -486,6 +487,16 @@ namespace visual_ops
     void min_max_loc(data_dict args);
 
     /**
+     * ANCHOR get_object
+     * @brief Extract an object from the source image.
+     *
+     * @param args
+     *      `opencv_image* source`: The image to extract the object from
+     *      `object_representation* object`: The extracted object
+     */
+    void get_object(data_dict args);
+
+    /**
      * ANCHOR object_distance
      * @brief Compute the distance between two objects.
      *
@@ -645,7 +656,7 @@ namespace visual_ops
         // IMAGE TYPES: integer ID parent VOp node, or -1 for no parent
         CV_IMAGE_ARG,
         LATENT_REP_ARG,
-        OBJECT_SOURCE_ARG,
+        OBJECT_ARG,
         // MEMORY POINTERS
         VIBMGR_ARG,      // pointer to the VIB manager
         VWM_ARG,         // pointer to VWM
@@ -933,12 +944,22 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}
     };
 
+    //ANCHOR - GET OBJECT
+    inline vop_params_metadata get_object_metadata = {
+        /* vop_function = */        get_object,
+        /* num_params = */          2,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_OBJECT},
+        /* param_types = */         {CV_IMAGE_ARG, OBJECT_ARG},
+        /* param_directions */      {INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - OBJECT DISTANCE
     inline vop_params_metadata object_distance_metadata = {
         /* vop_function = */        object_distance,
         /* num_params = */          3,
         /* param_names = */         {VOP_ARG_QUERY, VOP_ARG_TARGET, VOP_ARG_DISTANCE, VOP_ARG_SOURCE},
-        /* param_types = */         {OBJECT_SOURCE_ARG, OBJECT_SOURCE_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
+        /* param_types = */         {OBJECT_ARG, OBJECT_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, OPTIONAL_ARG}
     };
@@ -1023,6 +1044,7 @@ namespace visual_ops
         {VOP_MATCH_TEMPLATE, match_template_metadata},
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
+        {VOP_GET_OBJECT, get_object_metadata},
         {VOP_OBJECT_DISTANCE, object_distance_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},

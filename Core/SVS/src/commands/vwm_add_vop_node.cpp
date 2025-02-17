@@ -99,7 +99,7 @@ bool add_vop_node_command::update_sub() {
                 break;
             case visual_ops::CV_IMAGE_ARG:
             case visual_ops::LATENT_REP_ARG:
-            case visual_ops::OBJECT_SOURCE_ARG:
+            case visual_ops::OBJECT_ARG:
                 node_data_dict[param_name] = new long;
                 param_present = si->get_const_attr(root, param_name, *((long*)node_data_dict[param_name]));
                 node_parents[param_name] = (int)*((long*)node_data_dict[param_name]);
@@ -145,6 +145,9 @@ bool add_vop_node_command::update_sub() {
                         break;
                     case visual_ops::CV_IMAGE_ARG:
                         node_data_dict[param_name] = new opencv_image();
+                        break;
+                    case visual_ops::OBJECT_ARG:
+                        node_data_dict[param_name] = NULL;
                         break;
                     #ifdef ENABLE_TORCH
                     case visual_ops::LATENT_REP_ARG:
