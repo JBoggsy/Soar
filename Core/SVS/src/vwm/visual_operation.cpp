@@ -237,9 +237,9 @@ namespace visual_ops
     }
     //!SECTION MATRIX CREATION
 
-    //////////////////////
-    // MATRIX ACCESSING //
-    //////////////////////
+    //////////////////////////////
+    // SECTION MATRIX ACCESSING //
+    //////////////////////////////
 
     void stack_matrices(data_dict args) {
         opencv_image* image     = (opencv_image*)args[VOP_ARG_SOURCE];
@@ -287,10 +287,12 @@ namespace visual_ops
     void extract_channels(data_dict args) {
     }
 
+    //!SECTION MATRIX ACCESSING
 
-    /////////////////////////////
-    // MATHEMATICAL PRIMITIVES //
-    /////////////////////////////
+
+    /////////////////////////////////////
+    // SECTION MATHEMATICAL PRIMITIVES //
+    /////////////////////////////////////
 
     void add_mats(data_dict args) {
         opencv_image* image =   (opencv_image*)args[VOP_ARG_SOURCE];
@@ -423,9 +425,11 @@ namespace visual_ops
         }
     }
 
-    //////////////////////
-    // OBJECT DETECTION //
-    //////////////////////
+    //!SECTION MATHEMATICAL PRIMITIVES
+
+    //////////////////////////////
+    // SECTION OBJECT DETECTION //
+    //////////////////////////////
 
     void match_template(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
@@ -478,75 +482,20 @@ namespace visual_ops
         printf("Result max %f at (%d, %d)\n", *((double*)args[VOP_ARG_MAXVAL]), maxloc.x, maxloc.y);
     }
 
-    void extract_objects(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
-        int segment;
-        if (args[VOP_ARG_SEGMENT] == NULL) {
-            segment = 1;
-        } else {
-            segment = *(int*)args[VOP_ARG_SEGMENT];
-        }
-        std::vector<OBJ_REP_TYPE*>* objects = (std::vector<OBJ_REP_TYPE*>*)args[VOP_ARG_OBJECTS];
+    void object_distance(data_dict args) {
+        OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
+        OBJ_REP_TYPE* target = (OBJ_REP_TYPE*)args[VOP_ARG_TARGET];
+        double* distance = (double*)args[VOP_ARG_DISTANCE];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
 
-        bool do_segment = (segment == 1);
-        OBJ_REP_TYPE::get_object_representations(image, *objects, do_segment);
+        *distance = query->get_shape_distance(target);
     }
 
-    void find_object_in_image(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
-        OBJ_REP_TYPE* query_object = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY_NODE];
-        std::vector<object_match*>* matches = (std::vector<object_match*>*)args[VOP_ARG_MATCHES];
+    //!SECTION OBJECT DETECTION
 
-        std::vector<OBJ_REP_TYPE*> source_objects;
-        OBJ_REP_TYPE::get_object_representations(image, source_objects);
-
-        std::priority_queue<object_match*, std::vector<object_match*>, std::greater<object_match*>> match_queue;
-        double match_score;
-        object_match* match;
-        for (int i = 0; i < source_objects.size(); i++) {
-            match = new object_match();
-            match_score = query_object->get_shape_distance(source_objects[i]);
-            if (match_score < 0.1) {
-                match->score = match_score;
-                match->query_object = query_object;
-                match->match_object = source_objects[i];
-                match->affine_transform = query_object->get_best_affine_transforms(source_objects[i], 10).front();
-
-                if (match->affine_transform != NULL) {
-                    std::pair<double, double> translation = match->translation_from_affine();
-                    match->x = translation.first;
-                    match->y = translation.second;
-
-                    match->rotation = match->rotation_from_affine();
-
-                    std::pair<double, double> scale = match->scale_from_affine();
-                    match->scale_x = scale.first;
-                    match->scale_y = scale.second;
-                }
-
-                match->match_object_index = i;
-                match_queue.push(match);
-            }
-        }
-
-        while (!match_queue.empty()) {
-            cv::Mat transform_dbg_img = match_queue.top()->show_transform();
-            matches->push_back(match_queue.top());
-            match_queue.pop();
-        }
-    }
-
-    void generate_object_image(data_dict args) {
-        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
-        OBJ_REP_TYPE* query_object = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY_NODE];
-
-        cv::Mat obj_img = query_object->get_object_image();
-        obj_img.copyTo(*image->get_image());
-    }
-
-    ///////////////////////////
-    // ENCODING AND DECODING //
-    ///////////////////////////
+    ///////////////////////////////////
+    // SECTION ENCODING AND DECODING //
+    ///////////////////////////////////
 
     #ifdef ENABLE_TORCH
     void encode(data_dict args) {
@@ -582,9 +531,11 @@ namespace visual_ops
     }
     #endif
 
-    ///////////////////////////
-    // VLTM-BASED OPERATIONS //
-    ///////////////////////////
+    //!SECTION ENCODING AND DECODING
+
+    ///////////////////////////////////
+    // SECTION VLTM-BASED OPERATIONS //
+    ///////////////////////////////////
 
     void recognize(data_dict args) {
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
@@ -638,4 +589,6 @@ namespace visual_ops
         vltm->recall(class_name, source);
         #endif
     }
+
+    //!SECTION VLTM-BASED OPERATIONS
 } // namespace visual_ops

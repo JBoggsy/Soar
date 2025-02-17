@@ -57,9 +57,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_MATCH_TEMPLATE          std::string("match-template")
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
-#define VOP_EXTRACT_OBJECTS         std::string("extract-objects")
-#define VOP_FIND_OBJECT_IN_IMAGE    std::string("find-object-in-image")
-#define VOP_GEN_OBJ_IMAGE           std::string("generate-object-image")
+#define VOP_OBJECT_DISTANCE         std::string("object-distance")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -85,6 +83,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_CONF1       std::string("confidence1")
 #define VOP_ARG_CONF2       std::string("confidence2")
 #define VOP_ARG_CONF3       std::string("confidence3")
+#define VOP_ARG_DISTANCE    std::string("distance")
 #define VOP_ARG_END         std::string("end")
 #define VOP_ARG_FILEPATH    std::string("filepath")
 #define VOP_ARG_FILL_VAL    std::string("fill-val")
@@ -102,7 +101,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_MINVAL      std::string("minval")
 #define VOP_ARG_OBJECTS     std::string("objects")
 #define VOP_ARG_OP          std::string("unary-op")
-#define VOP_ARG_QUERY_NODE  std::string("query-node")
+#define VOP_ARG_QUERY       std::string("query")
 #define VOP_ARG_ROTATION    std::string("rotation")
 #define VOP_ARG_SCALEX      std::string("scale-x")
 #define VOP_ARG_SCALEY      std::string("scale-y")
@@ -111,9 +110,10 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_SIGMAY      std::string("sigma-y")
 #define VOP_ARG_SIZEX       std::string("size-x")
 #define VOP_ARG_SIZEY       std::string("size-y")
-#define VOP_ARG_START       std::string("start")
-#define VOP_ARG_TEMPLATE    std::string("template")
 #define VOP_ARG_SOURCE      std::string("source")
+#define VOP_ARG_START       std::string("start")
+#define VOP_ARG_TARGET      std::string("target")
+#define VOP_ARG_TEMPLATE    std::string("template")
 #define VOP_ARG_THRESH      std::string("thresh")
 #define VOP_ARG_TYPE        std::string("type")
 #define VOP_ARG_VEC_INDEX   std::string("vector-index")
@@ -486,56 +486,19 @@ namespace visual_ops
     void min_max_loc(data_dict args);
 
     /**
-     * ANCHOR extract_objects
-     * @brief Extract objects from the source image using Canny edge detection
-     * and Watershed segmentation.
+     * ANCHOR object_distance
+     * @brief Compute the distance between two objects.
      *
-     * @param args Map of arguments to method:
+     * @note Object distance is *not* necessarily symmetric. The `query` object
+     * is compared to the `target` object in that order, i.e., distance returned
+     * is from `query` to `target`.
      *
-     * - `opencv_image* source`: The image to extract objects from.
-     *
-     * - `bool segment`: Whether to segment the image before extracting objects.
-     *   Defaults to true.
-     *
-     * - `std::vector<OBJ_REP_TYPE*>* objects`: The extracted objects.
+     * @param args
+     *      `object_representation* query`: The first object to compare
+     *      `object_representation* target`: The second object to compare
+     *      `double* distance`: The computed distance between the two objects
      */
-    void extract_objects(data_dict args);
-
-    /**
-     * ANCHOR find_object_in_image
-     * @brief Find the specified object in the source image, returning a
-     * centroid and the rotation and scaling needed to transform the input
-     * object into the found object.
-     *
-     * @param args Map of arguments to method:
-     *
-     * - `opencv_image* source`: The image to search for the object in.
-     *
-     * - `OBJECT_SOURCE_ARG query-node`: The node ID of the VOp node which
-     *   contains the query object.
-     *
-     * - `int* vector-index`: The index of the query object in the vector of
-     *   objects in the query node.
-     *
-     * - `std::vector<object_match*>* matches`: The matches found in the image.
-     */
-    void find_object_in_image(data_dict args);
-
-    /**
-     * ANCHOR generate_object_image
-     * @brief Generate an image of the specified object.
-     *
-     * @param args Map of arguments to method:
-     *
-     * - `OBJECT_SOURCE_ARG query-node`: The node ID of the VOp node which
-     *   contains the query object.
-     *
-     * - `int* vector-index`: The index of the query object in the vector of
-     *   objects in the query node.
-     *
-     * - `opencv_image* source`: The generated object image.
-     */
-    void generate_object_image(data_dict args);
+    void object_distance(data_dict args);
 
     //!SECTION OBJECT DETECTION
 
@@ -679,14 +642,10 @@ namespace visual_ops
         INT_ARG,
         DOUBLE_ARG,
         STRING_ARG,
-        // OBJECT TYPES:
-        OBJECT_VEC_ARG,
-        OBJECT_SOURCE_ARG,
-        OBJECT_MATCH_VEC_ARG,
-        OBJECT_MATCH_SOURCE_ARG,
         // IMAGE TYPES: integer ID parent VOp node, or -1 for no parent
         CV_IMAGE_ARG,
         LATENT_REP_ARG,
+        OBJECT_SOURCE_ARG,
         // MEMORY POINTERS
         VIBMGR_ARG,      // pointer to the VIB manager
         VWM_ARG,         // pointer to VWM
@@ -714,7 +673,7 @@ namespace visual_ops
     // VISUAL OPERATIONS METADATA DEFINITIONS
     /////////////////////////////////////////
 
-    // GET FROM VIB
+    //ANCHOR - GET FROM VIB
     inline vop_params_metadata get_from_vib_metadata = {
         /* vop_function = */        get_from_vib,
         /* num_params = */          4,
@@ -724,7 +683,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // LOAD FROM FILE
+    //ANCHOR - LOAD FROM FILE
     inline vop_params_metadata load_from_file_metadata = {
         /* vop_function = */        load_from_file,
         /* num_params = */          2,
@@ -734,7 +693,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG}
     };
 
-    // SAVE TO FILE
+    //ANCHOR - SAVE TO FILE
     inline vop_params_metadata save_to_file_metadata = {
         /* vop_function = */        save_to_file,
         /* num_params = */          2,
@@ -744,7 +703,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // DISPLAY IMAGE
+    //ANCHOR - DISPLAY IMAGE
     inline vop_params_metadata display_image_metadata = {
         /* vop_function = */        display_image,
         /* num_params = */          2,
@@ -754,7 +713,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // IDENTITY
+    //ANCHOR - IDENTITY
     inline vop_params_metadata identity_metadata = {
         /* vop_function = */        identity,
         /* num_params = */          1,
@@ -764,7 +723,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG}
     };
 
-    // BLUR
+    //ANCHOR - BLUR
     inline vop_params_metadata blur_metadata = {
         /* vop_function = */        blur,
         /* num_params = */          6,
@@ -774,7 +733,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, OPTIONAL_ARG, OPTIONAL_ARG, OPTIONAL_ARG, REQUIRED_ARG}
     };
 
-    // GAUSSIAN BLUR
+    //ANCHOR - GAUSSIAN BLUR
     inline vop_params_metadata gaussian_blur_metadata = {
         /* vop_function = */        gaussian_blur,
         /* num_params = */          6,
@@ -784,7 +743,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // GREYSCALE
+    //ANCHOR - GREYSCALE
     inline vop_params_metadata greyscale_metadata = {
         /* vop_function = */        greyscale,
         /* num_params = */          1,
@@ -794,7 +753,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG}
     };
 
-    // THRESHOLD
+    //ANCHOR - THRESHOLD
     inline vop_params_metadata threshold_metadata = {
         /* vop_function = */        threshold,
         /* num_params = */          4,
@@ -804,7 +763,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // FLIP IMAGE
+    //ANCHOR - FLIP IMAGE
     inline vop_params_metadata flip_image_metadata = {
         /* vop_function = */        flip_image,
         /* num_params = */          2,
@@ -814,7 +773,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // FLIP IMAGE
+    //ANCHOR - ROTATE IMAGE
     inline vop_params_metadata rotate_image_metadata = {
         /* vop_function = */        rotate_image,
         /* num_params = */          2,
@@ -824,7 +783,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // CREATE INT FILLED MATRIX
+    //ANCHOR - CREATE INT FILLED MATRIX
     inline vop_params_metadata create_int_filled_mat_metadata = {
         /* vop_function = */        create_int_filled_mat,
         /* num_params = */          4,
@@ -834,7 +793,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // CREATE FLOAT FILLED MATRIX
+    //ANCHOR - CREATE FLOAT FILLED MATRIX
     inline vop_params_metadata create_float_filled_mat_metadata = {
         /* vop_function = */        create_float_filled_mat,
         /* num_params = */          4,
@@ -844,7 +803,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // CREATE X COORDINATE FILLED MATRIX
+    //ANCHOR - CREATE X COORDINATE FILLED MATRIX
     inline vop_params_metadata create_x_coord_mat_metadata = {
         /* vop_function = */        create_x_coord_mat,
         /* num_params = */          3,
@@ -854,7 +813,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // CREATE Y COORDINATE FILLED MATRIX
+    //ANCHOR - CREATE Y COORDINATE FILLED MATRIX
     inline vop_params_metadata create_y_coord_mat_metadata = {
         /* vop_function = */        create_y_coord_mat,
         /* num_params = */          3,
@@ -864,7 +823,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // STACK MATRICES
+    //ANCHOR - STACK MATRICES
     inline vop_params_metadata stack_matrices_metadata = {
         /* vop_function = */        stack_matrices,
         /* num_params = */          3,
@@ -874,7 +833,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // EXTRACT CHANNEL FROM MATRIX
+    //ANCHOR - EXTRACT CHANNEL FROM MATRIX
     inline vop_params_metadata extract_channel_metadata = {
         /* vop_function = */        extract_channel,
         /* num_params = */          2,
@@ -884,7 +843,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // EXTRACT CHANNELS FROM MATRIX
+    //ANCHOR - EXTRACT CHANNELS FROM MATRIX
     inline vop_params_metadata extract_channels_metadata = {
         /* vop_function = */        extract_channels,
         /* num_params = */          3,
@@ -894,7 +853,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // ADD MATRICES
+    //ANCHOR - ADD MATRICES
     inline vop_params_metadata add_mats_metadata = {
         /* vop_function = */        add_mats,
         /* num_params = */          3,
@@ -904,7 +863,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // SUBTRACT MATRICES
+    //ANCHOR - SUBTRACT MATRICES
     inline vop_params_metadata sub_mats_metadata = {
         /* vop_function = */        sub_mats,
         /* num_params = */          3,
@@ -914,7 +873,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // MULTIPLY MATRICES
+    //ANCHOR - MULTIPLY MATRICES
     inline vop_params_metadata mul_mats_metadata = {
         /* vop_function = */        mul_mats,
         /* num_params = */          3,
@@ -924,7 +883,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // DIVIDE MATRICES
+    //ANCHOR - DIVIDE MATRICES
     inline vop_params_metadata div_mats_metadata = {
         /* vop_function = */        div_mats,
         /* num_params = */          3,
@@ -934,7 +893,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // APPLY UNARY OPERATION
+    //ANCHOR - APPLY UNARY OPERATION
     inline vop_params_metadata apply_unary_op_metadata = {
         /* vop_function = */        apply_unary_op,
         /* num_params = */          2,
@@ -944,7 +903,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // MATCH TEMPLATE
+    //ANCHOR - MATCH TEMPLATE
     inline vop_params_metadata match_template_metadata = {
         /* vop_function = */        match_template,
         /* num_params = */          3,
@@ -954,7 +913,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // CROP TO ROI
+    //ANCHOR - CROP TO ROI
     inline vop_params_metadata crop_to_roi_metadata = {
         /* vop_function = */        crop_to_ROI,
         /* num_params = */          5,
@@ -964,7 +923,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // MIN MAX LOC
+    //ANCHOR - MIN MAX LOC
     inline vop_params_metadata min_max_loc_metadata = {
         /* vop_function = */        min_max_loc,
         /* num_params = */          7,
@@ -974,37 +933,17 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG}
     };
 
-    // EXTRACT OBJECTS
-    inline vop_params_metadata extract_objects_metadata = {
-        /* vop_function = */        extract_objects,
+    //ANCHOR - OBJECT DISTANCE
+    inline vop_params_metadata object_distance_metadata = {
+        /* vop_function = */        object_distance,
         /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_SEGMENT, VOP_ARG_OBJECTS},
-        /* param_types = */         {CV_IMAGE_ARG, INT_ARG, OBJECT_VEC_ARG},
-        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG}
+        /* param_names = */         {VOP_ARG_QUERY, VOP_ARG_TARGET, VOP_ARG_DISTANCE, VOP_ARG_SOURCE},
+        /* param_types = */         {OBJECT_SOURCE_ARG, OBJECT_SOURCE_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, OPTIONAL_ARG}
     };
 
-    // FIND OBJECT IN IMAGE
-    inline vop_params_metadata find_object_in_image_metadata = {
-        /* vop_function = */        find_object_in_image,
-        /* num_params = */          4,
-        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_QUERY_NODE, VOP_ARG_VEC_INDEX, VOP_ARG_MATCHES},
-        /* param_types = */         {CV_IMAGE_ARG, OBJECT_SOURCE_ARG, INT_ARG, OBJECT_MATCH_VEC_ARG},
-        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
-    };
-
-    // GENERATE OBJECT IMAGE
-    inline vop_params_metadata generate_object_image_metadata = {
-        /* vop_function = */        generate_object_image,
-        /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_QUERY_NODE, VOP_ARG_VEC_INDEX, VOP_ARG_SOURCE},
-        /* param_types = */         {OBJECT_SOURCE_ARG, INT_ARG, CV_IMAGE_ARG},
-        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
-    };
-
-    // ENCODE IMAGE
+    //ANCHOR - ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
         /* num_params = */          3,
@@ -1014,7 +953,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // DECODE IMAGE
+    //ANCHOR - DECODE IMAGE
     inline vop_params_metadata decode_metadata = {
         /* vop_function = */        decode,
         /* num_params = */          3,
@@ -1024,7 +963,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
-    // RECOGNIZE IMAGE
+    //ANCHOR - RECOGNIZE IMAGE
     inline vop_params_metadata recognize_metadata = {
         /* vop_function = */        recognize,
         /* num_params = */          8,
@@ -1034,7 +973,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,   REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,    REQUIRED_ARG,  REQUIRED_ARG}
     };
 
-    // LEARN FROM IMAGE
+    //ANCHOR - LEARN FROM IMAGE
     inline vop_params_metadata learn_from_metadata = {
         /* vop_function = */        learn_from,
         /* num_params = */          3,
@@ -1044,7 +983,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,      REQUIRED_ARG}
     };
 
-    // GENERATE IMAGE OF CLASS
+    //ANCHOR - GENERATE IMAGE OF CLASS
     inline vop_params_metadata generate_metadata = {
         /* vop_function = */        generate,
         /* num_params = */          3,
@@ -1054,6 +993,7 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG,   REQUIRED_ARG,      REQUIRED_ARG}
     };
 
+    //ANCHOR - LOOKUP TABLE
     // CREATE LOOKUP TABLE MAPPING OPERATION NAMES TO METADATA
     //////////////////////////////////////////////////////////
     inline std::unordered_map<std::string, vop_params_metadata> vops_param_table({
@@ -1083,15 +1023,14 @@ namespace visual_ops
         {VOP_MATCH_TEMPLATE, match_template_metadata},
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
-        {VOP_EXTRACT_OBJECTS, extract_objects_metadata},
-        {VOP_FIND_OBJECT_IN_IMAGE, find_object_in_image_metadata},
-        {VOP_GEN_OBJ_IMAGE, generate_object_image_metadata},
+        {VOP_OBJECT_DISTANCE, object_distance_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
         {VOP_LEARN_FROM, learn_from_metadata},
         {VOP_GENERATE, generate_metadata}
     });
+    //!SECTION VOP METADATA AND LUT
 
 } // namespace visual_ops
 
