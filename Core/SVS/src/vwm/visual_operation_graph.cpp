@@ -53,20 +53,9 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                 param_val_str = *(std::string*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_str);
                 break;
-            case visual_ops::OBJECT_VEC_ARG:
-                param_val_obj_vec = *(std::vector<OBJ_REP_TYPE*>*)parameters_[param_name];
-                param_val_int = param_val_obj_vec.size();
-                param_syms_[param_name] = si_->make_sym(param_val_int);
-                break;
-            case visual_ops::OBJECT_MATCH_VEC_ARG:
-                param_val_obj_match_vec = *(std::vector<visual_ops::object_match*>*)parameters_[param_name];
-                param_val_int = param_val_obj_match_vec.size();
-                param_syms_[param_name] = si_->make_sym(param_val_int);
-                break;
             case visual_ops::CV_IMAGE_ARG:
             case visual_ops::LATENT_REP_ARG:
             case visual_ops::OBJECT_SOURCE_ARG:
-            case visual_ops::OBJECT_MATCH_SOURCE_ARG:
                 param_val_int = *(int*)parameters_[param_name];
                 param_syms_[param_name] = si_->make_sym(param_val_int);
                 parent_ids_[param_name] = param_val_int;
@@ -251,8 +240,7 @@ bool visual_operation_node::evaluate() {
                 #endif
                 break;
             case visual_ops::OBJECT_SOURCE_ARG:
-                int object_index = (int)*(long*)parameters_[VOP_ARG_VEC_INDEX];
-                parameters_[parent_param_name] = vwm_->get_object_rep(parent_node_id, object_index);
+                parameters_[parent_param_name] = vwm_->get_object_rep(parent_node_id);
                 break;
 
         }
@@ -345,8 +333,8 @@ latent_representation* visual_operation_node::get_node_latent_rep(std::string pa
 }
 #endif
 
-OBJ_REP_TYPE* visual_operation_node::get_object_rep(int object_index) {
-    return ((std::vector<OBJ_REP_TYPE*>*)parameters_[VOP_ARG_OBJECTS])->at(object_index);
+OBJ_REP_TYPE* visual_operation_node::get_object_rep() {
+    return (OBJ_REP_TYPE*)parameters_[VOP_ARG_OBJECT];
 }
 
 std::string visual_operation_node::get_dot_string() {

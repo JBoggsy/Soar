@@ -31,6 +31,7 @@ private:
 
     visual_working_memory* vwm_;
     opencv_image* node_image_;
+    OBJ_REP_TYPE* node_object_rep_;
 
     soar_interface* si_;
     Symbol* node_link_;
@@ -69,7 +70,7 @@ public:
     #ifdef ENABLE_TORCH
     latent_representation* get_node_latent_rep(std::string param_name);
     #endif
-    OBJ_REP_TYPE* get_object_rep(int object_index);
+    OBJ_REP_TYPE* get_object_rep();
 
 
     /**

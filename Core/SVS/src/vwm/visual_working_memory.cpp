@@ -180,12 +180,12 @@ latent_representation* visual_working_memory::get_node_latent_rep(int node_id, s
 }
 #endif
 
-OBJ_REP_TYPE* visual_working_memory::get_object_rep(int node_id, int object_index) {
+OBJ_REP_TYPE* visual_working_memory::get_object_rep(int node_id) {
     visual_operation_node* target_node = get_node(node_id);
     if (target_node == NULL) {
         return NULL;
     } else {
-        return target_node->get_object_rep(object_index);
+        return target_node->get_object_rep();
     }
 }
 
