@@ -86,7 +86,7 @@ private:
  * @brief The derived image class for holding an OpenCV Mat object representing
  * an image. Allows for far more flexibility and use of the OpenCV algorithms
  * compared to basic_image, but requires including OpenCV.
- * 
+ *
  */
 class opencv_image: public image_base
 {
@@ -97,6 +97,7 @@ public:
     void copy_from(opencv_image* other);
 
     cv::Mat* get_image() { return _img; }
+    cv::Mat* get_mask();
     void set_image(cv::Mat* image);
     int get_width() {return _img->cols; }
     int get_height() { return _img->rows; }

@@ -127,6 +127,13 @@ void opencv_image::set_image(cv::Mat* image) {
     // _img->convertTo(*_img, CV_32FC4);
 }
 
+cv::Mat* opencv_image::get_mask() {
+    cv::Mat mask;
+    cv::extractChannel(*get_image(), mask, 3);
+    mask = mask > 0;
+    return &mask;
+}
+
 void opencv_image::update_image(const cv::Mat& new_img) {
     bool prev_empty = is_empty();
     _img = new cv::Mat;
