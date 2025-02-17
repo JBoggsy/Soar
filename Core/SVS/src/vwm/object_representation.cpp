@@ -16,7 +16,7 @@ int get_object_representations(opencv_image* image, std::vector<object_represent
 //SECTION: `hand_crafted_object_representation` //
 //////////////////////////////////////////////////
 
-int hand_crafted_object_representation::get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations) {
+int hand_crafted_object_representation::get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations, bool do_segment) {
     // Ensure the input image is valid
     if (image == NULL || image->get_image()->empty() || image->get_image()->cols <= 0 || image->get_image()->rows <= 0) {
         throw std::invalid_argument("Invalid input image");
@@ -29,9 +29,17 @@ int hand_crafted_object_representation::get_object_representations(opencv_image*
     cv::Mat bordered_image;
     cv::copyMakeBorder(*image->get_image(), bordered_image, border_size, border_size, border_size, border_size, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
 
-    // Segment the image into object masks
+    // Segment the image into object masks if needed
     std::vector<cv::Mat> masks;
-    segment_image(bordered_image, masks);
+    if (do_segment) {
+        segment_image(bordered_image, masks);
+    } else {
+        cv::Mat mask;
+        cv::extractChannel(bordered_image, mask, 3);
+        mask = mask > 0;
+        masks.push_back(mask);
+        masks.push_back(mask);
+    }
 
     // Create object representations for each mask
     for (int i = 1; i < masks.size(); i++) {
@@ -100,6 +108,8 @@ hand_crafted_object_representation::hand_crafted_object_representation(cv::Mat _
     // Initialize the basic image and mask data
     _base_image.copyTo(base_image);
     _mask.copyTo(mask);
+    cv::extractChannel(base_image, base_image_mask, 3);
+    base_image_mask = base_image_mask > 0;
     border_size = _border_size;
     shape = mask.size();
     diagonal_size = sqrt(pow(shape.width, 2) + pow(shape.height, 2));
@@ -217,10 +227,37 @@ void hand_crafted_object_representation::calculate_corners() {
         use_harris_detector,
         k
     );
+    // Convert corners to keypoints
     for (int i = 0; i < corners.size(); i++) {
         cv::KeyPoint keypoint = cv::KeyPoint(corners[i], 16.0);
         corner_keypoints.push_back(keypoint);
     }
+
+    // Calculate corner angles
+    cv::Vec2f corner_a;
+    cv::Vec2f corner_b;
+    cv::Vec2f corner_c;
+    for (int i = 0; i < corners.size(); i++) {
+        if (i == 0) {
+            corner_a = corners.back();
+        } else {
+            corner_a = corners[i-1];
+        }
+        corner_b = corners[i];
+        if (i == corners.size() - 1) {
+            corner_c = corners[0];
+        } else {
+            corner_c = corners[i+1];
+        }
+        cv::Vec2f vector_a = corner_a - corner_b;
+        cv::Vec2f vector_b = corner_c - corner_b;
+        double dot_product = vector_a.dot(vector_b);
+        double magnitude_a = sqrt(vector_a.dot(vector_a));
+        double magnitude_b = sqrt(vector_b.dot(vector_b));
+        double angle = acos(dot_product / (magnitude_a * magnitude_b));
+        corner_angles.push_back(angle);
+    }
+
     corners_calculated = true;
 }
 
@@ -241,25 +278,99 @@ double hand_crafted_object_representation::get_shape_distance(hand_crafted_objec
     return cv::matchShapes(this->get_contours()[0], other->get_contours()[0], cv::CONTOURS_MATCH_I2, 0.0);
 }
 
-cv::Mat hand_crafted_object_representation::get_best_affine_transform(hand_crafted_object_representation* other) {
-    cv::Ptr<cv::BFMatcher> matcher = cv::BFMatcher::create(cv::NORM_HAMMING, true);
-    std::vector<cv::DMatch> matches;
-    matcher->match(this->get_corner_descriptors(), other->get_corner_descriptors(), matches);
+std::vector<cv::Mat*> hand_crafted_object_representation::get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms) {
+    std::priority_queue<std::pair<double, cv::Mat*>, std::vector<std::pair<double, cv::Mat*>>, std::greater<std::pair<double, cv::Mat*>>> affine_queue;
+    std::vector<cv::Mat*> affine_transforms;
 
-    std::sort(matches.begin(), matches.end(), [](const cv::DMatch &a, const cv::DMatch &b) {
-        return a.distance < b.distance;
-    });
+    std::vector<cv::Vec2f> all_self_points = get_corners();
+    std::vector<cv::Vec2f> all_other_points = other->get_corners();
+    for (size_t si = 0; si < all_self_points.size(); si++) {
+        for (size_t sj = 0; sj < all_self_points.size(); sj++) {
+            if (si == sj) { continue; }
+            for (size_t sk = 0; sk < all_self_points.size(); sk++) {
+                if (si == sk || sj == sk) { continue; }
+                cv::Point2f self_prev = all_self_points[si];
+                cv::Point2f self_curr = all_self_points[sj];
+                cv::Point2f self_next = all_self_points[sk];
+                std::vector<cv::Point2f> self_points = { self_prev, self_curr, self_next };
 
-    std::vector<cv::Point2f> this_points;
-    std::vector<cv::Point2f> other_points;
-    for (int i = 0; i < std::min(3, (int)matches.size()); i++) {
-        cv::DMatch match = matches[i];
-        this_points.push_back(this->get_corners()[match.queryIdx]);
-        other_points.push_back(other->get_corners()[match.trainIdx]);
+                for (size_t oi = 0; oi < all_other_points.size(); oi++) {
+                    for (size_t oj = 0; oj < all_other_points.size(); oj++) {
+                        if (oi == oj) { continue; }
+                        for (size_t ok = 0; ok < all_other_points.size(); ok++) {
+                            if (oi == ok || oj == ok) { continue; }
+                            cv::Point2f other_prev = all_other_points[oi];
+                            cv::Point2f other_curr = all_other_points[oj];
+                            cv::Point2f other_next = all_other_points[ok];
+                            std::vector<cv::Point2f> other_points = { other_prev, other_curr, other_next };
+
+                            // Debug: draw matching colored dots on self and other object images
+                            // cv::Mat self_debug, other_debug;
+                            // get_object_image().convertTo(self_debug, CV_8UC3, 255.0);
+                            // other->get_object_image().convertTo(other_debug, CV_8UC3, 255.0);
+
+                            // // Define three matching colors: red, green, blue.
+                            // cv::Scalar colors[3] = { cv::Scalar(0, 0, 255, 255), cv::Scalar(0, 255, 0, 255), cv::Scalar(255, 0, 0, 255)};
+
+                            // for (size_t k = 0; k < 3; k++) {
+                            //     cv::circle(self_debug, self_points[k], 4, colors[k], -1);
+                            //     cv::circle(other_debug, other_points[k], 4, colors[k], -1);
+                            // }
+
+                            // int rows = std::max(self_debug.rows, other_debug.rows);
+                            // int cols = self_debug.cols + other_debug.cols;
+                            // cv::Mat combined_debug(rows, cols, self_debug.type(), cv::Scalar(0, 0, 0));
+                            // cv::Mat leftROI = combined_debug(cv::Rect(0, 0, self_debug.cols, self_debug.rows));
+                            // self_debug.copyTo(leftROI);
+                            // cv::Mat rightROI = combined_debug(cv::Rect(self_debug.cols, 0, other_debug.cols, other_debug.rows));
+                            // other_debug.copyTo(rightROI);
+
+                            // // Draw colored lines between corresponding points in self and other debug images.
+                            // for (size_t k = 0; k < 3; k++) {
+                            //     cv::Point2f pt1 = self_points[k];
+                            //     cv::Point2f pt2 = other_points[k] + cv::Point2f((float) self_debug.cols, 0.0);
+                            //     cv::line(combined_debug, pt1, pt2, colors[k], 2);
+                            // }
+
+                            // std::string filename = "affine_debug/affine_debug_" + std::to_string(si) + "-" + std::to_string(sj) + "-" + std::to_string(sk) + "_" + std::to_string(oi) + "-" + std::to_string(oj) + "-" + std::to_string(ok) + ".png";
+                            // cv::imwrite(filename, combined_debug);
+
+                            cv::Mat affine = cv::getAffineTransform(self_points, other_points);
+
+                            cv::Mat transformed_mask;
+                            cv::warpAffine(mask, transformed_mask, affine, other->mask.size(), cv::INTER_NEAREST);
+
+                            cv::Mat target_intersection;
+                            cv::bitwise_and(transformed_mask, other->mask, target_intersection);
+                            double overlap_area = static_cast<double>(cv::countNonZero(target_intersection));
+
+                            cv::Mat base_invalid_overlap;
+                            cv::Mat base_mask_inv;
+                            cv::bitwise_not(other->get_base_image_mask(), base_mask_inv);
+                            cv::bitwise_and(transformed_mask, base_mask_inv, base_invalid_overlap);
+                            double invalid_overlap = static_cast<double>(cv::countNonZero(base_invalid_overlap));
+
+                            if ((invalid_overlap/overlap_area) > 0.1) { continue; }
+
+                            double overlap_ratio = overlap_area / static_cast<double>(cv::countNonZero(other->mask));
+                            affine_queue.push(std::make_pair(overlap_ratio, new cv::Mat(affine)));
+                            if (affine_queue.size() > num_transforms) {
+                                cv::Mat* worst_affine = affine_queue.top().second;
+                                affine_queue.pop();
+                                delete worst_affine;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    cv::Mat affine_transform = cv::estimateAffine2D(this_points, other_points);
-    return affine_transform;
+    while (!affine_queue.empty()) {
+        affine_transforms.push_back(affine_queue.top().second);
+        affine_queue.pop();
+    }
+    return affine_transforms;
 }
 
 void hand_crafted_object_representation::_subdivide_contours() {

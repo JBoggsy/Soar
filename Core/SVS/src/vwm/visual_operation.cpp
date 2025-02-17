@@ -480,9 +480,16 @@ namespace visual_ops
 
     void extract_objects(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        int segment;
+        if (args[VOP_ARG_SEGMENT] == NULL) {
+            segment = 1;
+        } else {
+            segment = *(int*)args[VOP_ARG_SEGMENT];
+        }
         std::vector<OBJ_REP_TYPE*>* objects = (std::vector<OBJ_REP_TYPE*>*)args[VOP_ARG_OBJECTS];
 
-        OBJ_REP_TYPE::get_object_representations(image, *objects);
+        bool do_segment = (segment == 1);
+        OBJ_REP_TYPE::get_object_representations(image, *objects, do_segment);
     }
 
     void find_object_in_image(data_dict args) {
@@ -503,13 +510,27 @@ namespace visual_ops
                 match->score = match_score;
                 match->query_object = query_object;
                 match->match_object = source_objects[i];
-                match->affine_transform = query_object->get_best_affine_transform(source_objects[i]);
+                match->affine_transform = query_object->get_best_affine_transforms(source_objects[i], 10).front();
+
+                if (match->affine_transform != NULL) {
+                    std::pair<double, double> translation = match->translation_from_affine();
+                    match->x = translation.first;
+                    match->y = translation.second;
+
+                    match->rotation = match->rotation_from_affine();
+
+                    std::pair<double, double> scale = match->scale_from_affine();
+                    match->scale_x = scale.first;
+                    match->scale_y = scale.second;
+                }
+
                 match->match_object_index = i;
                 match_queue.push(match);
             }
         }
 
         while (!match_queue.empty()) {
+            cv::Mat transform_dbg_img = match_queue.top()->show_transform();
             matches->push_back(match_queue.top());
             match_queue.pop();
         }

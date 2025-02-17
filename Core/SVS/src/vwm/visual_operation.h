@@ -106,6 +106,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_ROTATION    std::string("rotation")
 #define VOP_ARG_SCALEX      std::string("scale-x")
 #define VOP_ARG_SCALEY      std::string("scale-y")
+#define VOP_ARG_SEGMENT     std::string("segment")
 #define VOP_ARG_SIGMAX      std::string("sigma-x")
 #define VOP_ARG_SIGMAY      std::string("sigma-y")
 #define VOP_ARG_SIZEX       std::string("size-x")
@@ -493,6 +494,9 @@ namespace visual_ops
      *
      * - `opencv_image* source`: The image to extract objects from.
      *
+     * - `bool segment`: Whether to segment the image before extracting objects.
+     *   Defaults to true.
+     *
      * - `std::vector<OBJ_REP_TYPE*>* objects`: The extracted objects.
      */
     void extract_objects(data_dict args);
@@ -622,6 +626,7 @@ namespace visual_ops
     // SECTION SPECIAL DATA STRUCTURES //
     /////////////////////////////////////
 
+    //ANCHOR - OBJECT MATCH STRUCT
     struct object_match {
         double score;
         int x;
@@ -629,10 +634,30 @@ namespace visual_ops
         double rotation;
         double scale_x;
         double scale_y;
-        cv::Mat affine_transform;
+        cv::Mat* affine_transform;
         OBJ_REP_TYPE* query_object;
         OBJ_REP_TYPE* match_object;
         int match_object_index;
+
+        std::pair<int, int> translation_from_affine () {
+            return std::make_pair(affine_transform->at<double>(0, 2), affine_transform->at<double>(1, 2));
+        }
+        std::pair<double, double> scale_from_affine () {
+            return std::make_pair(
+                std::sqrt(affine_transform->at<double>(0, 0) * affine_transform->at<double>(0, 0) + affine_transform->at<double>(0, 1) * affine_transform->at<double>(0, 1)),
+                std::sqrt(affine_transform->at<double>(1, 0) * affine_transform->at<double>(1, 0) + affine_transform->at<double>(1, 1) * affine_transform->at<double>(1, 1))
+            );
+        }
+        double rotation_from_affine () {
+            return std::atan2(affine_transform->at<double>(1, 0), affine_transform->at<double>(0, 0));
+        }
+
+        cv::Mat show_transform() {
+            cv::Mat out;
+            cv::warpAffine(query_object->get_object_image(), out, *affine_transform, match_object->get_object_image().size());
+            return out;
+        }
+
         bool operator<(const object_match& other) const {
             return score < other.score;
         }
@@ -952,11 +977,11 @@ namespace visual_ops
     // EXTRACT OBJECTS
     inline vop_params_metadata extract_objects_metadata = {
         /* vop_function = */        extract_objects,
-        /* num_params = */          2,
-        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_OBJECTS},
-        /* param_types = */         {CV_IMAGE_ARG, OBJECT_VEC_ARG},
-        /* param_directions */      {INPUT_ARG, OUTPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_SEGMENT, VOP_ARG_OBJECTS},
+        /* param_types = */         {CV_IMAGE_ARG, INT_ARG, OBJECT_VEC_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG}
     };
 
     // FIND OBJECT IN IMAGE

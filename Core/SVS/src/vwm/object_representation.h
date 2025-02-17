@@ -4,6 +4,7 @@
 // Standard includes
 #include <string>
 #include <vector>
+#include <queue>
 // Third-party includes
 #include <opencv2/opencv.hpp>
 #include <opencv2/ximgproc.hpp>
@@ -34,7 +35,7 @@ public:
      *
      * @return The number of object representations extracted.
      */
-    static int get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations);
+    static int get_object_representations(opencv_image* image, std::vector<hand_crafted_object_representation*> &object_representations, bool do_segment = true);
 
     /**
      * @brief Segments the given product image into object masks via color-based
@@ -49,6 +50,7 @@ public:
 
     cv::Mat get_base_image() { return base_image; }
     cv::Mat get_mask() { return mask; }
+    cv::Mat get_base_image_mask() { return base_image_mask; }
     cv::Vec4i get_border_size() { return border_size; }
     cv::Size2d get_shape() { return shape; }
     double get_diagonal_size() { return diagonal_size; }
@@ -67,6 +69,7 @@ public:
     int get_num_sides() {if (!line_segments_calculated) calculate_line_segments(); return line_segments.size();}
     std::vector<cv::Vec2f> get_corners() {if (!corners_calculated) calculate_corners(); return corners;}
     int get_num_corners() {if (!corners_calculated) calculate_corners(); return corners.size();}
+    std::vector<double> get_corner_angles() {if (!corners_calculated) calculate_corners(); return corner_angles;}
     std::vector<cv::KeyPoint> get_corner_keypoints() {if (!corners_calculated) calculate_corners(); return corner_keypoints;}
     std::vector<std::vector<int>> get_corner_descriptors() {if (!corner_descriptors_calculated) calculate_corner_descriptors(); return corner_descriptors;}
 
@@ -86,16 +89,16 @@ public:
     double get_shape_distance(hand_crafted_object_representation* other);
 
     /**
-     * @brief Computes the best affine transformation to align this object with
+     * @brief Computes the best affine transformations to align this object with
      * another object.
      *
      * This method uses the `cv::getAffineTransform` method to compute the best
      * affine transformation to align this object with another object.
      *
      * @param other The other object to align with.
+     * @param num_transforms The number of best affine transformations to compute.
      */
-    cv::Mat get_best_affine_transform(hand_crafted_object_representation* other);
-
+    std::vector<cv::Mat*> get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms);
 
 private:
     static const int MIN_CONTOUR_POINTS = 32;
@@ -103,6 +106,7 @@ private:
     // Basic image and mask data, computed in constructor
     cv::Mat base_image;
     cv::Mat mask;
+    cv::Mat base_image_mask;
     int border_size;
     cv::Size2d shape;
     double diagonal_size;
@@ -130,6 +134,7 @@ private:
     std::vector<cv::Vec4f> line_segments;
     bool line_segments_calculated = false;
     std::vector<cv::Vec2f> corners;
+    std::vector<double> corner_angles;
     std::vector<cv::KeyPoint> corner_keypoints;
     bool corners_calculated = false;
     std::vector<std::vector<int>> corner_descriptors;
