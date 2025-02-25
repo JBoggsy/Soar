@@ -48,6 +48,7 @@ public:
     double wasser_distance(latent_representation* other);
     std::vector<double>* sample(std::vector<double>* sample);
 
+    std::string to_string();
     void print_latent();
 
 };

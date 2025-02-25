@@ -98,11 +98,14 @@ bool add_vop_node_command::update_sub() {
                 param_present = si->get_const_attr(root, param_name, *((std::string*)node_data_dict[param_name]));
                 break;
             case visual_ops::CV_IMAGE_ARG:
+            case visual_ops::MULTI_CV_IMAGE_ARG:
             case visual_ops::LATENT_REP_ARG:
             case visual_ops::OBJECT_ARG:
                 node_data_dict[param_name] = new long;
                 param_present = si->get_const_attr(root, param_name, *((long*)node_data_dict[param_name]));
-                node_parents[param_name] = (int)*((long*)node_data_dict[param_name]);
+                if (param_present) {
+                    node_parents[param_name] = (int)*((long*)node_data_dict[param_name]);
+                }
                 break;
             case visual_ops::VWM_ARG:
                 node_data_dict[param_name] = vwm;
@@ -124,12 +127,20 @@ bool add_vop_node_command::update_sub() {
 
         // Decide what to do with an argument whose value is missing
         if (!param_present) {
-            if (param_opt == visual_ops::REQUIRED_ARG && param_dir == visual_ops::INPUT_ARG) {  // error out if param was required
+            if (param_opt == visual_ops::REQUIRED_ARG && param_dir == visual_ops::INPUT_ARG) {
+                // error out if param was required
                 char status_buffer[64];
                 sprintf(status_buffer, "missing req'd param %s\n", param_name.c_str());
                 set_status(std::string(status_buffer));
                 return false;
-            } else if (param_type == visual_ops::CV_IMAGE_ARG || param_type == visual_ops::LATENT_REP_ARG || param_type == visual_ops::OBJECT_ARG) {
+            } else if ((param_type == visual_ops::CV_IMAGE_ARG ||
+                       param_type == visual_ops::MULTI_CV_IMAGE_ARG ||
+                       param_type == visual_ops::LATENT_REP_ARG ||
+                       param_type == visual_ops::OBJECT_ARG) && (
+                       param_dir == visual_ops::INPUT_ARG) ||
+                       param_dir == visual_ops::INOUT_ARG) {
+                // set input imagery arguments to -1 if they are missing and add
+                // them to the parents list
                 node_data_dict[param_name] = new long(-1);
                 node_parents[param_name] = -1;
             } else if (param_dir != visual_ops::INPUT_ARG) {  // outputs must be allocated for later use
@@ -145,6 +156,9 @@ bool add_vop_node_command::update_sub() {
                         break;
                     case visual_ops::CV_IMAGE_ARG:
                         node_data_dict[param_name] = new opencv_image();
+                        break;
+                    case visual_ops::MULTI_CV_IMAGE_ARG:
+                        node_data_dict[param_name] = new std::vector<opencv_image*>();
                         break;
                     case visual_ops::OBJECT_ARG:
                         node_data_dict[param_name] = new OBJ_REP_TYPE();

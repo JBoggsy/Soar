@@ -67,6 +67,7 @@ public:
     bool evaluate();
     opencv_image* get_node_image();
     opencv_image* get_node_image(std::string param_name);
+    std::vector<opencv_image*>* get_node_image_vec(std::string param_name);
     #ifdef ENABLE_TORCH
     latent_representation* get_node_latent_rep(std::string param_name);
     #endif

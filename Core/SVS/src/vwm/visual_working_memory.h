@@ -143,6 +143,21 @@ public:
     opencv_image* get_node_image(int node_id);
     opencv_image* get_node_image(int node_id, std::string param_name);
 
+    /**
+     * @brief Gets a vector of images from the VOp node with the given ID.
+     *
+     * This method retrieves a vector of images from the specified parameter of
+     * the VOp node with the given ID. If the parameter does not exist, NULL is
+     * returned.
+     *
+     * @param node_id The id of the node whose image vector is requested.
+     * @param param_name The name of the parameter to retrieve the image vector
+     *
+     * @return std::vector<opencv_image*>* The image vector of the given node,
+     *        or NULL if such a node doesn't exist.
+     */
+    std::vector<opencv_image*>* get_node_image_vec(int node_id, std::string param_name);
+
     #ifdef ENABLE_TORCH
     /**
      * @brief Gets a latent representation from the VOp node with the given ID.

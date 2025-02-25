@@ -102,8 +102,9 @@ public:
     int get_width() {return _img->cols; }
     int get_height() { return _img->rows; }
     bool is_empty();
-    bool operator==(opencv_image& other);
+    std::string to_string();
 
+    bool operator==(opencv_image& other);
     float compare(opencv_image* other);
 
     void draw_image(std::string filename);

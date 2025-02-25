@@ -166,6 +166,16 @@ opencv_image* visual_working_memory::get_node_image(int node_id, std::string par
     }
 }
 
+std::vector<opencv_image*>* visual_working_memory::get_node_image_vec(int node_id, std::string param_name) {
+    if (node_id == -1) { return new std::vector<opencv_image*>(); }
+    visual_operation_node* target_node = get_node(node_id);
+    if (target_node == NULL) {
+        return NULL;
+    } else {
+        return target_node->get_node_image_vec(param_name);
+    }
+}
+
 #ifdef ENABLE_TORCH
 latent_representation* visual_working_memory::get_node_latent_rep(int node_id, std::string param_name) {
     if (node_id == -1) { return new latent_representation(); }
@@ -291,7 +301,7 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
 
     params_info = vop_node->get_param_names_and_types();
     for (std::pair<std::string, int> param_info : params_info) {
-        os << param_info.first << ": ";
+        os << param_info.first << ":=:";
         if (param_info.second == (int)visual_ops::INT_ARG) {
             os << vop_node->get_int_parameter(param_info.first);
         } else if (param_info.second == (int)visual_ops::DOUBLE_ARG) {
@@ -301,9 +311,15 @@ void visual_working_memory::cli_get_node_info(const std::vector<std::string>& ar
         } else if (param_info.second == (int)visual_ops::OBJECT_ARG) {
             os << vop_node->get_obj_parameter(param_info.first)->to_string();
         } else if (param_info.second == (int)visual_ops::CV_IMAGE_ARG) {
-            os << vop_node->get_parent_ids()->at(param_info.first);
+            os << vop_node->get_node_image(param_info.first)->to_string();
+        } else if (param_info.second == (int)visual_ops::MULTI_CV_IMAGE_ARG) {
+            os << vop_node->get_node_image_vec(param_info.first)->size();
         } else if (param_info.second == (int)visual_ops::LATENT_REP_ARG) {
-            os << vop_node->get_parent_ids()->at(param_info.first);
+            #ifdef ENABLE_TORCH
+            os << vop_node->get_node_latent_rep(param_info.first)->to_string();
+            #else
+            os << "LATENT_REP_ARG";
+            #endif
         } else {
             os << "MEMORY ARG";
         }

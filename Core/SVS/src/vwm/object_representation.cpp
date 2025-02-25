@@ -374,12 +374,7 @@ void hand_crafted_object_representation::_subdivide_contours() {
 }
 
 std::string hand_crafted_object_representation::to_string() {
-    std::string out = "Hand-crafted object representation:\n";
-    out += "Base image shape: " + std::to_string(base_image.rows) + "x" + std::to_string(base_image.cols) + "\n";
-    out += "Mask shape: " + std::to_string(mask.rows) + "x" + std::to_string(mask.cols) + "\n";
-    out += "Border size: " + std::to_string(border_size) + "\n";
-    out += "Shape: " + std::to_string(shape.width) + "x" + std::to_string(shape.height) + "\n";
-    out += "Diagonal size: " + std::to_string(diagonal_size) + "\n";
+    std::string out = "(" + std::to_string(shape.width) + "," + std::to_string(shape.height) + ")";
     return out;
 }
 

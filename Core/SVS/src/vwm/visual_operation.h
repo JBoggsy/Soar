@@ -59,6 +59,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
 #define VOP_GET_OBJECT              std::string("get-object")
 #define VOP_OBJECT_DISTANCE         std::string("object-distance")
+#define VOP_SEGMENT                 std::string("segment")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -84,6 +85,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_CONF1       std::string("confidence1")
 #define VOP_ARG_CONF2       std::string("confidence2")
 #define VOP_ARG_CONF3       std::string("confidence3")
+#define VOP_ARG_COUNT       std::string("count")
 #define VOP_ARG_DISTANCE    std::string("distance")
 #define VOP_ARG_END         std::string("end")
 #define VOP_ARG_FILEPATH    std::string("filepath")
@@ -106,7 +108,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_ROTATION    std::string("rotation")
 #define VOP_ARG_SCALEX      std::string("scale-x")
 #define VOP_ARG_SCALEY      std::string("scale-y")
-#define VOP_ARG_SEGMENT     std::string("segment")
+#define VOP_ARG_SEGMENTS    std::string("segments")
 #define VOP_ARG_SIGMAX      std::string("sigma-x")
 #define VOP_ARG_SIGMAY      std::string("sigma-y")
 #define VOP_ARG_SIZEX       std::string("size-x")
@@ -490,9 +492,11 @@ namespace visual_ops
      * ANCHOR get_object
      * @brief Extract an object from the source image.
      *
-     * @param args
-     *      `opencv_image* source`: The image to extract the object from
-     *      `object_representation* object`: The extracted object
+     * @param args Map of arguments to method:
+     *
+     * - `opencv_image* source`: The image to extract the object from
+     *
+     * - `object_representation* object`: The extracted object
      */
     void get_object(data_dict args);
 
@@ -504,12 +508,29 @@ namespace visual_ops
      * is compared to the `target` object in that order, i.e., distance returned
      * is from `query` to `target`.
      *
-     * @param args
-     *      `object_representation* query`: The first object to compare
-     *      `object_representation* target`: The second object to compare
-     *      `double* distance`: The computed distance between the two objects
+     * @param args Map of arguments to method:
+     *
+     * - `object_representation* query`: The first object to compare
+     *
+     * - `object_representation* target`: The second object to compare
+     *
+     * - `double* distance`: The computed distance between the two objects
      */
     void object_distance(data_dict args);
+
+    /**
+     * ANCHOR segment
+     * @brief Segment the source image using watershed and return each segment.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `opencv_image* source`: The image to segment
+     *
+     * - `std::vector<opencv_image*>* segments`: The segmented regions
+     *
+     * - `int* count`: The number of segments found
+     */
+    void segment(data_dict args);
 
     //!SECTION OBJECT DETECTION
 
@@ -653,8 +674,9 @@ namespace visual_ops
         INT_ARG,
         DOUBLE_ARG,
         STRING_ARG,
-        // IMAGE TYPES: integer ID parent VOp node, or -1 for no parent
+        // IMAGERY TYPES: integer ID parent VOp node, or -1 for no parent
         CV_IMAGE_ARG,
+        MULTI_CV_IMAGE_ARG,
         LATENT_REP_ARG,
         OBJECT_ARG,
         // MEMORY POINTERS
@@ -690,7 +712,7 @@ namespace visual_ops
         /* num_params = */          4,
         /* param_names = */         {VOP_ARG_VIBID, VOP_ARG_BUFFERINDEX, VOP_ARG_VIBMGR, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, INT_ARG, VIBMGR_ARG, CV_IMAGE_ARG},
-        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
@@ -700,7 +722,7 @@ namespace visual_ops
         /* num_params = */          2,
         /* param_names = */         {VOP_ARG_FILEPATH, VOP_ARG_SOURCE},
         /* param_types = */         {STRING_ARG, CV_IMAGE_ARG},
-        /* param_directions */      {INPUT_ARG, INOUT_ARG},
+        /* param_directions */      {INPUT_ARG, OUTPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG}
     };
 
@@ -964,6 +986,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, OPTIONAL_ARG}
     };
 
+    //ANCHOR - SEGMENT
+    inline vop_params_metadata segment_metadata = {
+        /* vop_function = */        segment,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_SEGMENTS, VOP_ARG_COUNT},
+        /* param_types = */         {CV_IMAGE_ARG, MULTI_CV_IMAGE_ARG, INT_ARG},
+        /* param_directions */      {INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
@@ -1046,6 +1078,7 @@ namespace visual_ops
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
         {VOP_GET_OBJECT, get_object_metadata},
         {VOP_OBJECT_DISTANCE, object_distance_metadata},
+        {VOP_SEGMENT, segment_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},

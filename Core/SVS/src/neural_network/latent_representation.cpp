@@ -86,6 +86,14 @@ double latent_representation::wasser_distance(latent_representation* other) {
     return sqrt(mean_diff_term + var_term_sum);
 }
 
+std::string latent_representation::to_string() {
+    std::string str = "Latent:\n";
+    for (int i = 0; i < _mu->size(); i++) {
+        str += "  " + std::to_string(_mu->at(i)) + " (" + std::to_string(_sigma->at(i)) + ")\n";
+    }
+    return str;
+}
+
 void latent_representation::print_latent() {
     printf("Latent:\n");
     for (int i = 0; i < _mu->size(); i++) {

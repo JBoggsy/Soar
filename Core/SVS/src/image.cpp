@@ -153,6 +153,16 @@ bool opencv_image::is_empty() {
     return _img->empty();
 }
 
+std::string opencv_image::to_string() {
+    std::string str = "";
+    if (is_empty()) {
+        str += "Empty";
+    } else {
+        str += "(" + std::to_string(_img->cols) + "," + std::to_string(_img->rows) + ")";
+    }
+    return str;
+}
+
 bool opencv_image::operator==(opencv_image& other) {
     cv::Mat difference_mat = *_img - *other._img;
     cv::Scalar channel_diffs = cv::sum(difference_mat);

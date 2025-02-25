@@ -499,6 +499,67 @@ namespace visual_ops
         source->update_image(query->get_base_image());
     }
 
+    void segment(data_dict args) {
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        std::vector<opencv_image*>* segments = (std::vector<opencv_image*>*)args[VOP_ARG_SEGMENTS];
+
+        cv::Mat source_image = *(source->get_image());
+        cv::Mat image_copy;
+        source_image.copyTo(image_copy);
+        image_copy.convertTo(image_copy, CV_8UC4);
+        cv::Mat blurred_img;
+        cv::blur(image_copy, blurred_img, cv::Size(3, 3), cv::Point(-1, -1));
+        cv::Mat detected_edges;
+        cv::Canny(blurred_img, detected_edges, 75, 75 * 4, 3);
+        cv::Mat edge_mask;
+        edge_mask = detected_edges == 0;
+        // Multiply it by the alpha channel of the image to mask background regions
+        cv::Mat image_alpha_mask;
+        cv::extractChannel(image_copy, image_alpha_mask, 3);
+        image_alpha_mask = image_alpha_mask > 0;
+        edge_mask = edge_mask.mul(image_alpha_mask);
+
+        // get_regions()
+        // Generate the seed and unknown regions for the watershed algorithm
+        cv::Mat seed_regions;
+        cv::Mat unknown_regions;
+        cv::erode(edge_mask, seed_regions, cv::Mat(), cv::Point(-1, -1), 1);
+        cv::dilate(edge_mask, unknown_regions, cv::Mat(), cv::Point(-1, -1), 3);
+        unknown_regions = unknown_regions - edge_mask;
+        cv::dilate(unknown_regions, unknown_regions, cv::Mat(), cv::Point(-1, -1), 1);
+
+        // get_watershed_markers()
+        // Apply the watershed algorithm to segment the image
+        cv::Mat watershed_markers;
+        int num_segments = cv::connectedComponents(seed_regions, watershed_markers, 8, CV_32S, cv::CCL_DEFAULT);
+        watershed_markers += 1;
+        watershed_markers.setTo(0, unknown_regions);
+
+        cv::Mat image_copy_flat;
+        if (image_copy.channels() == 4) {
+            cv::cvtColor(image_copy, image_copy_flat, cv::COLOR_RGBA2RGB);
+        } else {
+            image_copy.copyTo(image_copy_flat);
+        }
+        cv::watershed(image_copy_flat, watershed_markers);
+
+        // get_watershed_object_masks()
+        // Extract the object masks from the watershed markers
+        for (int i = 2; i <= num_segments; i++) {
+            cv::Mat marker_mask = watershed_markers == i;  // This should be single-channel a binary mask
+            cv::Mat broadcast = cv::Mat::ones(image_copy.channels()==4 ? 4 : 3, 1, marker_mask.depth());
+            cv::Mat mask;
+            cv::transform(marker_mask, mask, broadcast);  // Should be a 3- or 4-channel binary mask
+            cv::Mat masked_image;
+            cv::bitwise_and(image_copy, mask, masked_image);
+            opencv_image* segment = new opencv_image();
+            segment->update_image(masked_image);
+            segments->push_back(segment);
+        }
+
+        *((int*)args[VOP_ARG_COUNT]) = num_segments;
+    }
+
     //!SECTION OBJECT DETECTION
 
     ///////////////////////////////////
