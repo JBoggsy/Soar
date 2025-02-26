@@ -557,7 +557,15 @@ namespace visual_ops
             segments->push_back(segment);
         }
 
-        *((int*)args[VOP_ARG_COUNT]) = num_segments;
+        *((int*)args[VOP_ARG_COUNT]) = num_segments-1;
+    }
+
+    void get_segment(data_dict args) {
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        std::vector<opencv_image*>* segments = (std::vector<opencv_image*>*)args[VOP_ARG_SEGMENTS];
+        int index = *(int*)args[VOP_ARG_INDEX];
+
+        source->update_image(*segments->at(index)->get_image());
     }
 
     //!SECTION OBJECT DETECTION

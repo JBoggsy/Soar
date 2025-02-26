@@ -60,6 +60,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_GET_OBJECT              std::string("get-object")
 #define VOP_OBJECT_DISTANCE         std::string("object-distance")
 #define VOP_SEGMENT                 std::string("segment")
+#define VOP_GET_SEGMENT             std::string("get-segment")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -93,6 +94,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_FOV_VERT    std::string("fov-vert")
 #define VOP_ARG_FOV_HORIZ   std::string("fov-horiz")
 #define VOP_ARG_HEIGHT      std::string("height")
+#define VOP_ARG_INDEX       std::string("index")
 #define VOP_ARG_LATENT      std::string("latent")
 #define VOP_ARG_MATCHES     std::string("matches")
 #define VOP_ARG_MAXLOCX     std::string("maxloc-x")
@@ -119,7 +121,6 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_TEMPLATE    std::string("template")
 #define VOP_ARG_THRESH      std::string("thresh")
 #define VOP_ARG_TYPE        std::string("type")
-#define VOP_ARG_VEC_INDEX   std::string("vector-index")
 #define VOP_ARG_VIBID       std::string("vib-id")
 #define VOP_ARG_VIBMGR      std::string("vib-manager")
 #define VOP_ARG_VLTM        std::string("vltm")
@@ -531,6 +532,21 @@ namespace visual_ops
      * - `int* count`: The number of segments found
      */
     void segment(data_dict args);
+
+    /**
+     * ANCHOR get_segment
+     * @brief Get the segment at the specified index.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `int index`: The index of the segment to retrieve
+     *
+     * - `std::vector<opencv_image*>* segments`: The vector of segments to
+     *   select from.
+     *
+     * - `opencv_image* source`: The segment at the specified index
+     */
+    void get_segment(data_dict args);
 
     //!SECTION OBJECT DETECTION
 
@@ -996,6 +1012,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    //ANCHOR - GET SEGMENT
+    inline vop_params_metadata get_segment_metadata = {
+        /* vop_function = */        get_segment,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_INDEX, VOP_ARG_SEGMENTS, VOP_ARG_SOURCE},
+        /* param_types = */         {INT_ARG, MULTI_CV_IMAGE_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
@@ -1079,6 +1105,7 @@ namespace visual_ops
         {VOP_GET_OBJECT, get_object_metadata},
         {VOP_OBJECT_DISTANCE, object_distance_metadata},
         {VOP_SEGMENT, segment_metadata},
+        {VOP_GET_SEGMENT, get_segment_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
