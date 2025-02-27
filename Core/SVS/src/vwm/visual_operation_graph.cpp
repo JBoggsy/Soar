@@ -93,6 +93,7 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                         img_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), si_->make_sym(param_val_img->get_height()));
                     }
                 }
+                break;
             case visual_ops::MULTI_CV_IMAGE_ARG:
                 if (param_dir != visual_ops::OUTPUT_ARG) {
                     param_val_int = *(int*)parameters_[param_name];
@@ -340,7 +341,7 @@ bool visual_operation_node::evaluate() {
     wme* img_width_wme;
     wme* img_height_wme;
 
-    std::vector<opencv_image*> param_val_img_vec;
+    std::vector<opencv_image*>* param_val_img_vec;
     wme* num_images_wme;
 
     OBJ_REP_TYPE* param_val_obj;
@@ -380,30 +381,66 @@ bool visual_operation_node::evaluate() {
                 param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
                 break;
             case visual_ops::CV_IMAGE_ARG:
-                param_val_img = (opencv_image*)(parameters_[param_name]);
-                param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
-                empty_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("empty"), si_->make_sym(param_val_img->is_empty()));
-                img_width_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("width"), si_->make_sym(param_val_img->get_width()));
-                img_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), si_->make_sym(param_val_img->get_height()));
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_img = (opencv_image*)parameters_[param_name];
+                    param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                    bool empty = param_val_img->is_empty();
+                    empty_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("empty"), si_->make_sym(empty));
+
+                    if (!empty) {
+                        img_width_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("width"), si_->make_sym(param_val_img->get_width()));
+                        img_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), si_->make_sym(param_val_img->get_height()));
+                    }
+                }
                 break;
             case visual_ops::MULTI_CV_IMAGE_ARG:
-                param_val_img_vec = *(std::vector<opencv_image*>*)parameters_[param_name];
-                param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
-                num_images_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-images"), si_->make_sym((int)param_val_img_vec.size()));
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_img_vec = (std::vector<opencv_image*>*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(-1);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                }
                 break;
             case visual_ops::LATENT_REP_ARG:
                 #ifdef ENABLE_TORCH
-                param_val_latent = (latent_representation*)(parameters_[param_name]);
-                param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
-                latent_size_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("size"), si_->make_sym(param_val_latent->get_size()));
-                break;
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_latent = (latent_representation*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(-1);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                }
                 #endif
+                break;
             case visual_ops::OBJECT_ARG:
-                param_val_obj = (OBJ_REP_TYPE*)(parameters_[param_name]);
-                param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
-                obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), si_->make_sym(param_val_obj->get_num_sides()));
-                obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), si_->make_sym(param_val_obj->get_num_corners()));
-                obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), si_->make_sym(param_val_obj->get_ellipsity()));
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_obj = (OBJ_REP_TYPE*)(parameters_[param_name]);
+                    param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                    obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), -1);
+                    obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), -1);
+                    obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), -1);
+                }
                 break;
         }
     }
