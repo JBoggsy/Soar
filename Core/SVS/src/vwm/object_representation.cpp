@@ -264,99 +264,95 @@ double hand_crafted_object_representation::get_shape_distance(hand_crafted_objec
     return cv::matchShapes(this->get_contours()[0], other->get_contours()[0], cv::CONTOURS_MATCH_I2, 0.0);
 }
 
-std::vector<cv::Mat*> hand_crafted_object_representation::get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms) {
-    // std::priority_queue<std::pair<double, cv::Mat*>, std::vector<std::pair<double, cv::Mat*>>, std::greater<std::pair<double, cv::Mat*>>> affine_queue;
-    // std::vector<cv::Mat*> affine_transforms;
+std::vector<std::pair<double, cv::Mat*>>* hand_crafted_object_representation::get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms) {
+    std::priority_queue<std::pair<double, cv::Mat*>, std::vector<std::pair<double, cv::Mat*>>, std::greater<std::pair<double, cv::Mat*>>> affine_queue;
+    std::vector<std::pair<double, cv::Mat*>>* affine_transforms = new std::vector<std::pair<double, cv::Mat*>>();
 
-    // std::vector<cv::Vec2f> all_self_points = get_corners();
-    // std::vector<cv::Vec2f> all_other_points = other->get_corners();
-    // for (size_t si = 0; si < all_self_points.size(); si++) {
-    //     for (size_t sj = 0; sj < all_self_points.size(); sj++) {
-    //         if (si == sj) { continue; }
-    //         for (size_t sk = 0; sk < all_self_points.size(); sk++) {
-    //             if (si == sk || sj == sk) { continue; }
-    //             cv::Point2f self_prev = all_self_points[si];
-    //             cv::Point2f self_curr = all_self_points[sj];
-    //             cv::Point2f self_next = all_self_points[sk];
-    //             std::vector<cv::Point2f> self_points = { self_prev, self_curr, self_next };
+    std::vector<cv::Vec2f> all_self_points = get_corners();
+    std::vector<cv::Vec2f> all_other_points = other->get_corners();
+    for (size_t si = 0; si < all_self_points.size(); si++) {
+        for (size_t sj = 0; sj < all_self_points.size(); sj++) {
+            if (si == sj) { continue; }
+            for (size_t sk = 0; sk < all_self_points.size(); sk++) {
+                if (si == sk || sj == sk) { continue; }
+                cv::Point2f self_prev = all_self_points[si];
+                cv::Point2f self_curr = all_self_points[sj];
+                cv::Point2f self_next = all_self_points[sk];
+                std::vector<cv::Point2f> self_points = { self_prev, self_curr, self_next };
 
-    //             for (size_t oi = 0; oi < all_other_points.size(); oi++) {
-    //                 for (size_t oj = 0; oj < all_other_points.size(); oj++) {
-    //                     if (oi == oj) { continue; }
-    //                     for (size_t ok = 0; ok < all_other_points.size(); ok++) {
-    //                         if (oi == ok || oj == ok) { continue; }
-    //                         cv::Point2f other_prev = all_other_points[oi];
-    //                         cv::Point2f other_curr = all_other_points[oj];
-    //                         cv::Point2f other_next = all_other_points[ok];
-    //                         std::vector<cv::Point2f> other_points = { other_prev, other_curr, other_next };
+                for (size_t oi = 0; oi < all_other_points.size(); oi++) {
+                    for (size_t oj = 0; oj < all_other_points.size(); oj++) {
+                        if (oi == oj) { continue; }
+                        for (size_t ok = 0; ok < all_other_points.size(); ok++) {
+                            if (oi == ok || oj == ok) { continue; }
+                            cv::Point2f other_prev = all_other_points[oi];
+                            cv::Point2f other_curr = all_other_points[oj];
+                            cv::Point2f other_next = all_other_points[ok];
+                            std::vector<cv::Point2f> other_points = { other_prev, other_curr, other_next };
 
-    //                         // Debug: draw matching colored dots on self and other object images
-    //                         // cv::Mat self_debug, other_debug;
-    //                         // get_object_image().convertTo(self_debug, CV_8UC3, 255.0);
-    //                         // other->get_object_image().convertTo(other_debug, CV_8UC3, 255.0);
+                            // Debug: draw matching colored dots on self and other object images
+                            // cv::Mat self_debug, other_debug;
+                            // get_object_image().convertTo(self_debug, CV_8UC3, 255.0);
+                            // other->get_object_image().convertTo(other_debug, CV_8UC3, 255.0);
 
-    //                         // // Define three matching colors: red, green, blue.
-    //                         // cv::Scalar colors[3] = { cv::Scalar(0, 0, 255, 255), cv::Scalar(0, 255, 0, 255), cv::Scalar(255, 0, 0, 255)};
+                            // // Define three matching colors: red, green, blue.
+                            // cv::Scalar colors[3] = { cv::Scalar(0, 0, 255, 255), cv::Scalar(0, 255, 0, 255), cv::Scalar(255, 0, 0, 255)};
 
-    //                         // for (size_t k = 0; k < 3; k++) {
-    //                         //     cv::circle(self_debug, self_points[k], 4, colors[k], -1);
-    //                         //     cv::circle(other_debug, other_points[k], 4, colors[k], -1);
-    //                         // }
+                            // for (size_t k = 0; k < 3; k++) {
+                            //     cv::circle(self_debug, self_points[k], 4, colors[k], -1);
+                            //     cv::circle(other_debug, other_points[k], 4, colors[k], -1);
+                            // }
 
-    //                         // int rows = std::max(self_debug.rows, other_debug.rows);
-    //                         // int cols = self_debug.cols + other_debug.cols;
-    //                         // cv::Mat combined_debug(rows, cols, self_debug.type(), cv::Scalar(0, 0, 0));
-    //                         // cv::Mat leftROI = combined_debug(cv::Rect(0, 0, self_debug.cols, self_debug.rows));
-    //                         // self_debug.copyTo(leftROI);
-    //                         // cv::Mat rightROI = combined_debug(cv::Rect(self_debug.cols, 0, other_debug.cols, other_debug.rows));
-    //                         // other_debug.copyTo(rightROI);
+                            // int rows = std::max(self_debug.rows, other_debug.rows);
+                            // int cols = self_debug.cols + other_debug.cols;
+                            // cv::Mat combined_debug(rows, cols, self_debug.type(), cv::Scalar(0, 0, 0));
+                            // cv::Mat leftROI = combined_debug(cv::Rect(0, 0, self_debug.cols, self_debug.rows));
+                            // self_debug.copyTo(leftROI);
+                            // cv::Mat rightROI = combined_debug(cv::Rect(self_debug.cols, 0, other_debug.cols, other_debug.rows));
+                            // other_debug.copyTo(rightROI);
 
-    //                         // // Draw colored lines between corresponding points in self and other debug images.
-    //                         // for (size_t k = 0; k < 3; k++) {
-    //                         //     cv::Point2f pt1 = self_points[k];
-    //                         //     cv::Point2f pt2 = other_points[k] + cv::Point2f((float) self_debug.cols, 0.0);
-    //                         //     cv::line(combined_debug, pt1, pt2, colors[k], 2);
-    //                         // }
+                            // // Draw colored lines between corresponding points in self and other debug images.
+                            // for (size_t k = 0; k < 3; k++) {
+                            //     cv::Point2f pt1 = self_points[k];
+                            //     cv::Point2f pt2 = other_points[k] + cv::Point2f((float) self_debug.cols, 0.0);
+                            //     cv::line(combined_debug, pt1, pt2, colors[k], 2);
+                            // }
 
-    //                         // std::string filename = "affine_debug/affine_debug_" + std::to_string(si) + "-" + std::to_string(sj) + "-" + std::to_string(sk) + "_" + std::to_string(oi) + "-" + std::to_string(oj) + "-" + std::to_string(ok) + ".png";
-    //                         // cv::imwrite(filename, combined_debug);
+                            // std::string filename = "affine_debug/affine_debug_" + std::to_string(si) + "-" + std::to_string(sj) + "-" + std::to_string(sk) + "_" + std::to_string(oi) + "-" + std::to_string(oj) + "-" + std::to_string(ok) + ".png";
+                            // cv::imwrite(filename, combined_debug);
 
-    //                         cv::Mat affine = cv::getAffineTransform(self_points, other_points);
+                            cv::Mat affine = cv::getAffineTransform(self_points, other_points);
 
-    //                         cv::Mat transformed_mask;
-    //                         cv::warpAffine(mask, transformed_mask, affine, other->mask.size(), cv::INTER_NEAREST);
+                            cv::Mat transformed_mask;
+                            cv::warpAffine(mask, transformed_mask, affine, other->mask.size(), cv::INTER_NEAREST);
 
-    //                         cv::Mat target_intersection;
-    //                         cv::bitwise_and(transformed_mask, other->mask, target_intersection);
-    //                         double overlap_area = static_cast<double>(cv::countNonZero(target_intersection));
+                            cv::Mat target_intersection;
+                            cv::bitwise_and(transformed_mask, other->mask, target_intersection);
+                            double intersection_area = static_cast<double>(cv::countNonZero(target_intersection));
 
-    //                         cv::Mat base_invalid_overlap;
-    //                         cv::Mat base_mask_inv;
-    //                         cv::bitwise_not(other->get_base_image_mask(), base_mask_inv);
-    //                         cv::bitwise_and(transformed_mask, base_mask_inv, base_invalid_overlap);
-    //                         double invalid_overlap = static_cast<double>(cv::countNonZero(base_invalid_overlap));
+                            cv::Mat target_union;
+                            cv::bitwise_or(transformed_mask, other->mask, target_union);
+                            double union_area = static_cast<double>(cv::countNonZero(target_union));
 
-    //                         if ((invalid_overlap/overlap_area) > 0.1) { continue; }
+                            double iou = intersection_area / union_area;
+                            affine_queue.push(std::make_pair(iou, new cv::Mat(affine)));
+                            if (affine_queue.size() > num_transforms) {
+                                cv::Mat* worst_affine = affine_queue.top().second;
+                                affine_queue.pop();
+                                delete worst_affine;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    //                         double overlap_ratio = overlap_area / static_cast<double>(cv::countNonZero(other->mask));
-    //                         affine_queue.push(std::make_pair(overlap_ratio, new cv::Mat(affine)));
-    //                         if (affine_queue.size() > num_transforms) {
-    //                             cv::Mat* worst_affine = affine_queue.top().second;
-    //                             affine_queue.pop();
-    //                             delete worst_affine;
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // while (!affine_queue.empty()) {
-    //     affine_transforms.push_back(affine_queue.top().second);
-    //     affine_queue.pop();
-    // }
-    // return affine_transforms;
+    while (!affine_queue.empty()) {
+        affine_transforms->push_back(affine_queue.top());
+        affine_queue.pop();
+    }
+    return affine_transforms;
 }
 
 void hand_crafted_object_representation::_subdivide_contours() {

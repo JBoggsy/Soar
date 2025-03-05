@@ -568,6 +568,38 @@ namespace visual_ops
         source->update_image(*segments->at(index)->get_image());
     }
 
+    void get_transforms(data_dict args) {
+        OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
+        OBJ_REP_TYPE* target = (OBJ_REP_TYPE*)args[VOP_ARG_TARGET];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+
+        std::vector<visual_ops::affine_transform_struct*>* transforms = (std::vector<visual_ops::affine_transform_struct*>*)args[VOP_ARG_TRANSFORMS];
+        transforms->clear();
+
+        std::vector<std::pair<double, cv::Mat*>>* results = query->get_best_affine_transforms(target, 5);
+
+        for (int i = 0; i < results->size(); i++) {
+            visual_ops::affine_transform_struct* transform = new visual_ops::affine_transform_struct();
+            transform->score = results->at(i).first;
+            transform->affine_transform = results->at(i).second;
+
+            std::pair<int, int> translation = transform->translation_from_affine();
+            transform->x = translation.first;
+            transform->y = translation.second;
+
+            transform->rotation = transform->rotation_from_affine();
+
+            std::pair<double, double> scale = transform->scale_from_affine();
+            transform->scale_x = scale.first;
+            transform->scale_y = scale.second;
+
+            transforms->push_back(transform);
+        }
+
+        source->update_image(query->get_base_image());
+        *((int*)args[VOP_ARG_COUNT]) = results->size();
+    }
+
     //!SECTION OBJECT DETECTION
 
     ///////////////////////////////////

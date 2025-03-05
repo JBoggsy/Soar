@@ -61,6 +61,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_OBJECT_DISTANCE         std::string("object-distance")
 #define VOP_SEGMENT                 std::string("segment")
 #define VOP_GET_SEGMENT             std::string("get-segment")
+#define VOP_GET_TRANSFORMS          std::string("get-transforms")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -120,6 +121,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_TARGET      std::string("target")
 #define VOP_ARG_TEMPLATE    std::string("template")
 #define VOP_ARG_THRESH      std::string("thresh")
+#define VOP_ARG_TRANSFORMS  std::string("transforms")
 #define VOP_ARG_TYPE        std::string("type")
 #define VOP_ARG_VIBID       std::string("vib-id")
 #define VOP_ARG_VIBMGR      std::string("vib-manager")
@@ -547,6 +549,25 @@ namespace visual_ops
      * - `opencv_image* source`: The segment at the specified index
      */
     void get_segment(data_dict args);
+
+    /**
+     * ANCHOR get_transforms
+     * @brief Get a list of affine transformations that align three corners of
+     * the query object with the target object. List is sorted by IoU.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `object_representation* query`: The object to align
+     *
+     * - `object_representation* target`: The object to align with
+     *
+     * - `int count`: The number of best affine transformations to compute
+     *
+     * - `std::vector<visual_ops::affine_transform_struct*>* transforms`: The list of best affine transformations
+     * 
+     * - `opencv_image* source`: The source image, in this case the query object
+     */
+    void get_transforms(data_dict args);
 
     //!SECTION OBJECT DETECTION
 
@@ -1022,6 +1043,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    //ANCHOR - GET TRANSFORMS
+    inline vop_params_metadata get_transforms_metadata = {
+        /* vop_function = */        get_transforms,
+        /* num_params = */          5,
+        /* param_names = */         {VOP_ARG_QUERY, VOP_ARG_TARGET, VOP_ARG_COUNT, VOP_ARG_TRANSFORMS, VOP_ARG_SOURCE},
+        /* param_types = */         {OBJECT_ARG, OBJECT_ARG, INT_ARG, MULTI_AFFINE_TRANSFORM_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - ENCODE IMAGE
     inline vop_params_metadata encode_metadata = {
         /* vop_function = */        encode,
@@ -1106,6 +1137,7 @@ namespace visual_ops
         {VOP_OBJECT_DISTANCE, object_distance_metadata},
         {VOP_SEGMENT, segment_metadata},
         {VOP_GET_SEGMENT, get_segment_metadata},
+        {VOP_GET_TRANSFORMS, get_transforms_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
