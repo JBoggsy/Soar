@@ -638,7 +638,7 @@ namespace visual_ops
     /////////////////////////////////////
 
     //ANCHOR - OBJECT MATCH STRUCT
-    struct object_match {
+    struct affine_transform_struct {
         double score;
         int x;
         int y;
@@ -646,9 +646,6 @@ namespace visual_ops
         double scale_x;
         double scale_y;
         cv::Mat* affine_transform;
-        OBJ_REP_TYPE* query_object;
-        OBJ_REP_TYPE* match_object;
-        int match_object_index;
 
         std::pair<int, int> translation_from_affine () {
             return std::make_pair(affine_transform->at<double>(0, 2), affine_transform->at<double>(1, 2));
@@ -663,16 +660,16 @@ namespace visual_ops
             return std::atan2(affine_transform->at<double>(1, 0), affine_transform->at<double>(0, 0));
         }
 
-        cv::Mat show_transform() {
+        cv::Mat show_transform(OBJ_REP_TYPE* query_object, OBJ_REP_TYPE* match_object) {
             cv::Mat out;
             cv::warpAffine(query_object->get_object_image(), out, *affine_transform, match_object->get_object_image().size());
             return out;
         }
 
-        bool operator<(const object_match& other) const {
+        bool operator<(const affine_transform_struct& other) const {
             return score < other.score;
         }
-        bool operator>(const object_match& other) const {
+        bool operator>(const affine_transform_struct& other) const {
             return score > other.score;
         }
     };
@@ -694,7 +691,10 @@ namespace visual_ops
         CV_IMAGE_ARG,
         MULTI_CV_IMAGE_ARG,
         LATENT_REP_ARG,
+        // OBJECT TYPES
         OBJECT_ARG,
+        AFFINE_TRANSFORM_ARG,
+        MULTI_AFFINE_TRANSFORM_ARG,
         // MEMORY POINTERS
         VIBMGR_ARG,      // pointer to the VIB manager
         VWM_ARG,         // pointer to VWM

@@ -48,6 +48,12 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
     wme* obj_num_corners_wme;
     wme* obj_ellipsity_wme;
 
+    visual_ops::affine_transform_struct* param_val_affine;
+    wme* affine_score_wme;
+
+    std::vector<visual_ops::affine_transform_struct*>* param_val_affine_vec;
+    wme* num_affines_wme;
+
     #ifdef ENABLE_TORCH
     latent_representation* param_val_latent;
     wme* latent_size_wme;
@@ -134,6 +140,32 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                     obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), -1);
                     obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), -1);
                     obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), -1);
+                }
+                break;
+            case visual_ops::AFFINE_TRANSFORM_ARG:
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_affine = (visual_ops::affine_transform_struct*)(parameters_[param_name]);
+                    param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                    affine_score_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("score"), -1);
+                }
+                break;
+            case visual_ops::MULTI_AFFINE_TRANSFORM_ARG:
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_affine_vec = (std::vector<visual_ops::affine_transform_struct*>*)(parameters_[param_name]);
+                    param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                    num_affines_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-affines"), 0);
                 }
                 break;
             default:
@@ -322,7 +354,12 @@ bool visual_operation_node::evaluate() {
             case visual_ops::OBJECT_ARG:
                 parameters_[parent_param_name] = vwm_->get_object_rep(parent_node_id);
                 break;
-
+            case visual_ops::AFFINE_TRANSFORM_ARG:
+                parameters_[parent_param_name] = vwm_->get_affine_transform(parent_node_id, parent_param_name);
+                break;
+            case visual_ops::MULTI_AFFINE_TRANSFORM_ARG:
+                parameters_[parent_param_name] = vwm_->get_affine_transform_vec(parent_node_id, parent_param_name);
+                break;
         }
         if (parameters_[parent_param_name] == NULL) { printf("ERROR: Node %d not found\n", parent_node_id); }
     }
@@ -353,6 +390,12 @@ bool visual_operation_node::evaluate() {
     latent_representation* param_val_latent;
     wme* latent_size_wme;
     #endif
+
+    visual_ops::affine_transform_struct* param_val_affine;
+    wme* affine_score_wme;
+
+    std::vector<visual_ops::affine_transform_struct*>* param_val_affine_vec;
+    wme* num_affines_wme;
 
     for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
         param_name = op_metadata_.param_names[param_i];
@@ -408,7 +451,7 @@ bool visual_operation_node::evaluate() {
                     parent_types_[param_name] = param_type;
                 } else {
                     param_val_img_vec = (std::vector<opencv_image*>*)parameters_[param_name];
-                    param_syms_[param_name] = si_->make_sym(-1);
+                    param_syms_[param_name] = si_->make_sym((int)param_val_img_vec->size());
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
                 }
                 break;
@@ -437,9 +480,35 @@ bool visual_operation_node::evaluate() {
                 } else {
                     param_val_obj = (OBJ_REP_TYPE*)(parameters_[param_name]);
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
-                    obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), -1);
-                    obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), -1);
-                    obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), -1);
+                    obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), param_val_obj->get_num_sides());
+                    obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), param_val_obj->get_num_corners());
+                    obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), param_val_obj->get_ellipsity());
+                }
+                break;
+            case visual_ops::AFFINE_TRANSFORM_ARG:
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_affine = (visual_ops::affine_transform_struct*)(parameters_[param_name]);
+                    param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                    affine_score_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("score"), param_val_affine->score);
+                }
+                break;
+            case visual_ops::MULTI_AFFINE_TRANSFORM_ARG:
+                if (param_dir != visual_ops::OUTPUT_ARG) {
+                    param_val_int = *(int*)parameters_[param_name];
+                    param_syms_[param_name] = si_->make_sym(param_val_int);
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    parent_ids_[param_name] = param_val_int;
+                    parent_types_[param_name] = param_type;
+                } else {
+                    param_val_affine_vec = (std::vector<visual_ops::affine_transform_struct*>*)(parameters_[param_name]);
+                    param_syms_[param_name] = si_->make_sym((int)param_val_affine_vec->size());
+                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
                 }
                 break;
         }
@@ -450,7 +519,9 @@ bool visual_operation_node::evaluate() {
     if (op_type_.compare(VOP_SAVE_TO_FILE) != 0) {
         char debug_save_filename[64];
         snprintf(debug_save_filename, 64, "node-%d.json", id_);
-        ((opencv_image*)parameters_["source"])->save_image_data(debug_save_filename);
+        if (parameters_.find("source") != parameters_.end()) {
+            ((opencv_image*)parameters_["source"])->save_image_data(debug_save_filename);
+        }
     }
 
     return true;
@@ -473,6 +544,14 @@ latent_representation* visual_operation_node::get_node_latent_rep(std::string pa
 
 OBJ_REP_TYPE* visual_operation_node::get_object_rep() {
     return (OBJ_REP_TYPE*)parameters_[VOP_ARG_OBJECT];
+}
+
+visual_ops::affine_transform_struct* visual_operation_node::get_affine_transform(std::string param_name) {
+    return (visual_ops::affine_transform_struct*)parameters_[param_name];
+}
+
+std::vector<visual_ops::affine_transform_struct*>* visual_operation_node::get_affine_transform_vec(std::string param_name) {
+    return (std::vector<visual_ops::affine_transform_struct*>*)parameters_[param_name];
 }
 
 std::string visual_operation_node::get_dot_string() {

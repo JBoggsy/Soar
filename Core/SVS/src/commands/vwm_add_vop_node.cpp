@@ -101,6 +101,8 @@ bool add_vop_node_command::update_sub() {
             case visual_ops::MULTI_CV_IMAGE_ARG:
             case visual_ops::LATENT_REP_ARG:
             case visual_ops::OBJECT_ARG:
+            case visual_ops::AFFINE_TRANSFORM_ARG:
+            case visual_ops::MULTI_AFFINE_TRANSFORM_ARG:
                 node_data_dict[param_name] = new long;
                 param_present = si->get_const_attr(root, param_name, *((long*)node_data_dict[param_name]));
                 if (param_present) {
@@ -136,7 +138,9 @@ bool add_vop_node_command::update_sub() {
             } else if ((param_type == visual_ops::CV_IMAGE_ARG ||
                        param_type == visual_ops::MULTI_CV_IMAGE_ARG ||
                        param_type == visual_ops::LATENT_REP_ARG ||
-                       param_type == visual_ops::OBJECT_ARG) && (
+                       param_type == visual_ops::OBJECT_ARG ||
+                       param_type == visual_ops::AFFINE_TRANSFORM_ARG ||
+                       param_type == visual_ops::MULTI_AFFINE_TRANSFORM_ARG) && (
                        param_dir == visual_ops::INPUT_ARG) ||
                        param_dir == visual_ops::INOUT_ARG) {
                 // set input imagery arguments to -1 if they are missing and add
@@ -159,6 +163,9 @@ bool add_vop_node_command::update_sub() {
                         break;
                     case visual_ops::MULTI_CV_IMAGE_ARG:
                         node_data_dict[param_name] = new std::vector<opencv_image*>();
+                        break;
+                    case visual_ops::MULTI_AFFINE_TRANSFORM_ARG:
+                        node_data_dict[param_name] = new std::vector<visual_ops::affine_transform_struct*>();
                         break;
                     case visual_ops::OBJECT_ARG:
                         node_data_dict[param_name] = new OBJ_REP_TYPE();

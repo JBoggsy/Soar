@@ -200,6 +200,26 @@ OBJ_REP_TYPE* visual_working_memory::get_object_rep(int node_id) {
     }
 }
 
+visual_ops::affine_transform_struct* visual_working_memory::get_affine_transform(int node_id, std::string param_name) {
+    visual_operation_node* target_node = get_node(node_id);
+    if (node_id == -1) { return new visual_ops::affine_transform_struct(); }
+    if (target_node == NULL) {
+        return NULL;
+    } else {
+        return target_node->get_affine_transform(param_name);
+    }
+}
+
+std::vector<visual_ops::affine_transform_struct*>* visual_working_memory::get_affine_transform_vec(int node_id, std::string param_name) {
+    visual_operation_node* target_node = get_node(node_id);
+    if (node_id == -1) { return new std::vector<visual_ops::affine_transform_struct*>(); }
+    if (target_node == NULL) {
+        return NULL;
+    } else {
+        return target_node->get_affine_transform_vec(param_name);
+    }
+}
+
 int visual_working_memory::assign_new_node_id() {
     return next_vop_node_id++;
 }

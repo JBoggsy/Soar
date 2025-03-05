@@ -72,6 +72,8 @@ public:
     latent_representation* get_node_latent_rep(std::string param_name);
     #endif
     OBJ_REP_TYPE* get_object_rep();
+    visual_ops::affine_transform_struct* get_affine_transform(std::string param_name);
+    std::vector<visual_ops::affine_transform_struct*>* get_affine_transform_vec(std::string param_name);
 
 
     /**

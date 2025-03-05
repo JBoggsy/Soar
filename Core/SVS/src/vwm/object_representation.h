@@ -54,7 +54,7 @@ public:
     cv::Mat get_contour_image() {if (!contour_image_generated) generate_contour_image(); return contour_image;}
     cv::Rect2d get_mask_bbox() {if (!mask_bbox_calculated) calculate_mask_bbox(); return mask_bbox;}
     cv::RotatedRect get_min_area_rect() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect;}
-    double get_ellipsity() { return ellipsity; }
+    double get_ellipsity() { if (!ellipsity_calculated) calculate_ellipsity(); return ellipsity;}
 
     std::vector<cv::Vec4f> get_line_segments() {if (!line_segments_calculated) calculate_line_segments(); return line_segments;}
     int get_num_sides() {if (!line_segments_calculated) calculate_line_segments(); return line_segments.size();}
@@ -89,7 +89,7 @@ public:
      * @param other The other object to align with.
      * @param num_transforms The number of best affine transformations to compute.
      */
-    std::vector<cv::Mat*> get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms);
+    std::vector<std::pair<double, cv::Mat*>>* get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms);
 
     /**
      * @brief Converts the object representation to a string.

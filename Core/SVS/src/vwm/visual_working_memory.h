@@ -185,6 +185,26 @@ public:
     OBJ_REP_TYPE* get_object_rep(int node_id);
 
     /**
+     * @brief Get the affine transformation from the given node.
+     *
+     * @param node_id The id of the node whose affine transformation is
+     * requested.
+     * @param param_name The name of the parameter to retrieve the affine
+     * transformation from.
+     */
+    visual_ops::affine_transform_struct* get_affine_transform(int node_id, std::string param_name);
+
+    /**
+     * @brief Get the vector of affine transformations from the given node.
+     *
+     * @param node_id The id of the node whose affine transformation vector is
+     * requested.
+     * @param param_name The name of the parameter to retrieve the affine
+     * transformation vector from.
+     */
+    std::vector<visual_ops::affine_transform_struct*>* get_affine_transform_vec(int node_id, std::string param_name);
+
+    /**
      * @brief Generate a DOT language representation of the visual operations graph.
      */
     std::string get_vog_dot_string();
