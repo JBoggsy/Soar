@@ -48,12 +48,17 @@ public:
 
     cv::Mat get_object_image() {if (!object_image_generated) generate_object_image(); return object_image;}
     cv::Mat get_object_image_gray() {if (!object_image_generated) generate_object_image(); return object_image_gray;}
+    cv::Scalar get_object_color() {if (!object_image_generated) generate_object_image(); return object_color;}
+    std::string get_object_color_name() {if (!object_image_generated) generate_object_image(); return object_color_name;}
 
     std::vector<std::vector<cv::Point>> get_contours() {if (!contours_calculated) calculate_contours(); return contours;}
     std::vector<cv::Point> get_contour() {if (!contour_calculated) calculate_contours(); return contour;}
     cv::Mat get_contour_image() {if (!contour_image_generated) generate_contour_image(); return contour_image;}
     cv::Rect2d get_mask_bbox() {if (!mask_bbox_calculated) calculate_mask_bbox(); return mask_bbox;}
     cv::RotatedRect get_min_area_rect() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect;}
+    float get_min_rect_height() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect.size.height;}
+    float get_min_rect_width() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect.size.width;}
+    float get_min_rect_angle() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect.angle;}
     double get_ellipsity() { if (!ellipsity_calculated) calculate_ellipsity(); return ellipsity;}
 
     std::vector<cv::Vec4f> get_line_segments() {if (!line_segments_calculated) calculate_line_segments(); return line_segments;}
@@ -61,6 +66,7 @@ public:
     std::vector<cv::Vec2f> get_corners() {if (!corners_calculated) calculate_corners(); return corners;}
     int get_num_corners() {if (!corners_calculated) calculate_corners(); return corners.size();}
     std::vector<double> get_corner_angles() {if (!corners_calculated) calculate_corners(); return corner_angles;}
+
     std::vector<cv::KeyPoint> get_corner_keypoints() {if (!corners_calculated) calculate_corners(); return corner_keypoints;}
     std::vector<std::vector<int>> get_corner_descriptors() {if (!corner_descriptors_calculated) calculate_corner_descriptors(); return corner_descriptors;}
 
@@ -116,6 +122,16 @@ public:
 
 private:
     static const int MIN_CONTOUR_POINTS = 32;
+    static const cv::Scalar COLOR_RED;
+    static const cv::Scalar COLOR_GREEN;
+    static const cv::Scalar COLOR_BLUE;
+    static const cv::Scalar COLOR_CYAN;
+    static const cv::Scalar COLOR_MAGENTA;
+    static const cv::Scalar COLOR_YELLOW;
+    static const cv::Scalar COLOR_BLACK;
+    static const cv::Scalar COLOR_WHITE;
+    static const std::vector<cv::Scalar> COLORS;
+    static const std::vector<std::string> COLOR_NAMES;
 
     // Basic image and mask data, computed in constructor
     cv::Mat base_image;
@@ -127,6 +143,8 @@ private:
     // Object image, lazy-computed
     cv::Mat object_image;
     cv::Mat object_image_gray;
+    cv::Scalar object_color;
+    std::string object_color_name;
     bool object_image_generated = false;
 
     // Contours and related, lazy-computed

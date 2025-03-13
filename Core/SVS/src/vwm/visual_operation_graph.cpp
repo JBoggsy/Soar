@@ -47,6 +47,10 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
     wme* obj_num_sides_wme;
     wme* obj_num_corners_wme;
     wme* obj_ellipsity_wme;
+    wme* obj_color_wme;
+    wme* obj_minrect_h_wme;
+    wme* obj_minrect_w_wme;
+    wme* obj_minrect_angle_wme;
 
     visual_ops::affine_transform_struct* param_val_affine;
     wme* affine_score_wme;
@@ -140,6 +144,9 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                     obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), -1);
                     obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), -1);
                     obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), -1);
+                    obj_color_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("color"), -1);
+                    obj_minrect_h_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-h"), -1);
+                    obj_minrect_w_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-w"), -1);
                 }
                 break;
             case visual_ops::AFFINE_TRANSFORM_ARG:
@@ -385,6 +392,10 @@ bool visual_operation_node::evaluate() {
     wme* obj_num_sides_wme;
     wme* obj_num_corners_wme;
     wme* obj_ellipsity_wme;
+    wme* obj_color_wme;
+    wme* obj_minrect_h_wme;
+    wme* obj_minrect_w_wme;
+    wme* obj_minrect_angle_wme;
 
     #ifdef ENABLE_TORCH
     latent_representation* param_val_latent;
@@ -482,6 +493,17 @@ bool visual_operation_node::evaluate() {
                     obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), param_val_obj->get_num_sides());
                     obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), param_val_obj->get_num_corners());
                     obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), param_val_obj->get_ellipsity());
+                    cv::Scalar color = param_val_obj->get_object_color();
+                    obj_color_wme = si_->make_id_wme(param_wmes_[param_name]->value, std::string("color-value"));
+                    si_->make_wme(obj_color_wme->value, std::string("r"), color[0]);
+                    si_->make_wme(obj_color_wme->value, std::string("g"), color[1]);
+                    si_->make_wme(obj_color_wme->value, std::string("b"), color[2]);
+                    si_->make_wme(obj_color_wme->value, std::string("a"), color[3]);
+                    std::string color_name = param_val_obj->get_object_color_name();
+                    si_->make_wme(param_wmes_[param_name]->value, std::string("color-name"), si_->make_sym(color_name));
+                    obj_minrect_h_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-h"), param_val_obj->get_min_rect_height());
+                    obj_minrect_w_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-w"), param_val_obj->get_min_rect_width());
+                    obj_minrect_angle_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-angle"), param_val_obj->get_min_rect_angle());
                 }
                 break;
             case visual_ops::AFFINE_TRANSFORM_ARG:

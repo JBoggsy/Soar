@@ -1202,11 +1202,15 @@ Symbol* round_off_air_rhs_function_code(agent* thisAgent, cons* args, void* /*us
     /* Now, deal with the arguments based on type and return result */
     if (float_found)
     {
-        return thisAgent->symbolManager->make_float_constant(round_off_heading_float(n, f_m));
+        double rounded_quotient = std::round(n / f_m);
+        double rounded_value = f_m * rounded_quotient;
+        return thisAgent->symbolManager->make_float_constant(rounded_value);
     }
     else
     {
-        return thisAgent->symbolManager->make_int_constant(round_off_heading_int(static_cast<int64_t>(n), i_m));
+        double rounded_quotient = std::round(static_cast<double>(n) / static_cast<double>(i_m));
+        double rounded_value = static_cast<double>(i_m) * rounded_quotient;
+        return thisAgent->symbolManager->make_int_constant(static_cast<int64_t>(rounded_value));
     }
 }
 
