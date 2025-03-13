@@ -213,6 +213,22 @@ void hand_crafted_object_representation::calculate_corners() {
         use_harris_detector,
         k
     );
+
+    // Calculate the center of the corners
+    cv::Point2f center(0, 0);
+    for (cv::Vec2f corner : corners) {
+        center.x += corner[0];
+        center.y += corner[1];
+    }
+    center *= (1.0 / corners.size());
+
+    // Sort corners in counterclockwise order
+    std::sort(corners.begin(), corners.end(), [center](const cv::Point2f& a, const cv::Point2f& b) {
+        double angle_a = atan2(a.y - center.y, a.x - center.x);
+        double angle_b = atan2(b.y - center.y, b.x - center.x);
+        return angle_a < angle_b;
+    });
+
     // Convert corners to keypoints
     for (int i = 0; i < corners.size(); i++) {
         cv::KeyPoint keypoint = cv::KeyPoint(corners[i], 16.0);
@@ -268,63 +284,40 @@ std::vector<std::pair<double, cv::Mat*>>* hand_crafted_object_representation::ge
     std::priority_queue<std::pair<double, cv::Mat*>, std::vector<std::pair<double, cv::Mat*>>, std::greater<std::pair<double, cv::Mat*>>> affine_queue;
     std::vector<std::pair<double, cv::Mat*>>* affine_transforms = new std::vector<std::pair<double, cv::Mat*>>();
 
+    std::unordered_set<double> scores_seen = std::unordered_set<double>();
     std::vector<cv::Vec2f> all_self_points = get_corners();
     std::vector<cv::Vec2f> all_other_points = other->get_corners();
     for (size_t si = 0; si < all_self_points.size(); si++) {
         for (size_t sj = 0; sj < all_self_points.size(); sj++) {
             if (si == sj) { continue; }
             for (size_t sk = 0; sk < all_self_points.size(); sk++) {
-                if (si == sk || sj == sk) { continue; }
+                if (si <= sk || sj == sk) { continue; }
                 cv::Point2f self_prev = all_self_points[si];
                 cv::Point2f self_curr = all_self_points[sj];
                 cv::Point2f self_next = all_self_points[sk];
+                if (cv::norm(self_prev - self_curr) < 5 || cv::norm(self_prev - self_next) < 5 || cv::norm(self_curr - self_next) < 5) {
+                    continue;
+                }
                 std::vector<cv::Point2f> self_points = { self_prev, self_curr, self_next };
 
                 for (size_t oi = 0; oi < all_other_points.size(); oi++) {
                     for (size_t oj = 0; oj < all_other_points.size(); oj++) {
                         if (oi == oj) { continue; }
                         for (size_t ok = 0; ok < all_other_points.size(); ok++) {
-                            if (oi == ok || oj == ok) { continue; }
+                            if (oi <= ok || oj == ok) { continue; }
                             cv::Point2f other_prev = all_other_points[oi];
                             cv::Point2f other_curr = all_other_points[oj];
                             cv::Point2f other_next = all_other_points[ok];
+                            if (cv::norm(other_prev - other_curr) < 5 || cv::norm(other_prev - other_next) < 5 || cv::norm(other_curr - other_next) < 5) {
+                                continue;
+                            }
                             std::vector<cv::Point2f> other_points = { other_prev, other_curr, other_next };
-
-                            // Debug: draw matching colored dots on self and other object images
-                            // cv::Mat self_debug, other_debug;
-                            // get_object_image().convertTo(self_debug, CV_8UC3, 255.0);
-                            // other->get_object_image().convertTo(other_debug, CV_8UC3, 255.0);
-
-                            // // Define three matching colors: red, green, blue.
-                            // cv::Scalar colors[3] = { cv::Scalar(0, 0, 255, 255), cv::Scalar(0, 255, 0, 255), cv::Scalar(255, 0, 0, 255)};
-
-                            // for (size_t k = 0; k < 3; k++) {
-                            //     cv::circle(self_debug, self_points[k], 4, colors[k], -1);
-                            //     cv::circle(other_debug, other_points[k], 4, colors[k], -1);
-                            // }
-
-                            // int rows = std::max(self_debug.rows, other_debug.rows);
-                            // int cols = self_debug.cols + other_debug.cols;
-                            // cv::Mat combined_debug(rows, cols, self_debug.type(), cv::Scalar(0, 0, 0));
-                            // cv::Mat leftROI = combined_debug(cv::Rect(0, 0, self_debug.cols, self_debug.rows));
-                            // self_debug.copyTo(leftROI);
-                            // cv::Mat rightROI = combined_debug(cv::Rect(self_debug.cols, 0, other_debug.cols, other_debug.rows));
-                            // other_debug.copyTo(rightROI);
-
-                            // // Draw colored lines between corresponding points in self and other debug images.
-                            // for (size_t k = 0; k < 3; k++) {
-                            //     cv::Point2f pt1 = self_points[k];
-                            //     cv::Point2f pt2 = other_points[k] + cv::Point2f((float) self_debug.cols, 0.0);
-                            //     cv::line(combined_debug, pt1, pt2, colors[k], 2);
-                            // }
-
-                            // std::string filename = "affine_debug/affine_debug_" + std::to_string(si) + "-" + std::to_string(sj) + "-" + std::to_string(sk) + "_" + std::to_string(oi) + "-" + std::to_string(oj) + "-" + std::to_string(ok) + ".png";
-                            // cv::imwrite(filename, combined_debug);
-
                             cv::Mat affine = cv::getAffineTransform(self_points, other_points);
 
                             cv::Mat transformed_mask;
                             cv::warpAffine(mask, transformed_mask, affine, other->mask.size(), cv::INTER_NEAREST);
+
+                            double target_area = static_cast<double>(cv::countNonZero(other->mask));
 
                             cv::Mat target_intersection;
                             cv::bitwise_and(transformed_mask, other->mask, target_intersection);
@@ -334,9 +327,54 @@ std::vector<std::pair<double, cv::Mat*>>* hand_crafted_object_representation::ge
                             cv::bitwise_or(transformed_mask, other->mask, target_union);
                             double union_area = static_cast<double>(cv::countNonZero(target_union));
 
-                            double iou = intersection_area / union_area;
-                            affine_queue.push(std::make_pair(iou, new cv::Mat(affine)));
-                            if (affine_queue.size() > num_transforms) {
+                            // double score = intersection_area / union_area;
+                            double score = intersection_area / target_area;
+                            if (scores_seen.find(score) != scores_seen.end()) {
+                                continue;
+                            } else {
+                                scores_seen.insert(score);
+                            }
+                            affine_queue.push(std::make_pair(score, new cv::Mat(affine)));
+
+                            ///////////
+                            // DEBUG //
+                            // draw matching colored dots on self and other object images
+                            ///////////
+                            cv::Mat self_debug, other_debug;
+                            get_object_image().convertTo(self_debug, CV_8UC3, 255.0);
+                            other->get_object_image().convertTo(other_debug, CV_8UC3, 255.0);
+
+                            // Define three matching colors: red, green, blue.
+                            cv::Scalar colors[3] = { cv::Scalar(0, 0, 255, 255), cv::Scalar(0, 255, 0, 255), cv::Scalar(255, 0, 0, 255)};
+
+                            for (size_t k = 0; k < 3; k++) {
+                                cv::circle(self_debug, self_points[k], 4, colors[k], -1);
+                                cv::circle(other_debug, other_points[k], 4, colors[k], -1);
+                            }
+
+                            int rows = std::max(self_debug.rows, other_debug.rows);
+                            int cols = self_debug.cols + other_debug.cols;
+                            cv::Mat combined_debug(rows, cols, self_debug.type(), cv::Scalar(0, 0, 0));
+                            cv::Mat leftROI = combined_debug(cv::Rect(0, 0, self_debug.cols, self_debug.rows));
+                            self_debug.copyTo(leftROI);
+                            cv::Mat rightROI = combined_debug(cv::Rect(self_debug.cols, 0, other_debug.cols, other_debug.rows));
+                            other_debug.copyTo(rightROI);
+
+                            // Draw colored lines between corresponding points in self and other debug images.
+                            for (size_t k = 0; k < 3; k++) {
+                                cv::Point2f pt1 = self_points[k];
+                                cv::Point2f pt2 = other_points[k] + cv::Point2f((float) self_debug.cols, 0.0);
+                                cv::line(combined_debug, pt1, pt2, colors[k], 2);
+                            }
+
+                            std::string filename = "affine_debug/affine_debug_" + std::to_string(si) + "-" + std::to_string(sj) + "-" + std::to_string(sk) + "_" + std::to_string(oi) + "-" + std::to_string(oj) + "-" + std::to_string(ok) + "_" + std::to_string(score) + ".png";
+                            cv::imwrite(filename, combined_debug);
+
+                            ///////////
+                            // DEBUG //
+                            ///////////
+
+                            if (affine_queue.size() > num_transforms && num_transforms > 0) {
                                 cv::Mat* worst_affine = affine_queue.top().second;
                                 affine_queue.pop();
                                 delete worst_affine;
@@ -353,6 +391,16 @@ std::vector<std::pair<double, cv::Mat*>>* hand_crafted_object_representation::ge
         affine_queue.pop();
     }
     return affine_transforms;
+}
+
+cv::Mat hand_crafted_object_representation::get_corner_affine_transform(hand_crafted_object_representation* other) {
+    if (get_num_corners() != other->get_num_corners()) {
+        throw std::invalid_argument("Both objects must have the same number of corners.");
+    }
+
+    std::vector<cv::Vec2f> self_corners = get_corners();
+    std::vector<cv::Vec2f> other_corners = other->get_corners();
+    return cv::estimateAffine2D(self_corners, other_corners);
 }
 
 void hand_crafted_object_representation::_subdivide_contours() {

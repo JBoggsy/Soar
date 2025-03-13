@@ -164,6 +164,9 @@ bool add_vop_node_command::update_sub() {
                     case visual_ops::MULTI_CV_IMAGE_ARG:
                         node_data_dict[param_name] = new std::vector<opencv_image*>();
                         break;
+                    case visual_ops::AFFINE_TRANSFORM_ARG:
+                        node_data_dict[param_name] = new visual_ops::affine_transform_struct();
+                        break;
                     case visual_ops::MULTI_AFFINE_TRANSFORM_ARG:
                         node_data_dict[param_name] = new std::vector<visual_ops::affine_transform_struct*>();
                         break;

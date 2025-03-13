@@ -393,9 +393,16 @@ bool visual_operation_node::evaluate() {
 
     visual_ops::affine_transform_struct* param_val_affine;
     wme* affine_score_wme;
+    wme* affine_x_wme;
+    wme* affine_y_wme;
+    wme* affine_rotation_wme;
+    wme* affine_scale_x_wme;
+    wme* affine_scale_y_wme;
 
     std::vector<visual_ops::affine_transform_struct*>* param_val_affine_vec;
-    wme* num_affines_wme;
+    wme* num_xforms_wme;
+    wme* xform_wme;
+    Symbol* xform_sym;
 
     for (int param_i=0; param_i<op_metadata_.num_params; param_i++) {
         param_name = op_metadata_.param_names[param_i];
@@ -425,11 +432,9 @@ bool visual_operation_node::evaluate() {
                 break;
             case visual_ops::CV_IMAGE_ARG:
                 if (param_dir != visual_ops::OUTPUT_ARG) {
-                    param_val_int = *(int*)parameters_[param_name];
+                    param_val_int = parent_ids_[param_name];
                     param_syms_[param_name] = si_->make_sym(param_val_int);
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
-                    parent_ids_[param_name] = param_val_int;
-                    parent_types_[param_name] = param_type;
                 } else {
                     param_val_img = (opencv_image*)parameters_[param_name];
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
@@ -444,11 +449,9 @@ bool visual_operation_node::evaluate() {
                 break;
             case visual_ops::MULTI_CV_IMAGE_ARG:
                 if (param_dir != visual_ops::OUTPUT_ARG) {
-                    param_val_int = *(int*)parameters_[param_name];
+                    param_val_int = parent_ids_[param_name];
                     param_syms_[param_name] = si_->make_sym(param_val_int);
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
-                    parent_ids_[param_name] = param_val_int;
-                    parent_types_[param_name] = param_type;
                 } else {
                     param_val_img_vec = (std::vector<opencv_image*>*)parameters_[param_name];
                     param_syms_[param_name] = si_->make_sym((int)param_val_img_vec->size());
@@ -458,11 +461,9 @@ bool visual_operation_node::evaluate() {
             case visual_ops::LATENT_REP_ARG:
                 #ifdef ENABLE_TORCH
                 if (param_dir != visual_ops::OUTPUT_ARG) {
-                    param_val_int = *(int*)parameters_[param_name];
+                    param_val_int = parent_ids_[param_name];
                     param_syms_[param_name] = si_->make_sym(param_val_int);
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
-                    parent_ids_[param_name] = param_val_int;
-                    parent_types_[param_name] = param_type;
                 } else {
                     param_val_latent = (latent_representation*)parameters_[param_name];
                     param_syms_[param_name] = si_->make_sym(-1);
@@ -472,11 +473,9 @@ bool visual_operation_node::evaluate() {
                 break;
             case visual_ops::OBJECT_ARG:
                 if (param_dir != visual_ops::OUTPUT_ARG) {
-                    param_val_int = *(int*)parameters_[param_name];
+                    param_val_int = parent_ids_[param_name];
                     param_syms_[param_name] = si_->make_sym(param_val_int);
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
-                    parent_ids_[param_name] = param_val_int;
-                    parent_types_[param_name] = param_type;
                 } else {
                     param_val_obj = (OBJ_REP_TYPE*)(parameters_[param_name]);
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
@@ -487,28 +486,40 @@ bool visual_operation_node::evaluate() {
                 break;
             case visual_ops::AFFINE_TRANSFORM_ARG:
                 if (param_dir != visual_ops::OUTPUT_ARG) {
-                    param_val_int = *(int*)parameters_[param_name];
+                    param_val_int = parent_ids_[param_name];
                     param_syms_[param_name] = si_->make_sym(param_val_int);
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
-                    parent_ids_[param_name] = param_val_int;
-                    parent_types_[param_name] = param_type;
                 } else {
                     param_val_affine = (visual_ops::affine_transform_struct*)(parameters_[param_name]);
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
                     affine_score_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("score"), param_val_affine->score);
+                    affine_x_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("x"), param_val_affine->x);
+                    affine_y_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("y"), param_val_affine->y);
+                    affine_rotation_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("rotation"), param_val_affine->rotation);
+                    affine_scale_x_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("scale-x"), param_val_affine->scale_x);
+                    affine_scale_y_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("scale-y"), param_val_affine->scale_y);
                 }
                 break;
             case visual_ops::MULTI_AFFINE_TRANSFORM_ARG:
                 if (param_dir != visual_ops::OUTPUT_ARG) {
-                    param_val_int = *(int*)parameters_[param_name];
+                    param_val_int = parent_ids_[param_name];
                     param_syms_[param_name] = si_->make_sym(param_val_int);
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
-                    parent_ids_[param_name] = param_val_int;
-                    parent_types_[param_name] = param_type;
                 } else {
                     param_val_affine_vec = (std::vector<visual_ops::affine_transform_struct*>*)(parameters_[param_name]);
-                    param_syms_[param_name] = si_->make_sym((int)param_val_affine_vec->size());
-                    param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
+                    param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
+                    num_xforms_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-xforms"), (int)param_val_affine_vec->size());
+                    std::vector<visual_ops::affine_transform_struct*>::iterator affine_vec_itr = param_val_affine_vec->begin();
+                    for (; affine_vec_itr != param_val_affine_vec->end(); affine_vec_itr++) {
+                        xform_wme = si_->make_id_wme(param_wmes_[param_name]->value, std::string("xform"));
+                        xform_sym = xform_wme->value;
+                        affine_score_wme = si_->make_wme(xform_sym, std::string("score"), (*affine_vec_itr)->score);
+                        affine_x_wme = si_->make_wme(xform_sym, std::string("x"), (*affine_vec_itr)->x);
+                        affine_y_wme = si_->make_wme(xform_sym, std::string("y"), (*affine_vec_itr)->y);
+                        affine_rotation_wme = si_->make_wme(xform_sym, std::string("rotation"), (*affine_vec_itr)->rotation);
+                        affine_scale_x_wme = si_->make_wme(xform_sym, std::string("scale-x"), (*affine_vec_itr)->scale_x);
+                        affine_scale_y_wme = si_->make_wme(xform_sym, std::string("scale-y"), (*affine_vec_itr)->scale_y);
+                    }
                 }
                 break;
         }

@@ -33,6 +33,8 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_THRESHOLD               std::string("threshold")
 #define VOP_FLIP_IMAGE              std::string("flip-image")
 #define VOP_ROTATE_IMAGE            std::string("rotate-image")
+#define VOP_RESIZE_IMAGE            std::string("resize-image")
+#define VOP_SCALE_IMAGE             std::string("scale-image")
 // CLASSIC FEATURE DETECTION
 #define VOP_CANNY                   std::string("canny")
 #define VOP_HOUGH_LINES             std::string("hough-lines")
@@ -61,6 +63,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_OBJECT_DISTANCE         std::string("object-distance")
 #define VOP_SEGMENT                 std::string("segment")
 #define VOP_GET_SEGMENT             std::string("get-segment")
+#define VOP_GET_AFFINE_FROM_CORNERS std::string("get-affine-from-corners")
 #define VOP_GET_TRANSFORMS          std::string("get-transforms")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
@@ -121,6 +124,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_TARGET      std::string("target")
 #define VOP_ARG_TEMPLATE    std::string("template")
 #define VOP_ARG_THRESH      std::string("thresh")
+#define VOP_ARG_TRANSFORM  std::string("transform")
 #define VOP_ARG_TRANSFORMS  std::string("transforms")
 #define VOP_ARG_TYPE        std::string("type")
 #define VOP_ARG_VIBID       std::string("vib-id")
@@ -269,6 +273,28 @@ namespace visual_ops
      *        rotate. Positive values mean counter-clockwise rotation.
      */
     void rotate_image(data_dict args);
+
+    /**
+     * ANCHOR resize_image
+     * @brief Resize the image to the given dimensions.
+     *
+     * @param args
+     *      `int size-x`: New width of the image
+     *      `int size-y`: New height of the image
+     *      `opencv_image* source`: The image to resize
+     */
+    void resize_image(data_dict args);
+
+    /**
+     * ANCHOR scale_image
+     * @brief Scale the image by the given amount.
+     *
+     * @param args
+     *      `double scale-x`: Horizontal scaling factor
+     *      `double scale-y`: Vertical scaling factor
+     *      `opencv_image* source`: The image to scale
+     */
+    void scale_image(data_dict args);
     //!SECTION VISUAL TRANSFORMATIONS
 
     /////////////////////////////
@@ -551,6 +577,25 @@ namespace visual_ops
     void get_segment(data_dict args);
 
     /**
+     * ANCHOR get_affine_from_corners
+     * @brief Get the affine transformation which best aligns the corners of the
+     * query and target object. Note that query and target objects must have the
+     * same number of corners.
+     * 
+     * @param args Map of arguments to method:
+     * 
+     * - `object_representation* query`: The object to align
+     * 
+     * - `object_representation* target`: The object to align with
+     * 
+     * - `affine_transform_struct* transform`: The best affine transformation
+     * 
+     * - `opencv_image* source`: The `source` image, in this case an image
+     *   showing the result of applying the affine transform to the query image.
+     */
+    void get_affine_from_corners(data_dict args);
+
+    /**
      * ANCHOR get_transforms
      * @brief Get a list of affine transformations that align three corners of
      * the query object with the target object. List is sorted by IoU.
@@ -564,7 +609,7 @@ namespace visual_ops
      * - `int count`: The number of best affine transformations to compute
      *
      * - `std::vector<visual_ops::affine_transform_struct*>* transforms`: The list of best affine transformations
-     * 
+     *
      * - `opencv_image* source`: The source image, in this case the query object
      */
     void get_transforms(data_dict args);
@@ -853,6 +898,26 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    //ANCHOR - RESIZE IMAGE
+    inline vop_params_metadata resize_image_metadata = {
+        /* vop_function = */        resize_image,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SIZEX, VOP_ARG_SIZEY, VOP_ARG_SOURCE},
+        /* param_types = */         {INT_ARG, INT_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    //ANCHOR - SCALE IMAGE
+    inline vop_params_metadata scale_image_metadata = {
+        /* vop_function = */        scale_image,
+        /* num_params = */          3,
+        /* param_names = */         {VOP_ARG_SCALEX, VOP_ARG_SCALEY, VOP_ARG_SOURCE},
+        /* param_types = */         {DOUBLE_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - CREATE INT FILLED MATRIX
     inline vop_params_metadata create_int_filled_mat_metadata = {
         /* vop_function = */        create_int_filled_mat,
@@ -1043,6 +1108,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    //ANCHOR - GET AFFINE FROM CORNERS
+    inline vop_params_metadata get_affine_from_corners_metadata = {
+        /* vop_function = */        get_affine_from_corners,
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_QUERY, VOP_ARG_TARGET, VOP_ARG_TRANSFORM, VOP_ARG_SOURCE},
+        /* param_types = */         {OBJECT_ARG, OBJECT_ARG, AFFINE_TRANSFORM_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - GET TRANSFORMS
     inline vop_params_metadata get_transforms_metadata = {
         /* vop_function = */        get_transforms,
@@ -1118,6 +1193,8 @@ namespace visual_ops
         {VOP_THRESHOLD, threshold_metadata},
         {VOP_FLIP_IMAGE, flip_image_metadata},
         {VOP_ROTATE_IMAGE, rotate_image_metadata},
+        {VOP_RESIZE_IMAGE, resize_image_metadata},
+        {VOP_SCALE_IMAGE, scale_image_metadata},
         {VOP_CREATE_INT_FILLED_MAT, create_int_filled_mat_metadata},
         {VOP_CREATE_FLOAT_FILLED_MAT, create_float_filled_mat_metadata},
         {VOP_CREATE_X_COORD_MAT, create_x_coord_mat_metadata},
@@ -1137,6 +1214,7 @@ namespace visual_ops
         {VOP_OBJECT_DISTANCE, object_distance_metadata},
         {VOP_SEGMENT, segment_metadata},
         {VOP_GET_SEGMENT, get_segment_metadata},
+        {VOP_GET_AFFINE_FROM_CORNERS, get_affine_from_corners_metadata},
         {VOP_GET_TRANSFORMS, get_transforms_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},

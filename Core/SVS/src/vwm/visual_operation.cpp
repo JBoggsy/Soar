@@ -187,6 +187,26 @@ namespace visual_ops
         cv::warpAffine(*(image->get_image()), result, rot_mat, image->get_image()->size());
         image->set_image(&result);
     }
+
+    void resize_image(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        int size_x = *(int*)args[VOP_ARG_SIZEX];
+        int size_y = *(int*)args[VOP_ARG_SIZEY];
+
+        cv::Mat result;
+        cv::resize(*(image->get_image()), result, cv::Size(size_x, size_y));
+        image->set_image(&result);
+    }
+
+    void scale_image(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        double scale_x = *(double*)args[VOP_ARG_SCALEX];
+        double scale_y = *(double*)args[VOP_ARG_SCALEY];
+
+        cv::Mat result;
+        cv::resize(*(image->get_image()), result, cv::Size(), scale_x, scale_y);
+        image->set_image(&result);
+    }
     //!SECTION
 
     //////////////////////////////
@@ -553,6 +573,7 @@ namespace visual_ops
             cv::Mat masked_image;
             cv::bitwise_and(image_copy, mask, masked_image);
             opencv_image* segment = new opencv_image();
+            masked_image.convertTo(masked_image, CV_32F);
             segment->update_image(masked_image);
             segments->push_back(segment);
         }
@@ -568,6 +589,38 @@ namespace visual_ops
         source->update_image(*segments->at(index)->get_image());
     }
 
+    void get_affine_from_corners(data_dict args) {
+        OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
+        OBJ_REP_TYPE* target = (OBJ_REP_TYPE*)args[VOP_ARG_TARGET];
+        visual_ops::affine_transform_struct* transform = (visual_ops::affine_transform_struct*)args[VOP_ARG_TRANSFORM];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+
+        cv::Mat affine_transform = query->get_corner_affine_transform(target);
+        transform->affine_transform = new cv::Mat(affine_transform);
+
+        cv::Mat transformed_mask;
+        cv::Mat mask_intersection;
+        cv::Mat mask_union;
+        cv::warpAffine(query->get_mask(), transformed_mask, affine_transform, target->get_mask().size(), cv::INTER_NEAREST);
+        cv::bitwise_and(transformed_mask, target->get_mask(), mask_intersection);
+        double intersection_area = static_cast<double>(cv::countNonZero(mask_intersection));
+        cv::bitwise_or(transformed_mask, target->get_mask(), mask_union);
+        double union_area = static_cast<double>(cv::countNonZero(mask_union));
+        transform->score = intersection_area / union_area;
+
+        std::pair<int, int> translation = transform->translation_from_affine();
+        transform->x = translation.first;
+        transform->y = translation.second;
+
+        transform->rotation = transform->rotation_from_affine();
+
+        std::pair<double, double> scale = transform->scale_from_affine();
+        transform->scale_x = scale.first;
+        transform->scale_y = scale.second;
+        
+        source->update_image(transform->show_transform(query, target));
+    }
+
     void get_transforms(data_dict args) {
         OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
         OBJ_REP_TYPE* target = (OBJ_REP_TYPE*)args[VOP_ARG_TARGET];
@@ -576,7 +629,7 @@ namespace visual_ops
         std::vector<visual_ops::affine_transform_struct*>* transforms = (std::vector<visual_ops::affine_transform_struct*>*)args[VOP_ARG_TRANSFORMS];
         transforms->clear();
 
-        std::vector<std::pair<double, cv::Mat*>>* results = query->get_best_affine_transforms(target, 5);
+        std::vector<std::pair<double, cv::Mat*>>* results = query->get_best_affine_transforms(target, -1);
 
         for (int i = 0; i < results->size(); i++) {
             visual_ops::affine_transform_struct* transform = new visual_ops::affine_transform_struct();

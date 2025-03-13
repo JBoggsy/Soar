@@ -92,6 +92,21 @@ public:
     std::vector<std::pair<double, cv::Mat*>>* get_best_affine_transforms(hand_crafted_object_representation* other, int num_transforms);
 
     /**
+     * @brief Computes the affine transformation that best aligns the corners of
+     * this object with the corners of another object. 
+     * 
+     * This method computes the affine transformation that best aligns the corners
+     * of this object with the corners of another object using the
+     * `cv::estimateAffine2D` method. This object acts as the `from` argument
+     * and the other object acts as the `to` argument. That is, applying the
+     * returned affine transformation should align the corners of this object
+     * with the corners of the other object.
+     * 
+     * @note Both objects must have the same number of corners.
+     */
+    cv::Mat get_corner_affine_transform(hand_crafted_object_representation* other);
+
+    /**
      * @brief Converts the object representation to a string.
      *
      * This method converts the object representation to a string by concatenating
