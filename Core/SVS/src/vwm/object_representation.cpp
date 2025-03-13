@@ -36,6 +36,36 @@ const std::vector<std::string> hand_crafted_object_representation::COLOR_NAMES{
     "black",
     "white"
 };
+const cv::Scalar hand_crafted_object_representation::COLOR_RED(255, 0, 0, 255);
+const cv::Scalar hand_crafted_object_representation::COLOR_GREEN(0, 255, 0, 255);
+const cv::Scalar hand_crafted_object_representation::COLOR_BLUE(0, 0, 255, 255);
+const cv::Scalar hand_crafted_object_representation::COLOR_CYAN(0, 255, 255, 255);
+const cv::Scalar hand_crafted_object_representation::COLOR_MAGENTA(255, 0, 255, 255);
+const cv::Scalar hand_crafted_object_representation::COLOR_YELLOW(255, 255, 0, 255);
+const cv::Scalar hand_crafted_object_representation::COLOR_BLACK(15, 15, 15, 255);
+const cv::Scalar hand_crafted_object_representation::COLOR_WHITE(240, 240, 240, 255);
+
+const std::vector<cv::Scalar> hand_crafted_object_representation::COLORS{
+    hand_crafted_object_representation::COLOR_RED,
+    hand_crafted_object_representation::COLOR_GREEN,
+    hand_crafted_object_representation::COLOR_BLUE,
+    hand_crafted_object_representation::COLOR_CYAN,
+    hand_crafted_object_representation::COLOR_MAGENTA,
+    hand_crafted_object_representation::COLOR_YELLOW,
+    hand_crafted_object_representation::COLOR_BLACK,
+    hand_crafted_object_representation::COLOR_WHITE
+};
+
+const std::vector<std::string> hand_crafted_object_representation::COLOR_NAMES{
+    "red",
+    "green",
+    "blue",
+    "cyan",
+    "magenta",
+    "yellow",
+    "black",
+    "white"
+};
 
 int hand_crafted_object_representation::segment_image(cv::Mat image, std::vector<cv::Mat> &masks) {
     // get_edges()
@@ -133,6 +163,7 @@ void hand_crafted_object_representation::update_image(opencv_image* image) {
 
 void hand_crafted_object_representation::generate_object_image() {
     // Generate the object image
+    // Generate the object image
     cv::Mat mask_full_sized;
     cv::cvtColor(mask, mask_full_sized, cv::COLOR_GRAY2BGRA);
     mask_full_sized.convertTo(mask_full_sized, CV_32FC4, 1.0 / 255.0);
@@ -140,7 +171,31 @@ void hand_crafted_object_representation::generate_object_image() {
     object_image = base_image.mul(mask_full_sized);
 
     // Generate the grayscaled object image
+
+    // Generate the grayscaled object image
     cv::cvtColor(object_image, object_image_gray, cv::COLOR_RGBA2GRAY);
+
+    // Generate the object color
+    cv::Scalar mean_color = cv::mean(object_image, mask);
+    object_color = cv::Scalar(mean_color[0], mean_color[1], mean_color[2], mean_color[3]);
+    #include <limits>
+
+    double minDistance = std::numeric_limits<double>::max();
+    int closestIndex = 0;
+    for (size_t i = 0; i < COLORS.size(); i++) {
+        cv::Scalar candidate = COLORS[i];
+        double distance = sqrt(
+            pow(object_color[0] - candidate[0], 2) +
+            pow(object_color[1] - candidate[1], 2) +
+            pow(object_color[2] - candidate[2], 2)
+        );
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestIndex = static_cast<int>(i);
+        }
+    }
+    object_color_name = COLOR_NAMES[closestIndex];
+
 
     // Generate the object color
     cv::Scalar mean_color = cv::mean(object_image, mask);
