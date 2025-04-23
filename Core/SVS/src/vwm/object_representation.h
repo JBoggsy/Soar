@@ -66,10 +66,12 @@ public:
     std::vector<cv::Point> get_contour() {if (!contour_calculated) calculate_contours(); return contour;}
     cv::Mat get_contour_image() {if (!contour_image_generated) generate_contour_image(); return contour_image;}
     cv::Rect2d get_mask_bbox() {if (!mask_bbox_calculated) calculate_mask_bbox(); return mask_bbox;}
+    cv::Mat get_cropped_image() {if (!mask_bbox_calculated) calculate_mask_bbox(); return base_image(mask_bbox);}
+    cv::Mat get_cropped_mask() {if (!mask_bbox_calculated) calculate_mask_bbox(); return mask(mask_bbox);}
     cv::RotatedRect get_min_area_rect() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect;}
     float get_min_rect_height() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect.size.height;}
     float get_min_rect_width() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect.size.width;}
-    float get_min_rect_angle() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect.angle;}
+    float get_min_rect_angle() {if (!min_area_rect_calculated) calculate_min_area_rect(); return min_area_rect.size.width > min_area_rect.size.height ? min_area_rect.angle : min_area_rect.angle+90.0;}
     double get_ellipsity() { if (!ellipsity_calculated) calculate_ellipsity(); return ellipsity;}
 
     std::vector<cv::Vec4f> get_line_segments() {if (!line_segments_calculated) calculate_line_segments(); return line_segments;}

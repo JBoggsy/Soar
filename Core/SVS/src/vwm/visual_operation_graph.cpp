@@ -46,6 +46,8 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
     OBJ_REP_TYPE* param_val_obj;
     wme* obj_num_sides_wme;
     wme* obj_num_corners_wme;
+    wme* obj_width_wme;
+    wme* obj_height_wme;
     wme* obj_ellipsity_wme;
     wme* obj_color_wme;
     wme* obj_minrect_h_wme;
@@ -143,6 +145,8 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
                     obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), -1);
                     obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), -1);
+                    obj_width_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("width"), -1);
+                    obj_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), -1);
                     obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), -1);
                     obj_color_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("color"), -1);
                     obj_minrect_h_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-h"), -1);
@@ -339,7 +343,7 @@ bool visual_operation_node::evaluate() {
         switch (parent_param_type) {
             case visual_ops::CV_IMAGE_ARG:
                 opencv_image* parent_image;
-                parent_image = vwm_->get_node_image(parent_node_id, parent_param_name);
+                parent_image = vwm_->get_node_image(parent_node_id);
                 parameters_[parent_param_name] = parent_image;
                 break;
             case visual_ops::MULTI_CV_IMAGE_ARG:
@@ -391,6 +395,8 @@ bool visual_operation_node::evaluate() {
     OBJ_REP_TYPE* param_val_obj;
     wme* obj_num_sides_wme;
     wme* obj_num_corners_wme;
+    wme* obj_width_wme;
+    wme* obj_height_wme;
     wme* obj_ellipsity_wme;
     wme* obj_color_wme;
     wme* obj_minrect_h_wme;
@@ -492,6 +498,8 @@ bool visual_operation_node::evaluate() {
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
                     obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), param_val_obj->get_num_sides());
                     obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), param_val_obj->get_num_corners());
+                    obj_width_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("width"), param_val_obj->get_cropped_image().cols);
+                    obj_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), param_val_obj->get_cropped_image().rows);
                     obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), param_val_obj->get_ellipsity());
                     cv::Scalar color = param_val_obj->get_object_color();
                     obj_color_wme = si_->make_id_wme(param_wmes_[param_name]->value, std::string("color-value"));
@@ -551,7 +559,7 @@ bool visual_operation_node::evaluate() {
 
     if (op_type_.compare(VOP_SAVE_TO_FILE) != 0) {
         char debug_save_filename[64];
-        snprintf(debug_save_filename, 64, "node-%d.json", id_);
+        snprintf(debug_save_filename, 64, "node_data/node-%d.json", id_);
         if (parameters_.find("source") != parameters_.end()) {
             ((opencv_image*)parameters_["source"])->save_image_data(debug_save_filename);
         }
