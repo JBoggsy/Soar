@@ -180,11 +180,22 @@ namespace visual_ops
         double amount = *(double*)args[VOP_ARG_AMOUNT];
 
         cv::Mat rot_mat, result;
+        int height, width;
         float center_x, center_y;
-        center_x = (float)image->get_width() / 2.0;
-        center_y = (float)image->get_height() / 2.0;
+        height = image->get_height();
+        width = image->get_width();
+        center_y = (float)height / 2.0;
+        center_x = (float)width / 2.0;
         rot_mat = cv::getRotationMatrix2D(cv::Point2f(center_x, center_y), amount, 1.0);
-        cv::warpAffine(*(image->get_image()), result, rot_mat, image->get_image()->size());
+
+        float abs_cos = std::abs(rot_mat.at<double>(0, 0));
+        float abs_sin = std::abs(rot_mat.at<double>(0, 1));
+        int new_width = (int)(height * abs_sin + width * abs_cos);
+        int new_height = (int)(height * abs_cos + width * abs_sin);
+        rot_mat.at<double>(0, 2) += (new_width - width) / 2;
+        rot_mat.at<double>(1, 2) += (new_height - height) / 2;
+
+        cv::warpAffine(*(image->get_image()), result, rot_mat, cv::Size(new_width, new_height));
         image->set_image(&result);
     }
 
@@ -456,21 +467,70 @@ namespace visual_ops
         opencv_image* templ = (opencv_image*)args[VOP_ARG_TEMPLATE];
         int method = *(int*)args[VOP_ARG_METHOD];
 
-        int result_cols = image->get_width() - templ->get_width() + 1;
-        int result_rows = image->get_height() - templ->get_height() + 1;
-        cv::Mat result;
-        result.create( result_rows, result_cols, CV_32FC1 );
-        cv::matchTemplate(*image->get_image(), *templ->get_image(), result, method);
-        normalize( result, result, 0.0, 1.0, cv::NORM_MINMAX, CV_32FC1, cv::Mat() );
+        // Check if template is larger than source image in any dimension
+        int img_width = image->get_width();
+        int img_height = image->get_height();
+        int templ_width = templ->get_width();
+        int templ_height = templ->get_height();
 
-        double min, max;
+        // If template is larger than source in any dimension, pad the source image
+        if (templ_width > img_width || templ_height > img_height) {
+            int new_width = std::max(img_width, templ_width);
+            int new_height = std::max(img_height, templ_height);
+
+            // Calculate padding amounts
+            int pad_right = std::max(0, templ_width - img_width);
+            int pad_bottom = std::max(0, templ_height - img_height);
+
+            // Create a padded version of the source image
+            cv::Mat padded_image;
+            cv::copyMakeBorder(*image->get_image(), padded_image,
+                              0, pad_bottom, 0, pad_right,
+                              cv::BORDER_CONSTANT, cv::Scalar(0));
+
+            // Update the source image
+            image->set_image(&padded_image);
+
+            // Update dimensions after padding
+            img_width = image->get_width();
+            img_height = image->get_height();
+        }
+
+        int result_cols = img_width - templ_width + 1;
+        int result_rows = img_height - templ_height + 1;
+
+        // Ensure we have valid dimensions for result
+        if (result_cols <= 0 || result_rows <= 0) {
+            // Create empty result with minimum size
+            cv::Mat result(1, 1, CV_32FC1, cv::Scalar(0));
+            return;
+        }
+
+        cv::Mat result;
+        result.create(result_rows, result_cols, CV_32FC1);
+        cv::matchTemplate(*image->get_image(), *templ->get_image(), result, method);
+        // cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+
+        double minval;
+        double maxval;
         cv::Point minloc;
         cv::Point maxloc;
 
-        cv::minMaxLoc(result, &min, &max, &minloc, &maxloc);
+        cv::minMaxLoc(result, &minval, &maxval, &minloc, &maxloc);
 
+        cv::Point top_left;
+        cv::Point bottom_right;
 
-        image->set_image(&result);
+        if (method == cv::TM_SQDIFF || method == cv::TM_SQDIFF_NORMED) { top_left = minloc; }
+        else { top_left = maxloc; }
+        bottom_right = cv::Point(top_left.x + templ_width, top_left.y + templ_height);
+
+        cv::rectangle(*(image->get_image()), top_left, bottom_right, cv::Scalar(0, 0, 0, 255), 2, 8, 0);
+
+        *((int*)args[VOP_ARG_X]) = top_left.x;
+        *((int*)args[VOP_ARG_Y]) = top_left.y;
+        *((int*)args[VOP_ARG_WIDTH]) = templ_width;
+        *((int*)args[VOP_ARG_HEIGHT]) = templ_height;
     }
 
     void crop_to_ROI(data_dict args) {
@@ -481,6 +541,27 @@ namespace visual_ops
         int height = *(int*)args[VOP_ARG_HEIGHT];
 
         cv::Mat result;
+
+        // If the ROI is larger than the image, pad the image
+        int img_width = image->get_width();
+        int img_height = image->get_height();
+        if (x + width > img_width || y + height > img_height) {
+            int new_width = std::max(img_width, x + width);
+            int new_height = std::max(img_height, y + height);
+
+            // Calculate padding amounts
+            int pad_right = std::max(0, new_width - img_width);
+            int pad_bottom = std::max(0, new_height - img_height);
+
+            // Create a padded version of the source image
+            cv::Mat padded_image;
+            cv::copyMakeBorder(*image->get_image(), padded_image,
+                              0, pad_bottom, 0, pad_right,
+                              cv::BORDER_CONSTANT, cv::Scalar(0));
+
+            // Update the source image
+            image->set_image(&padded_image);
+        }
         cv::Rect ROI(x, y, width, height);
         result = (*image->get_image())(ROI);
         image->set_image(&result);
@@ -507,6 +588,7 @@ namespace visual_ops
         OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
 
         object->update_image(source);
+        source->update_image(object->get_object_image()(object->get_mask_bbox()));
     }
 
     void object_distance(data_dict args) {
@@ -521,64 +603,91 @@ namespace visual_ops
 
     void segment(data_dict args) {
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        std::string method;
+        if (args[VOP_ARG_METHOD] == NULL) {
+            method = std::string("colors");
+        } else {
+            method = *(std::string*)args[VOP_ARG_METHOD];
+        }
         std::vector<opencv_image*>* segments = (std::vector<opencv_image*>*)args[VOP_ARG_SEGMENTS];
 
-        cv::Mat source_image = *(source->get_image());
-        cv::Mat image_copy;
-        source_image.copyTo(image_copy);
-        image_copy.convertTo(image_copy, CV_8UC4);
-        cv::Mat blurred_img;
-        cv::blur(image_copy, blurred_img, cv::Size(3, 3), cv::Point(-1, -1));
-        cv::Mat detected_edges;
-        cv::Canny(blurred_img, detected_edges, 75, 75 * 4, 3);
-        cv::Mat edge_mask;
-        edge_mask = detected_edges == 0;
-        // Multiply it by the alpha channel of the image to mask background regions
-        cv::Mat image_alpha_mask;
-        cv::extractChannel(image_copy, image_alpha_mask, 3);
-        image_alpha_mask = image_alpha_mask > 0;
-        edge_mask = edge_mask.mul(image_alpha_mask);
-
-        // get_regions()
-        // Generate the seed and unknown regions for the watershed algorithm
-        cv::Mat seed_regions;
-        cv::Mat unknown_regions;
-        cv::erode(edge_mask, seed_regions, cv::Mat(), cv::Point(-1, -1), 1);
-        cv::dilate(edge_mask, unknown_regions, cv::Mat(), cv::Point(-1, -1), 3);
-        unknown_regions = unknown_regions - edge_mask;
-        cv::dilate(unknown_regions, unknown_regions, cv::Mat(), cv::Point(-1, -1), 1);
-
-        // get_watershed_markers()
-        // Apply the watershed algorithm to segment the image
-        cv::Mat watershed_markers;
-        int num_segments = cv::connectedComponents(seed_regions, watershed_markers, 8, CV_32S, cv::CCL_DEFAULT);
-        watershed_markers += 1;
-        watershed_markers.setTo(0, unknown_regions);
-
-        cv::Mat image_copy_flat;
-        if (image_copy.channels() == 4) {
-            cv::cvtColor(image_copy, image_copy_flat, cv::COLOR_RGBA2RGB);
+        std::vector<cv::Mat> segment_masks;
+        if (method.compare("watershed") == 0) {
+            int num_segments = OBJ_REP_TYPE::segment_image_watershed(*source->get_image(), segment_masks);
+        } else if (method.compare("colors") == 0) {
+            int num_segments = OBJ_REP_TYPE::segment_image_colors(*source->get_image(), segment_masks);
         } else {
-            image_copy.copyTo(image_copy_flat);
+            printf("Invalid segmentation method: %s\n", method.c_str());
+            return;
         }
-        cv::watershed(image_copy_flat, watershed_markers);
 
-        // get_watershed_object_masks()
-        // Extract the object masks from the watershed markers
-        for (int i = 2; i <= num_segments; i++) {
-            cv::Mat marker_mask = watershed_markers == i;  // This should be single-channel a binary mask
-            cv::Mat broadcast = cv::Mat::ones(image_copy.channels()==4 ? 4 : 3, 1, marker_mask.depth());
-            cv::Mat mask;
-            cv::transform(marker_mask, mask, broadcast);  // Should be a 3- or 4-channel binary mask
+        for (int i = 0; i < segment_masks.size(); i++) {
             cv::Mat masked_image;
-            cv::bitwise_and(image_copy, mask, masked_image);
+            cv::bitwise_and(*source->get_image(), *source->get_image(), masked_image, segment_masks[i]);
             opencv_image* segment = new opencv_image();
             masked_image.convertTo(masked_image, CV_32F);
             segment->update_image(masked_image);
             segments->push_back(segment);
         }
 
-        *((int*)args[VOP_ARG_COUNT]) = num_segments-1;
+        *((int*)args[VOP_ARG_COUNT]) = segment_masks.size();
+        // }
+        // cv::Mat source_image = *(source->get_image());
+        // cv::Mat image_copy;
+        // source_image.copyTo(image_copy);
+        // image_copy.convertTo(image_copy, CV_8UC4);
+        // cv::Mat blurred_img;
+        // cv::blur(image_copy, blurred_img, cv::Size(3, 3), cv::Point(-1, -1));
+        // cv::Mat detected_edges;
+        // cv::Canny(blurred_img, detected_edges, 75, 75 * 4, 3);
+        // cv::Mat edge_mask;
+        // edge_mask = detected_edges == 0;
+        // // Multiply it by the alpha channel of the image to mask background regions
+        // cv::Mat image_alpha_mask;
+        // cv::extractChannel(image_copy, image_alpha_mask, 3);
+        // image_alpha_mask = image_alpha_mask > 0;
+        // edge_mask = edge_mask.mul(image_alpha_mask);
+
+        // // get_regions()
+        // // Generate the seed and unknown regions for the watershed algorithm
+        // cv::Mat seed_regions;
+        // cv::Mat unknown_regions;
+        // cv::erode(edge_mask, seed_regions, cv::Mat(), cv::Point(-1, -1), 1);
+        // cv::dilate(edge_mask, unknown_regions, cv::Mat(), cv::Point(-1, -1), 3);
+        // unknown_regions = unknown_regions - edge_mask;
+        // cv::dilate(unknown_regions, unknown_regions, cv::Mat(), cv::Point(-1, -1), 1);
+
+        // // get_watershed_markers()
+        // // Apply the watershed algorithm to segment the image
+        // cv::Mat watershed_markers;
+        // int num_segments = cv::connectedComponents(seed_regions, watershed_markers, 8, CV_32S, cv::CCL_DEFAULT);
+        // watershed_markers += 1;
+        // watershed_markers.setTo(0, unknown_regions);
+
+        // cv::Mat image_copy_flat;
+        // if (image_copy.channels() == 4) {
+        //     cv::cvtColor(image_copy, image_copy_flat, cv::COLOR_RGBA2RGB);
+        // } else {
+        //     image_copy.copyTo(image_copy_flat);
+        // }
+        // cv::watershed(image_copy_flat, watershed_markers);
+
+        // // get_watershed_object_masks()
+        // // Extract the object masks from the watershed markers
+        // for (int i = 2; i <= num_segments; i++) {
+        //     cv::Mat marker_mask = watershed_markers == i;  // This should be single-channel a binary mask
+        //     cv::Mat broadcast = cv::Mat::ones(image_copy.channels()==4 ? 4 : 3, 1, marker_mask.depth());
+        //     cv::Mat mask;
+        //     cv::transform(marker_mask, mask, broadcast);  // Should be a 3- or 4-channel binary mask
+        //     cv::Mat masked_image;
+        //     cv::bitwise_and(image_copy, mask, masked_image);
+        //     opencv_image* segment = new opencv_image();
+        //     masked_image.convertTo(masked_image, CV_32F);
+        //     segment->update_image(masked_image);
+        //     segments->push_back(segment);
+        // }
+
+        // *((int*)args[VOP_ARG_COUNT]) = num_segments-1;
     }
 
     void get_segment(data_dict args) {
@@ -617,7 +726,7 @@ namespace visual_ops
         std::pair<double, double> scale = transform->scale_from_affine();
         transform->scale_x = scale.first;
         transform->scale_y = scale.second;
-        
+
         source->update_image(transform->show_transform(query, target));
     }
 
@@ -651,6 +760,98 @@ namespace visual_ops
 
         source->update_image(query->get_base_image());
         *((int*)args[VOP_ARG_COUNT]) = results->size();
+    }
+
+    void get_objects_iou(data_dict args) {
+        OBJ_REP_TYPE* a = (OBJ_REP_TYPE*)args[VOP_ARG_A];
+        OBJ_REP_TYPE* b = (OBJ_REP_TYPE*)args[VOP_ARG_B];
+        double* iou = (double*)args[VOP_ARG_IOU];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+
+        cv::Mat a_mask = a->get_cropped_mask();
+        cv::Mat b_mask = b->get_cropped_mask();
+
+        cv::Mat a_full_sized;
+        cv::Mat b_full_sized;
+        cv::Size2d merged_size = cv::Size2d(std::max(a_mask.cols, b_mask.cols), std::max(a_mask.rows, b_mask.rows));
+        int merged_width = static_cast<int>(merged_size.width);
+        int merged_height = static_cast<int>(merged_size.height);
+
+        int border_bottom_a = merged_height - a_mask.rows;
+        int border_right_a  = merged_width - a_mask.cols;
+        cv::copyMakeBorder(a_mask, a_full_sized, 0, border_bottom_a, 0, border_right_a, cv::BORDER_CONSTANT, cv::Scalar(0));
+
+        int border_bottom_b = merged_height - b_mask.rows;
+        int border_right_b  = merged_width - b_mask.cols;
+        cv::copyMakeBorder(b_mask, b_full_sized, 0, border_bottom_b, 0, border_right_b, cv::BORDER_CONSTANT, cv::Scalar(0));
+
+        cv::Mat mask_intersection;
+        cv::Mat mask_union;
+        cv::bitwise_and(a_full_sized, b_full_sized, mask_intersection);
+        double intersection_area = static_cast<double>(cv::countNonZero(mask_intersection));
+        cv::bitwise_or(a_full_sized, b_full_sized, mask_union);
+        double union_area = static_cast<double>(cv::countNonZero(mask_union));
+        *iou = intersection_area / union_area;
+
+        cv::Mat mask_iou;
+        cv::add(mask_intersection, mask_union, mask_iou, cv::noArray(), CV_32F);
+        mask_iou = mask_iou / 2.0;
+        mask_iou.convertTo(mask_iou, CV_8U);
+
+        source->update_image(mask_iou);
+    }
+
+    void get_object_coverage(data_dict args) {
+        OBJ_REP_TYPE* a = (OBJ_REP_TYPE*)args[VOP_ARG_A];
+        OBJ_REP_TYPE* b = (OBJ_REP_TYPE*)args[VOP_ARG_B];
+        int crop;
+        double* coverage = (double*)args[VOP_ARG_COVERAGE];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+
+        if (args[VOP_ARG_CROP] == NULL) {
+            crop = 1;
+        } else {
+            crop = *(int*)args[VOP_ARG_CROP];
+        }
+
+        cv::Mat a_mask;
+        cv::Mat b_mask;
+        if (crop == 1) {
+            a_mask = a->get_cropped_mask();
+            b_mask = b->get_cropped_mask();
+        } else {
+            a_mask = a->get_mask();
+            b_mask = b->get_mask();
+        }
+
+        cv::Mat a_full_sized;
+        cv::Mat b_full_sized;
+        cv::Size2d merged_size = cv::Size2d(std::max(a_mask.cols, b_mask.cols), std::max(a_mask.rows, b_mask.rows));
+        int merged_width = static_cast<int>(merged_size.width);
+        int merged_height = static_cast<int>(merged_size.height);
+
+        int border_bottom_a = merged_height - a_mask.rows;
+        int border_right_a  = merged_width - a_mask.cols;
+        cv::copyMakeBorder(a_mask, a_full_sized, 0, border_bottom_a, 0, border_right_a, cv::BORDER_CONSTANT, cv::Scalar(0));
+
+        int border_bottom_b = merged_height - b_mask.rows;
+        int border_right_b  = merged_width - b_mask.cols;
+        cv::copyMakeBorder(b_mask, b_full_sized, 0, border_bottom_b, 0, border_right_b, cv::BORDER_CONSTANT, cv::Scalar(0));
+
+        cv::Mat mask_union;
+        cv::bitwise_or(a_full_sized, b_full_sized, mask_union);
+
+        cv::Mat uncovered_pixels = mask_union - b_full_sized;
+        double uncovered_area = static_cast<double>(cv::countNonZero(uncovered_pixels));
+        double a_area = static_cast<double>(cv::countNonZero(a_full_sized));
+
+        *coverage = 1.0 - (uncovered_area / a_area);
+
+        cv::Mat mask_coverage;
+        cv::add(uncovered_pixels, mask_union, mask_coverage, cv::noArray(), CV_32F);
+        mask_coverage = mask_coverage / 2.0;
+        mask_coverage.convertTo(mask_coverage, CV_8U);
+        source->update_image(mask_coverage);
     }
 
     //!SECTION OBJECT DETECTION

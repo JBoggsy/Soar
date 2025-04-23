@@ -65,6 +65,8 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_GET_SEGMENT             std::string("get-segment")
 #define VOP_GET_AFFINE_FROM_CORNERS std::string("get-affine-from-corners")
 #define VOP_GET_TRANSFORMS          std::string("get-transforms")
+#define VOP_GET_OBJECTS_IOU         std::string("get-objects-iou")
+#define VOP_GET_OBJECT_COVERAGE     std::string("get-object-coverage")
 // ENCODING AND DECODING
 #define VOP_ENCODE                  std::string("encode")
 #define VOP_DECODE                  std::string("decode")
@@ -91,6 +93,8 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_CONF2       std::string("confidence2")
 #define VOP_ARG_CONF3       std::string("confidence3")
 #define VOP_ARG_COUNT       std::string("count")
+#define VOP_ARG_COVERAGE    std::string("coverage")
+#define VOP_ARG_CROP        std::string("crop")
 #define VOP_ARG_DISTANCE    std::string("distance")
 #define VOP_ARG_END         std::string("end")
 #define VOP_ARG_FILEPATH    std::string("filepath")
@@ -99,6 +103,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_FOV_HORIZ   std::string("fov-horiz")
 #define VOP_ARG_HEIGHT      std::string("height")
 #define VOP_ARG_INDEX       std::string("index")
+#define VOP_ARG_IOU         std::string("iou")
 #define VOP_ARG_LATENT      std::string("latent")
 #define VOP_ARG_MATCHES     std::string("matches")
 #define VOP_ARG_MAXLOCX     std::string("maxloc-x")
@@ -124,7 +129,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_TARGET      std::string("target")
 #define VOP_ARG_TEMPLATE    std::string("template")
 #define VOP_ARG_THRESH      std::string("thresh")
-#define VOP_ARG_TRANSFORM  std::string("transform")
+#define VOP_ARG_TRANSFORM   std::string("transform")
 #define VOP_ARG_TRANSFORMS  std::string("transforms")
 #define VOP_ARG_TYPE        std::string("type")
 #define VOP_ARG_VIBID       std::string("vib-id")
@@ -463,14 +468,29 @@ namespace visual_ops
 
     /**
      * ANCHOR match_template
-     * @brief Match a template image and return a new, single-channel image of
-     *        comparison results. The returned image will be a single-channel
-     *        32-bit floating-point image. If the source image is W×H and template
-     *        is w×h , then result is (W−w+1)×(H−h+1).
+     * @brief Match a template image to a source image and return the best
+     * match.
+     *
+     * Specifically, this VOp reutrns the best matching rectangle in the source
+     * image as the top left corner of the rectangle, and the width and height
+     * of the rectangle. The returned `source` image is mostly for debugging
+     * purposes and is depicts the source image with the best match drawn on it.
+     *
      * @param args
-     *        `int method`: Parameter specifying the comparison method
-     *        `opencv_image* source`: The image to be searched for template matches.
-     *        `opencv_image* template`: The template image to search for.
+     *
+     * - `int method`: Parameter specifying the comparison method
+     *
+     * - `opencv_image* source`: The image to be searched for template matches.
+     *
+     * - `opencv_image* template`: The template image to search for.
+     *
+     * - `int x`: x-coord of the top-left corner of the rectangle
+     *
+     * - `int y`: y-coord of the top-left corner of the rectangle
+     *
+     * - `int width`: width of the rectangle
+     *
+     * - `int height`: height of the rectangle
      */
     void match_template(data_dict args);
 
@@ -549,11 +569,14 @@ namespace visual_ops
 
     /**
      * ANCHOR segment
-     * @brief Segment the source image using watershed and return each segment.
+     * @brief Segment the source image and return each segment.
      *
      * @param args Map of arguments to method:
      *
      * - `opencv_image* source`: The image to segment
+     *
+     * - `std::string method`: The segmentation method to use. One of
+     *   "watershed", "color", defaults to "color".
      *
      * - `std::vector<opencv_image*>* segments`: The segmented regions
      *
@@ -581,15 +604,15 @@ namespace visual_ops
      * @brief Get the affine transformation which best aligns the corners of the
      * query and target object. Note that query and target objects must have the
      * same number of corners.
-     * 
+     *
      * @param args Map of arguments to method:
-     * 
+     *
      * - `object_representation* query`: The object to align
-     * 
+     *
      * - `object_representation* target`: The object to align with
-     * 
+     *
      * - `affine_transform_struct* transform`: The best affine transformation
-     * 
+     *
      * - `opencv_image* source`: The `source` image, in this case an image
      *   showing the result of applying the affine transform to the query image.
      */
@@ -610,9 +633,51 @@ namespace visual_ops
      *
      * - `std::vector<visual_ops::affine_transform_struct*>* transforms`: The list of best affine transformations
      *
-     * - `opencv_image* source`: The source image, in this case the query object
+     * - `opencv_image* source`: The node image, in this case the query object
      */
     void get_transforms(data_dict args);
+
+    /**
+     * ANCHOR get_objects_iou
+     * @brief Compute the intersection over union (IoU) of the object masks of
+     * this object and another object.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `object_representation* a`: The first object to compare
+     *
+     * - `object_representation* b`: The second object to compare
+     *
+     * - `float* iou`: The computed IoU between the two objects
+     *
+     * - `opencv_image* source`: The node image, in this case the image showing
+     *   the intersection of the two objects.
+     */
+    void get_objects_iou(data_dict args);
+
+
+    /**
+     * ANCHOR get_object_coverage
+     * @brief Compute how much of object `a` object `b` covers. This is ratio
+     * between the number of pixels in difference between the union of the two
+     * objects and the mask of the covering object (b) and the number of pixels
+     * in the mask of the covered object (a).
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `object_representation* a`: The first object to compare
+     *
+     * - `object_representation* b`: The second object to compare
+     *
+     * - `int* crop`: Whether to crop the objects to the bounding boxes of
+     *   their masks (1) or not (0).
+     *
+     * - `float* coverage`: The computed overlap between the two objects
+     *
+     * - `opencv_image* source`: The node image, in this case the image showing
+     *   the union in grey and the covered object in white.
+     */
+    void get_object_coverage(data_dict args);
 
     //!SECTION OBJECT DETECTION
 
@@ -1041,11 +1106,11 @@ namespace visual_ops
     //ANCHOR - MATCH TEMPLATE
     inline vop_params_metadata match_template_metadata = {
         /* vop_function = */        match_template,
-        /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_SOURCE, VOP_ARG_TEMPLATE},
-        /* param_types = */         {INT_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG},
-        /* param_directions */      {INPUT_ARG, INOUT_ARG, INPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+        /* num_params = */          7,
+        /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_SOURCE, VOP_ARG_TEMPLATE, VOP_ARG_X, VOP_ARG_Y, VOP_ARG_WIDTH, VOP_ARG_HEIGHT},
+        /* param_types = */         {INT_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG},
+        /* param_directions */      {INPUT_ARG, INOUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     //ANCHOR - CROP TO ROI
@@ -1091,11 +1156,11 @@ namespace visual_ops
     //ANCHOR - SEGMENT
     inline vop_params_metadata segment_metadata = {
         /* vop_function = */        segment,
-        /* num_params = */          3,
-        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_SEGMENTS, VOP_ARG_COUNT},
-        /* param_types = */         {CV_IMAGE_ARG, MULTI_CV_IMAGE_ARG, INT_ARG},
-        /* param_directions */      {INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_METHOD, VOP_ARG_SEGMENTS, VOP_ARG_COUNT},
+        /* param_types = */         {CV_IMAGE_ARG, STRING_ARG, MULTI_CV_IMAGE_ARG, INT_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     //ANCHOR - GET SEGMENT
@@ -1126,6 +1191,26 @@ namespace visual_ops
         /* param_types = */         {OBJECT_ARG, OBJECT_ARG, INT_ARG, MULTI_AFFINE_TRANSFORM_ARG, CV_IMAGE_ARG},
         /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    //ANCHOR - GET OBJECTS IOU
+    inline vop_params_metadata get_objects_iou_metadata = {
+        /* vop_function = */        get_objects_iou,
+        /* num_params = */          4,
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_IOU, VOP_ARG_SOURCE},
+        /* param_types = */         {OBJECT_ARG, OBJECT_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    //ANCHOR - GET OBJECT COVERAGE
+    inline vop_params_metadata get_object_coverage_metadata = {
+        /* vop_function = */        get_object_coverage,
+        /* num_params = */          5,
+        /* param_names = */         {VOP_ARG_A, VOP_ARG_B, VOP_ARG_CROP, VOP_ARG_COVERAGE, VOP_ARG_SOURCE},
+        /* param_types = */         {OBJECT_ARG, OBJECT_ARG, INT_ARG, DOUBLE_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INPUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, OPTIONAL_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     //ANCHOR - ENCODE IMAGE
@@ -1216,6 +1301,8 @@ namespace visual_ops
         {VOP_GET_SEGMENT, get_segment_metadata},
         {VOP_GET_AFFINE_FROM_CORNERS, get_affine_from_corners_metadata},
         {VOP_GET_TRANSFORMS, get_transforms_metadata},
+        {VOP_GET_OBJECTS_IOU, get_objects_iou_metadata},
+        {VOP_GET_OBJECT_COVERAGE, get_object_coverage_metadata},
         {VOP_ENCODE, encode_metadata},
         {VOP_DECODE, decode_metadata},
         {VOP_RECOGNIZE, recognize_metadata},
