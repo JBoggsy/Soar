@@ -155,6 +155,97 @@ Symbol* times_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*
 }
 
 /* --------------------------------------------------------------------
+                                Power
+   Takes two int_constant or float_constant arguments, and returns
+    the first argument raised to the power of the second argument. Result is
+    always a float.
+-------------------------------------------------------------------- */
+Symbol* pow_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*/)
+{
+    Symbol* arg1, *arg2;
+    double base, exponent, result;
+
+    if (!args)
+    {
+        thisAgent->outputManager->printa(thisAgent, "Error: '^' function called with no arguments\n");
+        return NIL;
+    }
+
+    arg1 = static_cast<symbol_struct*>(args->first);
+    arg2 = static_cast<symbol_struct*>(args->rest->first);
+
+    if ((arg1->symbol_type != INT_CONSTANT_SYMBOL_TYPE) &&
+            (arg1->symbol_type != FLOAT_CONSTANT_SYMBOL_TYPE))
+    {
+        thisAgent->outputManager->printa_sf(thisAgent, "Error: non-number (%y) passed to ^ function\n",
+                           arg1);
+        return NIL;
+    }
+
+    if ((arg2->symbol_type != INT_CONSTANT_SYMBOL_TYPE) &&
+            (arg2->symbol_type != FLOAT_CONSTANT_SYMBOL_TYPE))
+    {
+        thisAgent->outputManager->printa_sf(thisAgent, "Error: non-number (%y) passed to ^ function\n",
+                           arg2);
+        return NIL;
+    }
+
+    if (arg1->symbol_type == INT_CONSTANT_SYMBOL_TYPE)
+    {
+        base = static_cast<double>(arg1->ic->value);
+    }
+    else
+    {
+        base = arg1->fc->value;
+    }
+
+    if (arg2->symbol_type == INT_CONSTANT_SYMBOL_TYPE)
+    {
+        exponent = static_cast<double>(arg2->ic->value);
+    }
+    else
+    {
+        exponent = arg2->fc->value;
+    }
+
+    if (base == 0.0 && exponent < 0.0)
+    {
+        thisAgent->outputManager->printa(thisAgent, "Error: attempt to raise zero to a negative power.\n");
+        return NIL;
+    }
+
+    if (base < 0.0 && exponent != floor(exponent))
+    {
+        thisAgent->outputManager->printa(thisAgent, "Error: attempt to raise negative number to a non-integer power.\n");
+        return NIL;
+    }
+
+    if (exponent == 0.0)
+    {
+        return thisAgent->symbolManager->make_float_constant(1.0);
+    }
+    if (base == 1.0)
+    {
+        return thisAgent->symbolManager->make_float_constant(1.0);
+    } 
+    if (base == 0)
+    {
+        return thisAgent->symbolManager->make_float_constant(0.0);
+    }
+    if (exponent == 1.0)
+    {
+        return thisAgent->symbolManager->make_float_constant(base);
+    }
+    if (exponent == -1.0)
+    {
+        return thisAgent->symbolManager->make_float_constant(1.0 / base);
+    }
+
+    result = pow(base, exponent);
+    return thisAgent->symbolManager->make_float_constant(result);
+}
+
+/* --------------------------------------------------------------------
                                 Minus
 
    Takes one or more int_constant or float_constant arguments.
@@ -2378,6 +2469,7 @@ void init_built_in_rhs_math_functions(agent* thisAgent)
     /* RHS basic math functions */
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("+"), plus_rhs_function_code, -1, true, false, 0, true);
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("*"), times_rhs_function_code, -1, true, false, 0, true);
+    add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("pow"), pow_rhs_function_code, 2, true, false, 0, true);
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("-"), minus_rhs_function_code, -1, true, false, 0, true);
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("/"), fp_divide_rhs_function_code, -1, true, false, 0, true);
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("div"), div_rhs_function_code, 2, true, false, 0, true);
@@ -2427,6 +2519,7 @@ void remove_built_in_rhs_math_functions(agent* thisAgent)
 {
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("+"));
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("*"));
+    remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("pow"));
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("-"));
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("/"));
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("div"));
