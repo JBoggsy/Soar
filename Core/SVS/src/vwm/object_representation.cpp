@@ -36,38 +36,83 @@ const std::vector<std::string> hand_crafted_object_representation::COLOR_NAMES{
     "black",
     "white"
 };
-const cv::Scalar hand_crafted_object_representation::COLOR_RED(255, 0, 0, 255);
-const cv::Scalar hand_crafted_object_representation::COLOR_GREEN(0, 255, 0, 255);
-const cv::Scalar hand_crafted_object_representation::COLOR_BLUE(0, 0, 255, 255);
-const cv::Scalar hand_crafted_object_representation::COLOR_CYAN(0, 255, 255, 255);
-const cv::Scalar hand_crafted_object_representation::COLOR_MAGENTA(255, 0, 255, 255);
-const cv::Scalar hand_crafted_object_representation::COLOR_YELLOW(255, 255, 0, 255);
-const cv::Scalar hand_crafted_object_representation::COLOR_BLACK(15, 15, 15, 255);
-const cv::Scalar hand_crafted_object_representation::COLOR_WHITE(240, 240, 240, 255);
 
-const std::vector<cv::Scalar> hand_crafted_object_representation::COLORS{
-    hand_crafted_object_representation::COLOR_RED,
-    hand_crafted_object_representation::COLOR_GREEN,
-    hand_crafted_object_representation::COLOR_BLUE,
-    hand_crafted_object_representation::COLOR_CYAN,
-    hand_crafted_object_representation::COLOR_MAGENTA,
-    hand_crafted_object_representation::COLOR_YELLOW,
-    hand_crafted_object_representation::COLOR_BLACK,
-    hand_crafted_object_representation::COLOR_WHITE
-};
+int hand_crafted_object_representation::segment_image_colors(cv::Mat image, std::vector<cv::Mat> &masks) {
+    // Convert the image from CV_32FC4 to CV_8UC4
+    cv::Mat image_copy;
+    image.copyTo(image_copy);
+    image_copy.convertTo(image_copy, CV_8UC4, 255.0);
 
-const std::vector<std::string> hand_crafted_object_representation::COLOR_NAMES{
-    "red",
-    "green",
-    "blue",
-    "cyan",
-    "magenta",
-    "yellow",
-    "black",
-    "white"
-};
+    // Define the HSV ranges for each color
+    cv::Scalar lower_red = cv::Scalar(0, 100, 100);
+    cv::Scalar upper_red = cv::Scalar(10, 255, 255);
+    cv::Scalar lower_green = cv::Scalar(50, 100, 100);
+    cv::Scalar upper_green = cv::Scalar(70, 255, 255);
+    cv::Scalar lower_blue = cv::Scalar(110, 100, 100);
+    cv::Scalar upper_blue = cv::Scalar(130, 255, 255);
+    cv::Scalar lower_cyan = cv::Scalar(80, 100, 100);
+    cv::Scalar upper_cyan = cv::Scalar(100, 255, 255);
+    cv::Scalar lower_magenta = cv::Scalar(140, 100, 100);
+    cv::Scalar upper_magenta = cv::Scalar(160, 255, 255);
+    cv::Scalar lower_yellow = cv::Scalar(20, 100, 100);
+    cv::Scalar upper_yellow = cv::Scalar(40, 255, 255);
+    cv::Scalar lower_black = cv::Scalar(0, 0, 20);
+    cv::Scalar upper_black = cv::Scalar(180, 255, 50);
+    cv::Scalar lower_white = cv::Scalar(0, 0, 200);
+    cv::Scalar upper_white = cv::Scalar(180, 50, 255);
 
-int hand_crafted_object_representation::segment_image(cv::Mat image, std::vector<cv::Mat> &masks) {
+    // Convert the image to HSV
+    cv::Mat image_hsv;
+    cv::cvtColor(image_copy, image_hsv, cv::COLOR_RGB2HSV);
+
+    // Generate the masks for each color
+    cv::Mat mask_red;
+    cv::inRange(image_hsv, lower_red, upper_red, mask_red);
+    cv::Mat mask_green;
+    cv::inRange(image_hsv, lower_green, upper_green, mask_green);
+    cv::Mat mask_blue;
+    cv::inRange(image_hsv, lower_blue, upper_blue, mask_blue);
+    cv::Mat mask_cyan;
+    cv::inRange(image_hsv, lower_cyan, upper_cyan, mask_cyan);
+    cv::Mat mask_magenta;
+    cv::inRange(image_hsv, lower_magenta, upper_magenta, mask_magenta);
+    cv::Mat mask_yellow;
+    cv::inRange(image_hsv, lower_yellow, upper_yellow, mask_yellow);
+    cv::Mat mask_black;
+    cv::inRange(image_hsv, lower_black, upper_black, mask_black);
+    cv::Mat mask_white;
+    cv::inRange(image_hsv, lower_white, upper_white, mask_white);
+
+    // Add the masks to the masks vector if they are not empty
+    if (cv::countNonZero(mask_red) > 0) {
+        masks.push_back(mask_red);
+    }
+    if (cv::countNonZero(mask_green) > 0) {
+        masks.push_back(mask_green);
+    }
+    if (cv::countNonZero(mask_blue) > 0) {
+        masks.push_back(mask_blue);
+    }
+    if (cv::countNonZero(mask_cyan) > 0) {
+        masks.push_back(mask_cyan);
+    }
+    if (cv::countNonZero(mask_magenta) > 0) {
+        masks.push_back(mask_magenta);
+    }
+    if (cv::countNonZero(mask_yellow) > 0) {
+        masks.push_back(mask_yellow);
+    }
+    if (cv::countNonZero(mask_black) > 0) {
+        masks.push_back(mask_black);
+    }
+    if (cv::countNonZero(mask_white) > 0) {
+        masks.push_back(mask_white);
+    }
+
+    return masks.size();
+}
+
+int hand_crafted_object_representation::segment_image_watershed(cv::Mat image, std::vector<cv::Mat> &masks) {
     // get_edges()
     // Get inverted edge mask
     cv::Mat image_copy;
@@ -163,15 +208,11 @@ void hand_crafted_object_representation::update_image(opencv_image* image) {
 
 void hand_crafted_object_representation::generate_object_image() {
     // Generate the object image
-    // Generate the object image
     cv::Mat mask_full_sized;
     cv::cvtColor(mask, mask_full_sized, cv::COLOR_GRAY2BGRA);
     mask_full_sized.convertTo(mask_full_sized, CV_32FC4, 1.0 / 255.0);
     object_image = cv::Mat::zeros(base_image.size(), CV_32FC4);
     object_image = base_image.mul(mask_full_sized);
-
-    // Generate the grayscaled object image
-
     // Generate the grayscaled object image
     cv::cvtColor(object_image, object_image_gray, cv::COLOR_RGBA2GRAY);
 
@@ -195,29 +236,6 @@ void hand_crafted_object_representation::generate_object_image() {
         }
     }
     object_color_name = COLOR_NAMES[closestIndex];
-
-
-    // Generate the object color
-    cv::Scalar mean_color = cv::mean(object_image, mask);
-    object_color = cv::Scalar(mean_color[0], mean_color[1], mean_color[2], mean_color[3]);
-    #include <limits>
-
-    double minDistance = std::numeric_limits<double>::max();
-    int closestIndex = 0;
-    for (size_t i = 0; i < COLORS.size(); i++) {
-        cv::Scalar candidate = COLORS[i];
-        double distance = sqrt(
-            pow(object_color[0] - candidate[0], 2) +
-            pow(object_color[1] - candidate[1], 2) +
-            pow(object_color[2] - candidate[2], 2)
-        );
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestIndex = static_cast<int>(i);
-        }
-    }
-    object_color_name = COLOR_NAMES[closestIndex];
-
     object_image_generated = true;
 }
 
@@ -511,6 +529,18 @@ cv::Mat hand_crafted_object_representation::get_corner_affine_transform(hand_cra
     std::vector<cv::Vec2f> self_corners = get_corners();
     std::vector<cv::Vec2f> other_corners = other->get_corners();
     return cv::estimateAffine2D(self_corners, other_corners);
+}
+
+float hand_crafted_object_representation::get_masks_iou(hand_crafted_object_representation* other) {
+    cv::Mat intersection;
+    cv::bitwise_and(mask, other->get_mask(), intersection);
+    double intersection_area = static_cast<double>(cv::countNonZero(intersection));
+
+    cv::Mat union_mask;
+    cv::bitwise_or(mask, other->get_mask(), union_mask);
+    double union_area = static_cast<double>(cv::countNonZero(union_mask));
+
+    return static_cast<float>(intersection_area / union_area);
 }
 
 void hand_crafted_object_representation::_subdivide_contours() {

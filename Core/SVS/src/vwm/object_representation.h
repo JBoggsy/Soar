@@ -31,14 +31,25 @@ public:
 
     /**
      * @brief Segments the given product image into object masks via color-based
-     * segmentation.
+     * segmentation using HSV ranges.
+     * 
+     * @param product_img The product image to segment.
+     * @param masks The resulting object masks.
+     * 
+     * @return The number of object masks extracted
+     */
+    static int segment_image_colors(cv::Mat image, std::vector<cv::Mat> &masks);
+
+    /**
+     * @brief Segments the given product image into object masks via
+     * edge-detection and watershed-based segmentation.
      *
      * @param product_img The product image to segment.
      * @param masks The resulting object masks.
      *
      * @return The number of object masks extracted
      */
-    static int segment_image(cv::Mat image, std::vector<cv::Mat> &masks);
+    static int segment_image_watershed(cv::Mat image, std::vector<cv::Mat> &masks);
 
     cv::Mat get_base_image() { return base_image; }
     cv::Mat get_mask() { return mask; }
@@ -113,6 +124,12 @@ public:
     cv::Mat get_corner_affine_transform(hand_crafted_object_representation* other);
 
     /**
+     * @brief Computes the intersection over union (IoU) of the object masks of
+     * this object and another object.
+     */
+    float get_masks_iou(hand_crafted_object_representation* other);
+
+    /**
      * @brief Converts the object representation to a string.
      *
      * This method converts the object representation to a string by concatenating
@@ -143,6 +160,7 @@ private:
     // Object image, lazy-computed
     cv::Mat object_image;
     cv::Mat object_image_gray;
+    cv::Mat object_mask;
     cv::Scalar object_color;
     std::string object_color_name;
     bool object_image_generated = false;
