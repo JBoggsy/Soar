@@ -777,19 +777,29 @@ namespace visual_ops
         int merged_width = static_cast<int>(merged_size.width);
         int merged_height = static_cast<int>(merged_size.height);
 
-        int border_bottom_a = merged_height - a_mask.rows;
-        int border_right_a  = merged_width - a_mask.cols;
-        cv::copyMakeBorder(a_mask, a_full_sized, 0, border_bottom_a, 0, border_right_a, cv::BORDER_CONSTANT, cv::Scalar(0));
+        int border_top_bottom_a = merged_height - a_mask.rows;
+        int border_left_right_a  = merged_width - a_mask.cols;
+        int border_bottom_a = border_top_bottom_a / 2;
+        int border_top_a = border_top_bottom_a - border_bottom_a;
+        int border_right_a  = border_left_right_a / 2;
+        int border_left_a   = border_left_right_a - border_right_a;
+        cv::copyMakeBorder(a_mask, a_full_sized, border_top_a, border_bottom_a, border_left_a, border_right_a, cv::BORDER_CONSTANT, cv::Scalar(0));
 
-        int border_bottom_b = merged_height - b_mask.rows;
-        int border_right_b  = merged_width - b_mask.cols;
-        cv::copyMakeBorder(b_mask, b_full_sized, 0, border_bottom_b, 0, border_right_b, cv::BORDER_CONSTANT, cv::Scalar(0));
+        int border_top_bottom_b = merged_height - b_mask.rows;
+        int border_left_right_b  = merged_width - b_mask.cols;
+        int border_bottom_b = border_top_bottom_b / 2;
+        int border_top_b = border_top_bottom_b - border_bottom_b;
+        int border_right_b  = border_left_right_b / 2;
+        int border_left_b   = border_left_right_b - border_right_b;
+        cv::copyMakeBorder(b_mask, b_full_sized, border_top_b, border_bottom_b, border_left_b, border_right_b, cv::BORDER_CONSTANT, cv::Scalar(0));
 
         cv::Mat mask_intersection;
         cv::Mat mask_union;
         cv::bitwise_and(a_full_sized, b_full_sized, mask_intersection);
-        double intersection_area = static_cast<double>(cv::countNonZero(mask_intersection));
+        cv::dilate(mask_intersection, mask_intersection, cv::Mat(), cv::Point(-1, -1), 1);
         cv::bitwise_or(a_full_sized, b_full_sized, mask_union);
+
+        double intersection_area = static_cast<double>(cv::countNonZero(mask_intersection));
         double union_area = static_cast<double>(cv::countNonZero(mask_union));
         *iou = intersection_area / union_area;
 
@@ -830,13 +840,22 @@ namespace visual_ops
         int merged_width = static_cast<int>(merged_size.width);
         int merged_height = static_cast<int>(merged_size.height);
 
-        int border_bottom_a = merged_height - a_mask.rows;
-        int border_right_a  = merged_width - a_mask.cols;
-        cv::copyMakeBorder(a_mask, a_full_sized, 0, border_bottom_a, 0, border_right_a, cv::BORDER_CONSTANT, cv::Scalar(0));
+        int border_top_bottom_a = merged_height - a_mask.rows;
+        int border_left_right_a  = merged_width - a_mask.cols;
+        int border_bottom_a = border_top_bottom_a / 2;
+        int border_top_a = border_top_bottom_a - border_bottom_a;
+        int border_right_a  = border_left_right_a / 2;
+        int border_left_a   = border_left_right_a - border_right_a;
+        cv::copyMakeBorder(a_mask, a_full_sized, border_top_a, border_bottom_a, border_left_a, border_right_a, cv::BORDER_CONSTANT, cv::Scalar(0));
 
-        int border_bottom_b = merged_height - b_mask.rows;
-        int border_right_b  = merged_width - b_mask.cols;
-        cv::copyMakeBorder(b_mask, b_full_sized, 0, border_bottom_b, 0, border_right_b, cv::BORDER_CONSTANT, cv::Scalar(0));
+        int border_top_bottom_b = merged_height - b_mask.rows;
+        int border_left_right_b  = merged_width - b_mask.cols;
+        int border_bottom_b = border_top_bottom_b / 2;
+        int border_top_b = border_top_bottom_b - border_bottom_b;
+        int border_right_b  = border_left_right_b / 2;
+        int border_left_b   = border_left_right_b - border_right_b;
+        cv::copyMakeBorder(b_mask, b_full_sized, border_top_b, border_bottom_b, border_left_b, border_right_b, cv::BORDER_CONSTANT, cv::Scalar(0));
+        cv::dilate(b_full_sized, b_full_sized, cv::Mat(), cv::Point(-1, -1), 1);
 
         cv::Mat mask_union;
         cv::bitwise_or(a_full_sized, b_full_sized, mask_union);

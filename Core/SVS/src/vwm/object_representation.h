@@ -32,10 +32,10 @@ public:
     /**
      * @brief Segments the given product image into object masks via color-based
      * segmentation using HSV ranges.
-     * 
+     *
      * @param product_img The product image to segment.
      * @param masks The resulting object masks.
-     * 
+     *
      * @return The number of object masks extracted
      */
     static int segment_image_colors(cv::Mat image, std::vector<cv::Mat> &masks);
@@ -112,15 +112,15 @@ public:
 
     /**
      * @brief Computes the affine transformation that best aligns the corners of
-     * this object with the corners of another object. 
-     * 
+     * this object with the corners of another object.
+     *
      * This method computes the affine transformation that best aligns the corners
      * of this object with the corners of another object using the
      * `cv::estimateAffine2D` method. This object acts as the `from` argument
      * and the other object acts as the `to` argument. That is, applying the
      * returned affine transformation should align the corners of this object
      * with the corners of the other object.
-     * 
+     *
      * @note Both objects must have the same number of corners.
      */
     cv::Mat get_corner_affine_transform(hand_crafted_object_representation* other);
