@@ -41,8 +41,9 @@ visual_working_memory* visual_working_memory::clone(Symbol* vwm_link) {
 int visual_working_memory::add_visual_operation(std::string op_type, data_dict* op_args, std::unordered_map<std::string, int> parent_ids) {
     visual_ops::vop_params_metadata op_metadata = visual_ops::vops_param_table[op_type];
 
-    Symbol* new_node_link = si->get_wme_val(si->make_id_wme(vwm_link, std::string("node")));
-    visual_operation_node* new_node = new visual_operation_node(op_type, op_args, assign_new_node_id(), this, si, new_node_link);
+    wme* new_node_link_wme = si->make_id_wme(vwm_link, std::string("node"));
+    Symbol* new_node_link = si->get_wme_val(new_node_link_wme);
+    visual_operation_node* new_node = new visual_operation_node(op_type, op_args, assign_new_node_id(), this, si, new_node_link, new_node_link_wme);
     // Now that the VOP is created and added, link it to its source nodes
     std::unordered_map<std::string, int>::iterator parents_itr;
     for (parents_itr=parent_ids.begin(); parents_itr!=parent_ids.end(); parents_itr++) {
@@ -84,18 +85,26 @@ int visual_working_memory::remove_visual_operation(int node_id) {
     source_node = vop_nodes[node_id];
 
     // Remove all children of the source node
-    std::unordered_set<int>::iterator children_itr;
-    for (children_itr=source_node->get_child_ids()->begin(); children_itr != source_node->get_child_ids()->end(); children_itr++) {
-        child = vop_nodes[*children_itr];
+    std::unordered_set<int>::iterator child_node_ids_itr;
+    while (!source_node->get_child_ids()->empty()) {
+        child_node_ids_itr = source_node->get_child_ids()->begin();
+        child = vop_nodes[*child_node_ids_itr];
         remove_visual_operation(child->get_id());
     }
 
     // Remove source node from all of its parents, and check them for leaf status
     std::unordered_map<std::string, int>::iterator parents_itr;
     for (parents_itr = source_node->get_parent_ids()->begin(); parents_itr != source_node->get_parent_ids()->end(); parents_itr++) {
+            if (parents_itr->second == -1) {
+                continue;
+            }
             parent = vop_nodes[parents_itr->second];
             parent->remove_child_id(node_id);
         }
+
+    // Remove the source node from the VOP graph
+    vop_nodes.erase(node_id);
+    delete source_node;
 
     num_operations--;
     return num_operations;

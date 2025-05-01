@@ -49,6 +49,7 @@
 
 #include "src/commands/vwm_add_vop_node.cpp"
 #include "src/commands/vwm_edit_vop_node.cpp"
+#include "src/commands/vwm_delete_vop_node.cpp"
 
 #include "src/vltm/exact_visual_concept_descriptor.cpp"
 #include "src/vltm/visual_long_term_memory.cpp"

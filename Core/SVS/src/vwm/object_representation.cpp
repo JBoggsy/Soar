@@ -245,6 +245,13 @@ void hand_crafted_object_representation::calculate_contours() {
         throw std::runtime_error("No contours found in the mask.");
     }
     contour = contours[0];
+
+    if (all_contour_points.size() > 0) {
+        all_contour_points.clear();
+    }
+    for (const auto& contour : contours) {
+        all_contour_points.insert(all_contour_points.end(), contour.begin(), contour.end());
+    }
     contours_calculated = true;
     contour_calculated = true;
 }
@@ -252,19 +259,19 @@ void hand_crafted_object_representation::calculate_contours() {
 void hand_crafted_object_representation::generate_contour_image() {
     if (!contours_calculated) calculate_contours();
     contour_image = cv::Mat::zeros(shape, CV_8UC3);
-    cv::drawContours(contour_image, contours, 0, cv::Scalar(255, 255, 255), 1);
+    cv::drawContours(contour_image, contours, -1, cv::Scalar(255, 255, 255), 1);
     contour_image_generated = true;
 }
 
 void hand_crafted_object_representation::calculate_mask_bbox() {
     if (!contours_calculated) calculate_contours();
-    mask_bbox = cv::boundingRect(contours[0]);
+    mask_bbox = cv::boundingRect(all_contour_points);
     mask_bbox_calculated = true;
 }
 
 void hand_crafted_object_representation::calculate_min_area_rect() {
     if (!contours_calculated) calculate_contours();
-    min_area_rect = cv::minAreaRect(contours[0]);
+    min_area_rect = cv::minAreaRect(all_contour_points);
     min_area_rect_calculated = true;
 }
 

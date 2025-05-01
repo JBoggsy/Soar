@@ -34,6 +34,7 @@ private:
     OBJ_REP_TYPE* node_object_rep_;
 
     soar_interface* si_;
+    wme* node_link_wme_;
     Symbol* node_link_;
     Symbol* op_name_sym_;
     Symbol* node_id_sym_;
@@ -41,7 +42,8 @@ private:
     std::unordered_map<std::string, wme*> param_wmes_;
 public:
     visual_operation_node(std::string op_name, data_dict* params, int vop_node_id,
-                          visual_working_memory* vwm, soar_interface* si, Symbol* node_link);
+                          visual_working_memory* vwm, soar_interface* si,
+                          Symbol* node_link, wme* node_link_wme);
     ~visual_operation_node();
 
     std::string get_op_type() { return op_type_; }

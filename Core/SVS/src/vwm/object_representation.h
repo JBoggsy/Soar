@@ -171,6 +171,7 @@ private:
     std::vector<std::vector<cv::Point>> contours;
     bool contours_calculated = false;
     std::vector<cv::Point> contour;
+    std::vector<cv::Point> all_contour_points;
     bool contour_calculated = false;
     cv::Rect2d mask_bbox;
     bool mask_bbox_calculated = false;

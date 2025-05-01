@@ -11,8 +11,10 @@
 // VISUAL OPERATION NODE //
 ///////////////////////////
 visual_operation_node::visual_operation_node(std::string op_type, data_dict* params, int vop_node_id,
-                                             visual_working_memory* vwm, soar_interface* si, Symbol* node_link)
-    : op_type_(op_type), parameters_(*params), id_(vop_node_id), vwm_(vwm), si_(si), node_link_(node_link)
+                                             visual_working_memory* vwm, soar_interface* si,
+                                             Symbol* node_link, wme* node_link_wme)
+    : op_type_(op_type), parameters_(*params), id_(vop_node_id), vwm_(vwm), si_(si), node_link_(node_link),
+      node_link_wme_(node_link_wme)
 {
     op_metadata_ = visual_ops::vops_param_table[op_type];
     operation_   = op_metadata_.vop_function;
@@ -190,6 +192,16 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
 
 visual_operation_node::~visual_operation_node() {
     si_->del_sym(node_link_);
+    si_->del_sym(op_name_sym_);
+    si_->del_sym(node_id_sym_);
+    si_->remove_wme(node_link_wme_);
+
+    for (auto& param_wme : param_wmes_) {
+        si_->remove_wme(param_wme.second);
+    }
+    for (auto& param_sym : param_syms_) {
+        si_->del_sym(param_sym.second);
+    }
 }
 
 // visual_operation_node::create_obj_vec_param_wmes(std::string param_name, std::vector<OBJ_REP_TYPE*> obj_vec) {
