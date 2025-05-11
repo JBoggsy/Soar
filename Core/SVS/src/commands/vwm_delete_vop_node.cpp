@@ -64,8 +64,15 @@ bool delete_vop_node_command::update_sub() {
         return false;
     }
 
+    if (si->get_const_attr(root, "status", status)) {
+        if (status.compare("success") == 0) {
+            return false;
+        }
+    }
+
     // Delete the node
     int result = vwm->remove_visual_operation(node_id);
+    // printf("delete_vop_node_command: result = %d\n", result);
     if (result == -1) {
         set_status("no such node");
         return false;

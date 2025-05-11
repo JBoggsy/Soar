@@ -21,6 +21,7 @@
 #include "command.h"
 #include "command_table.h"
 #include "latent_representation.h"
+#include "token_sequence.h"
 #include "visual_long_term_memory.h"
 
 /////////////////
@@ -94,9 +95,13 @@ bool learn_percept_command::update_sub() {
     }
 
     #ifdef ENABLE_TORCH
-    latent_representation* latent = new latent_representation();
-    vltm->encode_image(percept, latent);
-    vltm->store_percept(latent, name);
+    // TODO: I should make this more flexible inthe final code so that it can be
+    // chosen at runtime.
+    // latent_representation* latent = new latent_representation();
+    token_sequence* representation = new token_sequence(49, 256);
+
+    vltm->encode_image(percept, representation);
+    vltm->store_percept(representation, name);
     #else
     vltm->store_percept(percept, name);
     #endif

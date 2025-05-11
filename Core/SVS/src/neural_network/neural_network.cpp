@@ -121,4 +121,43 @@ void vae_vcd_model::decode(latent_representation* latent, latent_representation*
     module->decode(latent, output);
 }
 
+
+///////////////////////
+// IMG FACTORY JEPA //
+/////////////////////
+img_factory_jepa::img_factory_jepa()
+{
+    module = new img_factory_jepa_wrapper();
+    module_loaded = false;
+}
+img_factory_jepa::img_factory_jepa(std::string traced_script_path)
+{
+    module = new img_factory_jepa_wrapper(traced_script_path);
+    module_loaded = true;
+}
+img_factory_jepa::~img_factory_jepa()
+{
+    delete module;
+}
+
+void img_factory_jepa::load_traced_script(std::string traced_script_path)
+{
+    module->load_traced_script(traced_script_path);
+    module_loaded = true;
+    printf("img_factory_jepa: Loaded traced script from %s\n", traced_script_path.c_str());
+}
+
+void img_factory_jepa::encode(cv::Mat& input, token_sequence* tokens)
+{
+    module->encode(input, tokens);
+}
+void img_factory_jepa::decode(token_sequence* tokens, cv::Mat& output)
+{
+    module->decode(tokens, output);
+}
+void img_factory_jepa::predict(token_sequence* source, token_sequence* conditioning, token_sequence* output)
+{
+    module->predict(source, conditioning, output);
+}
+
 #endif

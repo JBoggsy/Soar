@@ -12,6 +12,7 @@
 #include "vae_visual_concept_descriptor.h"
 #include "image.h"
 #include "latent_representation.h"
+#include "token_sequence.h"
 #include "object_representation.h"
 
 
@@ -190,12 +191,12 @@ namespace visual_ops
 
         float abs_cos = std::abs(rot_mat.at<double>(0, 0));
         float abs_sin = std::abs(rot_mat.at<double>(0, 1));
-        int new_width = (int)(height * abs_sin + width * abs_cos);
-        int new_height = (int)(height * abs_cos + width * abs_sin);
+        int new_width = (int)(height * abs_sin + width * abs_cos + 2);
+        int new_height = (int)(height * abs_cos + width * abs_sin + 2);
         rot_mat.at<double>(0, 2) += (new_width - width) / 2;
         rot_mat.at<double>(1, 2) += (new_height - height) / 2;
 
-        cv::warpAffine(*(image->get_image()), result, rot_mat, cv::Size(new_width, new_height));
+        cv::warpAffine(*(image->get_image()), result, rot_mat, cv::Size(new_width, new_height), cv::INTER_NEAREST);
         image->set_image(&result);
     }
 
@@ -205,7 +206,7 @@ namespace visual_ops
         int size_y = *(int*)args[VOP_ARG_SIZEY];
 
         cv::Mat result;
-        cv::resize(*(image->get_image()), result, cv::Size(size_x, size_y));
+        cv::resize(*(image->get_image()), result, cv::Size(size_x, size_y), 0, 0, cv::INTER_NEAREST);
         image->set_image(&result);
     }
 
@@ -215,7 +216,7 @@ namespace visual_ops
         double scale_y = *(double*)args[VOP_ARG_SCALEY];
 
         cv::Mat result;
-        cv::resize(*(image->get_image()), result, cv::Size(), scale_x, scale_y);
+        cv::resize(*(image->get_image()), result, cv::Size(), scale_x, scale_y, cv::INTER_NEAREST);
         image->set_image(&result);
     }
     //!SECTION
@@ -882,7 +883,9 @@ namespace visual_ops
     #ifdef ENABLE_TORCH
     void encode(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
-        latent_representation* latent = (latent_representation*)args[VOP_ARG_LATENT];
+        // TODO: Make this more flexible and selectable at runtime
+        // latent_representation* latent = (latent_representation*)args[VOP_ARG_LATENT];
+        token_sequence* latent = (token_sequence*)args[VOP_ARG_LATENT];
         VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
         vltm->encode_image(image, latent);
@@ -890,10 +893,13 @@ namespace visual_ops
 
     void decode(data_dict args) {
         opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
-        latent_representation* latent = (latent_representation*)args[VOP_ARG_LATENT];
+        // TODO: Make this more flexible and selectable at runtime
+        // latent_representation* latent =
+        // (latent_representation*)args[VOP_ARG_LATENT];
+        token_sequence* latent = (token_sequence*)args[VOP_ARG_LATENT];
         VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
-        vltm->decode_latent(latent, image);
+        vltm->decode_representation(latent, image);
     }
     #else
     void encode(data_dict args) {
@@ -925,7 +931,9 @@ namespace visual_ops
 
         vmem_match** matches = new vmem_match*[3];
         #ifdef ENABLE_TORCH
-        latent_representation* latent = new latent_representation();
+        // TODO: Make this more flexible and selectable at runtime
+        // latent_representation* latent = new latent_representation();
+        token_sequence* latent = new token_sequence();
         vltm->encode_image(source, latent);
         vltm->match(latent, matches, 3);
         #else
@@ -950,7 +958,9 @@ namespace visual_ops
         VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
         #ifdef ENABLE_TORCH
-        latent_representation* latent = new latent_representation();
+        // TODO: Make this more flexible and selectable at runtime
+        // latent_representation* latent = new latent_representation();
+        token_sequence* latent = new token_sequence();
         vltm->encode_image(source, latent);
         vltm->store_percept(latent, class_name);
         #else
@@ -964,9 +974,11 @@ namespace visual_ops
         VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
 
         #ifdef ENABLE_TORCH
-        latent_representation* latent = new latent_representation();
+        // TODO: Make this more flexible and selectable at runtime
+        // latent_representation* latent = new latent_representation();
+        token_sequence* latent = new token_sequence();
         vltm->recall(class_name, latent);
-        vltm->decode_latent(latent, source);
+        vltm->decode_representation(latent, source);
         #else
         vltm->recall(class_name, source);
         #endif

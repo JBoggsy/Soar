@@ -9,6 +9,7 @@
 #include "cliproxy.h"
 #ifdef ENABLE_TORCH
 #include "neural_network.h"
+#include "jepa_visual_concept_descriptor.h"
 #endif
 // Forward declarations
 class svs;  // "svs.h"
@@ -75,7 +76,11 @@ private:
     svs* _svs;
 
     #ifdef ENABLE_TORCH
-    vae_base_model* _vae_model;
+    // TODO: For now I'm just commenting this out, but I should make this much
+    // more flexible. Really the whole NN system here should be much more
+    // flexible, so that it can be altered at run-time.
+    // vae_base_model* _vcd_model;
+    img_factory_jepa* _vcd_model;
     #endif
 
 public:
@@ -99,36 +104,36 @@ public:
 
     #ifdef ENABLE_TORCH
     /**
-     * @brief Load a traced PyTorch script into the VAE model.
+     * @brief Load a traced PyTorch script into the VCD model.
      *
      * @param traced_script_path The path to the traced PyTorch script to load.
      */
-    void load_vae_model(std::string traced_script_path);
+    void load_vcd_model(std::string traced_script_path);
 
     #ifdef ENABLE_OPENCV
     /**
-     * @brief Encode an opencv_image into a latent representation.
+     * @brief Encode an opencv_image into a VCD representation.
      *
      * @param input The image to encode.
-     * @param latent The latent representation to write the result into.
+     * @param representation The representation to write the result into.
      */
-    void encode_image(opencv_image* input, latent_representation* latent);
+    void encode_image(opencv_image* input, img_T* representation);
 
     /**
-     * @brief Decode a latent representation into an opencv_image.
+     * @brief Decode a VCD representation into an opencv_image.
      *
-     * @param latent The latent representation to decode.
+     * @param latent The representation to decode.
      * @param output The opencv_image to write the result into.
      */
-    void decode_latent(latent_representation* latent, opencv_image* output);
+    void decode_representation(img_T* latent, opencv_image* output);
 
     /**
-     * @brief Load a VCD model from a given filepath.
-     * 
+     * @brief Load a class-specific VCD model from a given filepath.
+     *
      * @param vcd_id The string identifier of the VCD to load the model into.
      * @param model_filepath The path to the model file to load.
      */
-    void load_vae_vcd_model(std::string vcd_id, std::string model_filepath);
+    void load_class_vcd_model(std::string vcd_id, std::string model_filepath);
     #endif
     #endif
 
@@ -233,13 +238,13 @@ public:
     /**
      * @brief Load a traced PyTorch script into the VAE model.
      */
-    void cli_load_vae(const std::vector<std::string>& args, std::ostream& os);
+    void cli_load_vcd_model(const std::vector<std::string>& args, std::ostream& os);
 
     /**
-     * @brief Given a class name and a filepath to a torch model, create a vae
+     * @brief Given a class name and a filepath to a torch model, create a
      * vcd with the given class name and load the model from the given filepath.
      */
-    void cli_load_vae_vcd_model(const std::vector<std::string>& args, std::ostream& os);
+    void cli_load_class_vcd_model(const std::vector<std::string>& args, std::ostream& os);
     #endif
 
     /**
@@ -261,7 +266,8 @@ public:
 #ifdef ENABLE_OPENCV
 #ifdef ENABLE_TORCH
     // #define VLTM_TYPE visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>
-    #define VLTM_TYPE visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>
+    // #define VLTM_TYPE visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>
+    #define VLTM_TYPE visual_long_term_memory<token_sequence, jepa_visual_concept_descriptor>
 #else
     #define VLTM_TYPE visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>
 #endif

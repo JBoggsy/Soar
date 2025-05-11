@@ -5,13 +5,15 @@
 // third-party includes
 #include <opencv2/opencv.hpp>
 // SVS includes
+// #include "image.h"
 #include "latent_representation.h"
+#include "token_sequence.h"
 
 // forward declarations
 class torch_module_wrapper;
 class vae_base_model_wrapper;
 class vae_vcd_model_wrapper;
-
+class img_factory_jepa_wrapper;
 
 /**
  * @brief An abstract class for interfacing with a PyTorch-based neural network.
@@ -90,6 +92,26 @@ public:
      * into a single-element probability latent. Used for recognition.
      */
     void decode(latent_representation* latent, latent_representation* output);
+    bool get_module_loaded() { return module_loaded; }
+};
+
+
+class img_factory_jepa : public neural_network
+{
+private:
+    img_factory_jepa_wrapper* module;
+    bool module_loaded = false;
+public:
+    img_factory_jepa();
+    img_factory_jepa(std::string traced_script_path);
+    ~img_factory_jepa();
+    void load_traced_script(std::string traced_script_path);
+
+    void encode(cv::Mat& input, token_sequence* tokens);
+    // void encode(cv::Mat& input, opencv_image* tokens);
+    void decode(token_sequence* tokens, cv::Mat& output);
+    // void decode(opencv_image* tokens, cv::Mat& output);
+    void predict(token_sequence* source, token_sequence* conditioning, token_sequence* output);
     bool get_module_loaded() { return module_loaded; }
 };
 #endif

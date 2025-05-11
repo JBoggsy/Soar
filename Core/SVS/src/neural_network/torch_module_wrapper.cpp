@@ -83,6 +83,21 @@ void torch_module_wrapper::latent_to_tensor(latent_representation* latent, at::T
     output = sample_tensor.clone();
 }
 
+void torch_module_wrapper::tensor_to_token_sequence(at::Tensor& input, token_sequence* output)
+{
+    int num_tokens = input.size(0);
+    int num_features = input.size(1);
+    cv::Mat tokens(num_tokens, num_features, CV_32F, input.data_ptr<float>());
+    output->set_tokens(tokens);
+}
+
+void torch_module_wrapper::token_sequence_to_tensor(token_sequence* input, at::Tensor& output)
+{
+    cv::Mat tokens = input->get_tokens();
+    at::Tensor tensor = torch::from_blob(tokens.data, {tokens.rows, tokens.cols}, at::kFloat);
+    output = tensor.clone();
+}
+
 
 cv::Mat torch_module_wrapper::forward(cv::Mat& input)
 {
@@ -189,3 +204,57 @@ void vae_vcd_model_wrapper::decode(latent_representation* latent, latent_represe
     tensors_to_latent_dist(mu_tensor, sigma_tensor, output);
 }
 #endif
+
+
+/////////////////////////
+// IMAGE FACTORY JEPA //
+///////////////////////
+img_factory_jepa_wrapper::img_factory_jepa_wrapper()
+{
+    module = NULL;
+}
+img_factory_jepa_wrapper::img_factory_jepa_wrapper(std::string traced_script_path)
+{
+    module = NULL;
+    load_traced_script(traced_script_path);
+}
+img_factory_jepa_wrapper::~img_factory_jepa_wrapper()
+{
+    delete module;
+}
+
+void img_factory_jepa_wrapper::encode(cv::Mat& input, token_sequence* tokens)
+{
+    at::Tensor input_tensor;
+    mat_to_tensor(input, input_tensor);
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(input_tensor);
+    torch::jit::Method encode_method = module->get_method("encode");
+    at::Tensor output_tensor = encode_method(inputs).toTensor();
+    tensor_to_token_sequence(output_tensor, tokens);
+}
+
+void img_factory_jepa_wrapper::decode(token_sequence* tokens, cv::Mat& output)
+{
+    at::Tensor input_tensor;
+    token_sequence_to_tensor(tokens, input_tensor);
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(input_tensor);
+    torch::jit::Method decode_method = module->get_method("decode");
+    at::Tensor output_tensor = decode_method(inputs).toTensor();
+    tensor_to_mat(output_tensor, output);
+}
+
+void img_factory_jepa_wrapper::predict(token_sequence* source, token_sequence* conditioning, token_sequence* output)
+{
+    at::Tensor source_tensor;
+    token_sequence_to_tensor(source, source_tensor);
+    at::Tensor conditioning_tensor;
+    token_sequence_to_tensor(conditioning, conditioning_tensor);
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(source_tensor);
+    inputs.push_back(conditioning_tensor);
+    torch::jit::Method predict_method = module->get_method("predict");
+    at::Tensor output_tensor = predict_method(inputs).toTensor();
+    tensor_to_token_sequence(output_tensor, output);
+}

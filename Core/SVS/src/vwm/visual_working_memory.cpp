@@ -20,7 +20,7 @@ visual_working_memory::visual_working_memory(svs* svs_ptr, soar_interface* si, S
 {
     num_operations = 0;
     num_operations_symbol = si->make_sym(num_operations);
-    num_operations_wme = si->make_wme(vwm_link, std::string("num_ops"), num_operations_symbol);
+    num_operations_wme = si->make_wme(vwm_link, std::string("num-ops"), num_operations_symbol);
     next_vop_node_id = 0;
 
     #ifdef ENABLE_ROS
@@ -70,6 +70,7 @@ int visual_working_memory::add_visual_operation(std::string op_type, data_dict* 
     num_operations++;
 
     evaluate_from_node(new_node->get_id());
+    // printf("Added node %d (%s) with %d parents\n", new_node->get_id(), op_type.c_str(), (int)parent_ids.size());
     return new_node->get_id();
 
 }
@@ -79,12 +80,15 @@ int visual_working_memory::remove_visual_operation(int node_id) {
     visual_operation_node* parent;
     visual_operation_node* source_node;
 
+    // printf("Removing node %d...\n", node_id);
+
     if (vop_nodes.find(node_id) == vop_nodes.end()) {
         return num_operations;
     }
     source_node = vop_nodes[node_id];
 
     // Remove all children of the source node
+    // printf("Removing children (%d)... ", node_id);
     std::unordered_set<int>::iterator child_node_ids_itr;
     while (!source_node->get_child_ids()->empty()) {
         child_node_ids_itr = source_node->get_child_ids()->begin();
@@ -93,6 +97,7 @@ int visual_working_memory::remove_visual_operation(int node_id) {
     }
 
     // Remove source node from all of its parents, and check them for leaf status
+    // printf("Removing from parents (%d)... ", node_id);
     std::unordered_map<std::string, int>::iterator parents_itr;
     for (parents_itr = source_node->get_parent_ids()->begin(); parents_itr != source_node->get_parent_ids()->end(); parents_itr++) {
             if (parents_itr->second == -1) {
@@ -103,10 +108,14 @@ int visual_working_memory::remove_visual_operation(int node_id) {
         }
 
     // Remove the source node from the VOP graph
+    // printf("Erasing node (%d)... ", node_id);
     vop_nodes.erase(node_id);
+    // printf("Deleting node (%d)... ", node_id);
     delete source_node;
 
     num_operations--;
+
+    // printf("Done (%d remaining)\n", num_operations);
     return num_operations;
 
 }
@@ -230,7 +239,9 @@ std::vector<visual_ops::affine_transform_struct*>* visual_working_memory::get_af
 }
 
 int visual_working_memory::assign_new_node_id() {
-    return next_vop_node_id++;
+    int new_id = next_vop_node_id;
+    next_vop_node_id++;
+    return new_id;
 }
 
 std::string visual_working_memory::get_vog_dot_string() {

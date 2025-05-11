@@ -7,6 +7,7 @@
 #include <torch/script.h>
 // SVS includes
 #include "latent_representation.h"
+#include "token_sequence.h"
 
 
 /**
@@ -94,6 +95,22 @@ protected:
      */
     void latent_to_tensor(latent_representation* latent, at::Tensor& output);
 
+    /**
+     * @brief Convert a single tensor to a token sequence representation.
+     *
+     * @param input The input PyTorch tensor.
+     * @param output The output token sequence.
+     */
+    void tensor_to_token_sequence(at::Tensor& input, token_sequence* output);
+
+    /**
+     * @brief Convert a token sequence representation to a single tensor.
+     *
+     * @param input The input token sequence.
+     * @param output The output PyTorch tensor.
+     */
+    void token_sequence_to_tensor(token_sequence* input, at::Tensor& output);
+
     void print_tensor(at::Tensor& tensor);
 
     torch::jit::script::Module* module;
@@ -131,5 +148,33 @@ public:
 
     void encode(latent_representation* input, latent_representation* latent);
     void decode(latent_representation* latent, latent_representation* output);
+};
+
+
+class img_factory_jepa_wrapper : public torch_module_wrapper
+{
+    public:
+        img_factory_jepa_wrapper();
+        img_factory_jepa_wrapper(std::string traced_script_path);
+        ~img_factory_jepa_wrapper();
+
+        /**
+         * @brief Encodes an image into a token sequence.
+         *
+         * @param input The input image as a cv::Mat.
+         * @param tokens The output token sequence.
+         */
+        void encode(cv::Mat& input, token_sequence* tokens);
+
+        /**
+         * @brief Decodes a token sequence into an image.
+         *
+         * @param tokens The input token sequence.
+         * @param output The output image as a cv::Mat.
+         */
+        void decode(token_sequence* tokens, cv::Mat& output);
+
+        void predict(token_sequence* source, token_sequence* conditioning, token_sequence* output);
+
 };
 #endif

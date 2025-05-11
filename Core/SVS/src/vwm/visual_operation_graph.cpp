@@ -191,10 +191,10 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
 }
 
 visual_operation_node::~visual_operation_node() {
+    si_->remove_wme(node_link_wme_);
     si_->del_sym(node_link_);
     si_->del_sym(op_name_sym_);
     si_->del_sym(node_id_sym_);
-    si_->remove_wme(node_link_wme_);
 
     for (auto& param_wme : param_wmes_) {
         si_->remove_wme(param_wme.second);
