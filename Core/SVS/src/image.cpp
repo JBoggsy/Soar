@@ -150,6 +150,13 @@ void opencv_image::copy_from(opencv_image* other) {
 
 bool opencv_image::is_empty() {
     if (_img == NULL) { return true; }
+    if (_img->empty()) { return true; }
+    if (_img->rows == 0) { return true; }
+    if (_img->cols == 0) { return true; }
+    if (_img->channels() == 0) { return true; }
+    if (_img->data == NULL) { return true; }
+    if (_img->total() == 0) { return true; }
+    if (cv::sum(*_img).val[3] == 0) { return true; }
     return _img->empty();
 }
 

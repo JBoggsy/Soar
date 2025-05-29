@@ -242,7 +242,8 @@ void hand_crafted_object_representation::generate_object_image() {
 void hand_crafted_object_representation::calculate_contours() {
     cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
     if (contours.size() == 0) {
-        throw std::runtime_error("No contours found in the mask.");
+        set_object_null(true);
+        return;
     }
     contour = contours[0];
 
@@ -258,6 +259,10 @@ void hand_crafted_object_representation::calculate_contours() {
 
 void hand_crafted_object_representation::generate_contour_image() {
     if (!contours_calculated) calculate_contours();
+    if (get_object_null()) {
+        contour_image = cv::Mat::zeros(shape, CV_8UC3);
+        return;
+    }
     contour_image = cv::Mat::zeros(shape, CV_8UC3);
     cv::drawContours(contour_image, contours, -1, cv::Scalar(255, 255, 255), 1);
     contour_image_generated = true;
@@ -265,12 +270,20 @@ void hand_crafted_object_representation::generate_contour_image() {
 
 void hand_crafted_object_representation::calculate_mask_bbox() {
     if (!contours_calculated) calculate_contours();
+    if (get_object_null()) {
+        mask_bbox = cv::Rect2d(0, 0, 0, 0);
+        return;
+    }
     mask_bbox = cv::boundingRect(all_contour_points);
     mask_bbox_calculated = true;
 }
 
 void hand_crafted_object_representation::calculate_min_area_rect() {
     if (!contours_calculated) calculate_contours();
+    if (get_object_null()) {
+        min_area_rect = cv::RotatedRect(cv::Point2f(0, 0), cv::Size2f(0, 0), 0);
+        return;
+    }
     min_area_rect = cv::minAreaRect(all_contour_points);
     min_area_rect_calculated = true;
 }

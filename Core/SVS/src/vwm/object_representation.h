@@ -11,6 +11,7 @@
 // SVS includes
 #include "image.h"
 
+
 class object_representation
 {
 public:
@@ -56,6 +57,8 @@ public:
     cv::Vec4i get_border_size() { return border_size; }
     cv::Size2d get_shape() { return shape; }
     double get_diagonal_size() { return diagonal_size; }
+    void set_object_null(bool null) { null_object = null; }
+    bool get_object_null() { return null_object; }
 
     cv::Mat get_object_image() {if (!object_image_generated) generate_object_image(); return object_image;}
     cv::Mat get_object_image_gray() {if (!object_image_generated) generate_object_image(); return object_image_gray;}
@@ -158,6 +161,7 @@ private:
     int border_size;
     cv::Size2d shape;
     double diagonal_size;
+    bool null_object = false;
 
     // Object image, lazy-computed
     cv::Mat object_image;

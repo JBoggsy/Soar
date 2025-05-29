@@ -491,6 +491,8 @@ namespace visual_ops
      * - `int width`: width of the rectangle
      *
      * - `int height`: height of the rectangle
+     *
+     * - `double* amount`: The score of the best match
      */
     void match_template(data_dict args);
 
@@ -1106,11 +1108,11 @@ namespace visual_ops
     //ANCHOR - MATCH TEMPLATE
     inline vop_params_metadata match_template_metadata = {
         /* vop_function = */        match_template,
-        /* num_params = */          7,
-        /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_SOURCE, VOP_ARG_TEMPLATE, VOP_ARG_X, VOP_ARG_Y, VOP_ARG_WIDTH, VOP_ARG_HEIGHT},
-        /* param_types = */         {INT_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG},
-        /* param_directions */      {INPUT_ARG, INOUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
-        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+        /* num_params = */          8,
+        /* param_names = */         {VOP_ARG_METHOD, VOP_ARG_SOURCE, VOP_ARG_TEMPLATE, VOP_ARG_X, VOP_ARG_Y, VOP_ARG_WIDTH, VOP_ARG_HEIGHT, VOP_ARG_AMOUNT},
+        /* param_types = */         {INT_ARG, CV_IMAGE_ARG, CV_IMAGE_ARG, INT_ARG, INT_ARG, INT_ARG, INT_ARG, DOUBLE_ARG},
+        /* param_directions */      {INPUT_ARG, INOUT_ARG, INPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     //ANCHOR - CROP TO ROI

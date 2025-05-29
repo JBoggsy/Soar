@@ -405,6 +405,7 @@ bool visual_operation_node::evaluate() {
     wme* num_images_wme;
 
     OBJ_REP_TYPE* param_val_obj;
+    wme* obj_null_wme;
     wme* obj_num_sides_wme;
     wme* obj_num_corners_wme;
     wme* obj_width_wme;
@@ -468,12 +469,11 @@ bool visual_operation_node::evaluate() {
                     param_val_img = (opencv_image*)parameters_[param_name];
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
                     bool empty = param_val_img->is_empty();
-                    empty_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("empty"), si_->make_sym(empty));
-
                     if (!empty) {
                         img_width_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("width"), si_->make_sym(param_val_img->get_width()));
                         img_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), si_->make_sym(param_val_img->get_height()));
                     }
+                    empty_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("empty"), si_->make_sym(empty));
                 }
                 break;
             case visual_ops::MULTI_CV_IMAGE_ARG:
@@ -508,22 +508,26 @@ bool visual_operation_node::evaluate() {
                 } else {
                     param_val_obj = (OBJ_REP_TYPE*)(parameters_[param_name]);
                     param_wmes_[param_name] = si_->make_id_wme(node_link_, param_name);
-                    obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), param_val_obj->get_num_sides());
-                    obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), param_val_obj->get_num_corners());
-                    obj_width_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("width"), param_val_obj->get_cropped_image().cols);
-                    obj_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), param_val_obj->get_cropped_image().rows);
-                    obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), param_val_obj->get_ellipsity());
-                    cv::Scalar color = param_val_obj->get_object_color();
-                    obj_color_wme = si_->make_id_wme(param_wmes_[param_name]->value, std::string("color-value"));
-                    si_->make_wme(obj_color_wme->value, std::string("r"), color[0]);
-                    si_->make_wme(obj_color_wme->value, std::string("g"), color[1]);
-                    si_->make_wme(obj_color_wme->value, std::string("b"), color[2]);
-                    si_->make_wme(obj_color_wme->value, std::string("a"), color[3]);
-                    std::string color_name = param_val_obj->get_object_color_name();
-                    si_->make_wme(param_wmes_[param_name]->value, std::string("color-name"), si_->make_sym(color_name));
-                    obj_minrect_h_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-h"), param_val_obj->get_min_rect_height());
-                    obj_minrect_w_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-w"), param_val_obj->get_min_rect_width());
-                    obj_minrect_angle_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-angle"), param_val_obj->get_min_rect_angle());
+                    bool object_null = param_val_obj->get_object_null();
+                    if (!object_null) {
+                        obj_num_sides_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-sides"), param_val_obj->get_num_sides());
+                        obj_num_corners_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("num-corners"), param_val_obj->get_num_corners());
+                        obj_width_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("width"), param_val_obj->get_cropped_image().cols);
+                        obj_height_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("height"), param_val_obj->get_cropped_image().rows);
+                        obj_ellipsity_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("ellipsity"), param_val_obj->get_ellipsity());
+                        cv::Scalar color = param_val_obj->get_object_color();
+                        obj_color_wme = si_->make_id_wme(param_wmes_[param_name]->value, std::string("color-value"));
+                        si_->make_wme(obj_color_wme->value, std::string("r"), color[0]);
+                        si_->make_wme(obj_color_wme->value, std::string("g"), color[1]);
+                        si_->make_wme(obj_color_wme->value, std::string("b"), color[2]);
+                        si_->make_wme(obj_color_wme->value, std::string("a"), color[3]);
+                        std::string color_name = param_val_obj->get_object_color_name();
+                        si_->make_wme(param_wmes_[param_name]->value, std::string("color-name"), si_->make_sym(color_name));
+                        obj_minrect_h_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-h"), param_val_obj->get_min_rect_height());
+                        obj_minrect_w_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-w"), param_val_obj->get_min_rect_width());
+                        obj_minrect_angle_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("minrect-angle"), param_val_obj->get_min_rect_angle());
+                    }
+                    obj_null_wme = si_->make_wme(param_wmes_[param_name]->value, std::string("null"), si_->make_sym(object_null));
                 }
                 break;
             case visual_ops::AFFINE_TRANSFORM_ARG:
