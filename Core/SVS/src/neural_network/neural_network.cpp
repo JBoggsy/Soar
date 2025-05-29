@@ -149,6 +149,8 @@ void img_factory_jepa::load_traced_script(std::string traced_script_path)
 
 void img_factory_jepa::encode(cv::Mat& input, token_sequence* tokens)
 {
+    int input_width = input.cols;
+    int input_height = input.rows;
     module->encode(input, tokens);
 }
 void img_factory_jepa::decode(token_sequence* tokens, cv::Mat& output)

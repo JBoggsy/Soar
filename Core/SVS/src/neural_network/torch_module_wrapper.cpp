@@ -203,7 +203,6 @@ void vae_vcd_model_wrapper::decode(latent_representation* latent, latent_represe
     at::Tensor sigma_tensor = latent_tensors[1].toTensor();
     tensors_to_latent_dist(mu_tensor, sigma_tensor, output);
 }
-#endif
 
 
 /////////////////////////
@@ -258,3 +257,5 @@ void img_factory_jepa_wrapper::predict(token_sequence* source, token_sequence* c
     at::Tensor output_tensor = predict_method(inputs).toTensor();
     tensor_to_token_sequence(output_tensor, output);
 }
+
+#endif

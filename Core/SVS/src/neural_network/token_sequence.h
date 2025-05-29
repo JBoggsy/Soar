@@ -25,6 +25,20 @@ private:
     int _num_tokens; // number of tokens in the sequence
     int _num_features; // number of features per token
 
+    // If the encoded image was padded, these values are used to
+    // unpad the image after decoding.
+    bool _is_padded; // whether the tokens are padded
+    int _padding_t;  // padding for each side
+    int _padding_b;
+    int _padding_l;
+    int _padding_r;
+
+    // If the encoded image was downscaled, these values are used to
+    // upscale the image after decoding.
+    bool _is_scaled;
+    float _scale_width; // scaling factor for width
+    float _scale_height; // scaling factor for height
+
 public:
     /**
      * @brief Construct a new token sequence object.
@@ -33,10 +47,26 @@ public:
      * @param num_features The number of features per token.
      */
     token_sequence()
-        : _num_tokens(0), _num_features(0) {}
-    token_sequence(int num_tokens, int num_features);
+        : _num_tokens(0), _num_features(0),
+          _is_padded(false), _padding_t(0), _padding_b(0),
+          _padding_l(0), _padding_r(0), _is_scaled(false),
+          _scale_width(1.0f), _scale_height(1.0f) {}
     ~token_sequence() {}
     void copy_from(token_sequence* other);
+
+    void set_padding(int t, int b, int l, int r) {
+        _is_padded = true;
+        _padding_t = t;
+        _padding_b = b;
+        _padding_l = l;
+        _padding_r = r;
+    }
+
+    void set_scaling(float width, float height) {
+        _is_scaled = true;
+        _scale_width = width;
+        _scale_height = height;
+    }
 
     cv::Mat& get_tokens() { return _tokens; }
     void set_tokens(cv::Mat& tokens);

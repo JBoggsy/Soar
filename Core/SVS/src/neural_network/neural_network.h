@@ -101,6 +101,7 @@ class img_factory_jepa : public neural_network
 private:
     img_factory_jepa_wrapper* module;
     bool module_loaded = false;
+
 public:
     img_factory_jepa();
     img_factory_jepa(std::string traced_script_path);
