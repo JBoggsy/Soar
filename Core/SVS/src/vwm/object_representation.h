@@ -30,28 +30,6 @@ public:
 
     void update_image(opencv_image* image);
 
-    /**
-     * @brief Segments the given product image into object masks via color-based
-     * segmentation using HSV ranges.
-     *
-     * @param product_img The product image to segment.
-     * @param masks The resulting object masks.
-     *
-     * @return The number of object masks extracted
-     */
-    static int segment_image_colors(cv::Mat image, std::vector<cv::Mat> &masks);
-
-    /**
-     * @brief Segments the given product image into object masks via
-     * edge-detection and watershed-based segmentation.
-     *
-     * @param product_img The product image to segment.
-     * @param masks The resulting object masks.
-     *
-     * @return The number of object masks extracted
-     */
-    static int segment_image_watershed(cv::Mat image, std::vector<cv::Mat> &masks);
-
     cv::Mat get_base_image() { return base_image; }
     cv::Mat get_mask() { return mask; }
     cv::Vec4i get_border_size() { return border_size; }
@@ -227,6 +205,21 @@ private:
     void _subdivide_contours();
 };
 
+
+#ifdef ENABLE_TORCH
+class jepa_object_representation : public hand_crafted_object_representation
+{
+public:
+    jepa_object_representation();
+    jepa_object_representation(opencv_image* image, int border_size=16);
+    ~jepa_object_representation() {}
+
+    // Override the base class methods to use the JEPA representation
+    void update_image(opencv_image* image) override;
+
+    // Additional methods specific to JEPA representation can be added here
+};
+#endif
 
 #define OBJ_REP_TYPE hand_crafted_object_representation
 #endif

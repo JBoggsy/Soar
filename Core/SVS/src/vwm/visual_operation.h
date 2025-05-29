@@ -587,6 +587,28 @@ namespace visual_ops
     void segment(data_dict args);
 
     /**
+     * @brief Segments the given product image into object masks via color-based
+     * segmentation using HSV ranges.
+     *
+     * @param product_img The product image to segment.
+     * @param masks The resulting object masks.
+     *
+     * @return The number of object masks extracted
+     */
+    int __segment_image_colors(cv::Mat image, std::vector<cv::Mat> &masks);
+
+    /**
+     * @brief Segments the given product image into object masks via
+     * edge-detection and watershed-based segmentation.
+     *
+     * @param product_img The product image to segment.
+     * @param masks The resulting object masks.
+     *
+     * @return The number of object masks extracted
+     */
+    int __segment_image_watershed(cv::Mat image, std::vector<cv::Mat> &masks);
+
+    /**
      * ANCHOR get_segment
      * @brief Get the segment at the specified index.
      *
