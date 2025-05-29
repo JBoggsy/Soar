@@ -98,7 +98,7 @@ bool learn_percept_command::update_sub() {
     // TODO: I should make this more flexible inthe final code so that it can be
     // chosen at runtime.
     // latent_representation* latent = new latent_representation();
-    token_sequence* representation = new token_sequence(49, 256);
+    token_sequence* representation = new token_sequence();
 
     vltm->encode_image(percept, representation);
     vltm->store_percept(representation, name);
