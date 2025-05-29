@@ -153,13 +153,21 @@ void img_factory_jepa::encode(cv::Mat& input, token_sequence* tokens)
     int input_height = input.rows;
     module->encode(input, tokens);
 }
+
 void img_factory_jepa::decode(token_sequence* tokens, cv::Mat& output)
 {
     module->decode(tokens, output);
 }
-void img_factory_jepa::predict(token_sequence* source, token_sequence* conditioning, token_sequence* output)
+
+void img_factory_jepa::deobscure(token_sequence* source, token_sequence* conditioning, token_sequence* output)
 {
-    module->predict(source, conditioning, output);
+    module->deobscure(source, conditioning, output);
 }
+
+void img_factory_jepa::extract(token_sequence* source, token_sequence* base, token_sequence* output)
+{
+    module->extract(source, base, output);
+}
+
 
 #endif

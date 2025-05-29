@@ -153,28 +153,62 @@ public:
 
 class img_factory_jepa_wrapper : public torch_module_wrapper
 {
-    public:
-        img_factory_jepa_wrapper();
-        img_factory_jepa_wrapper(std::string traced_script_path);
-        ~img_factory_jepa_wrapper();
+public:
+    img_factory_jepa_wrapper();
+    img_factory_jepa_wrapper(std::string traced_script_path);
+    ~img_factory_jepa_wrapper();
 
-        /**
-         * @brief Encodes an image into a token sequence.
-         *
-         * @param input The input image as a cv::Mat.
-         * @param tokens The output token sequence.
-         */
-        void encode(cv::Mat& input, token_sequence* tokens);
+    /**
+     * @brief Encodes an image into a token sequence.
+     *
+     * @param input The input image as a cv::Mat.
+     * @param tokens The output token sequence.
+     */
+    void encode(cv::Mat& input, token_sequence* tokens);
 
-        /**
-         * @brief Decodes a token sequence into an image.
-         *
-         * @param tokens The input token sequence.
-         * @param output The output image as a cv::Mat.
-         */
-        void decode(token_sequence* tokens, cv::Mat& output);
+    /**
+     * @brief Decodes a token sequence into an image.
+     *
+     * @param tokens The input token sequence.
+     * @param output The output image as a cv::Mat.
+     */
+    void decode(token_sequence* tokens, cv::Mat& output);
 
-        void predict(token_sequence* source, token_sequence* conditioning, token_sequence* output);
+    /**
+     * @brief Deobscures a token sequence using a conditioning sequence.
+     *
+     * Given the unobscured original image of an object and a
+     * possibly-transformed, possibly-obscured final image of the object,
+     * generate the unobscured final image.
+     *
+     * @param source The original token sequence representing the unobscured
+     * source image.
+     * @param conditioning The token sequence representing the possibly-obscured
+     * and possibly-transformed final image.
+     * @param output The output token sequence representing the deobscured
+     * final image.
+     */
+    void deobscure(token_sequence* source, token_sequence* conditioning, token_sequence* output);
+
+    /**
+     * @brief Extracts a possibly-transformed, possibly-obscured segment
+     * corresponding to the source token sequence from the base token sequence.
+     *
+     * Given the unobscured original image of an object and a base image which
+     * contains a possibly-transformed, possibly-obscured instance of the
+     * original object as well as one or more other objects, generate a token
+     * sequence representing specifically the visible portion of the
+     * possibly-transformed, possibly-obscured instance of the original object.
+     *
+     * @param source The original token sequence representing the unobscured
+     * source image.
+     * @param base The base token sequence representing the image containing
+     * the possibly-transformed, possibly-obscured instance of the original
+     * object.
+     * @param output The output token sequence representing the extracted
+     * possibly-transformed, possibly-obscured instance of the original object.
+     */
+    void extract(token_sequence* source, token_sequence* base, token_sequence* output);
 
 };
 #endif

@@ -244,7 +244,7 @@ void img_factory_jepa_wrapper::decode(token_sequence* tokens, cv::Mat& output)
     tensor_to_mat(output_tensor, output);
 }
 
-void img_factory_jepa_wrapper::predict(token_sequence* source, token_sequence* conditioning, token_sequence* output)
+void img_factory_jepa_wrapper::deobscure(token_sequence* source, token_sequence* conditioning, token_sequence* output)
 {
     at::Tensor source_tensor;
     token_sequence_to_tensor(source, source_tensor);
@@ -255,6 +255,20 @@ void img_factory_jepa_wrapper::predict(token_sequence* source, token_sequence* c
     inputs.push_back(conditioning_tensor);
     torch::jit::Method predict_method = module->get_method("predict");
     at::Tensor output_tensor = predict_method(inputs).toTensor();
+    tensor_to_token_sequence(output_tensor, output);
+}
+
+void img_factory_jepa_wrapper::extract(token_sequence* source, token_sequence* base, token_sequence* output)
+{
+    at::Tensor source_tensor;
+    token_sequence_to_tensor(source, source_tensor);
+    at::Tensor base_tensor;
+    token_sequence_to_tensor(base, base_tensor);
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(source_tensor);
+    inputs.push_back(base_tensor);
+    torch::jit::Method extract_method = module->get_method("segment");
+    at::Tensor output_tensor = extract_method(inputs).toTensor();
     tensor_to_token_sequence(output_tensor, output);
 }
 
