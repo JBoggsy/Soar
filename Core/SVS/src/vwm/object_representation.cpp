@@ -83,6 +83,7 @@ void hand_crafted_object_representation::generate_object_image() {
     cv::Mat mask_full_sized;
     cv::cvtColor(mask, mask_full_sized, cv::COLOR_GRAY2BGRA);
     mask_full_sized.convertTo(mask_full_sized, CV_32FC4, 1.0 / 255.0);
+    base_image.convertTo(base_image, CV_32FC4, 1.0 / 255.0);
     object_image = cv::Mat::zeros(base_image.size(), CV_32FC4);
     object_image = base_image.mul(mask_full_sized);
     // Generate the grayscaled object image
@@ -109,6 +110,9 @@ void hand_crafted_object_representation::generate_object_image() {
     }
     object_color_name = COLOR_NAMES[closestIndex];
     object_image_generated = true;
+    base_image.convertTo(base_image, CV_32FC4, 255.0);
+    object_image.convertTo(object_image, CV_32FC4, 255.0);
+
 }
 
 void hand_crafted_object_representation::calculate_contours() {
@@ -464,5 +468,86 @@ std::string hand_crafted_object_representation::to_string() {
                       "," + std::to_string(get_num_sides()) + ")";
     return out;
 }
+
+#ifdef ENABLE_TORCH
+jepa_object_representation::jepa_object_representation() {
+    shape = cv::Size2d(0, 0);
+    diagonal_size = 0;
+    border_size = 0;
+}
+
+jepa_object_representation::jepa_object_representation(opencv_image* image) {
+    update_image(image);
+}
+
+jepa_object_representation::jepa_object_representation(opencv_image* image, img_factory_jepa* jepa_model) {
+    update_jepa_model(jepa_model);
+    update_image(image);
+}
+
+jepa_object_representation::jepa_object_representation(img_factory_jepa* jepa_model) {
+    update_jepa_model(jepa_model);
+}
+
+jepa_object_representation::jepa_object_representation(img_factory_jepa* jepa_model, token_sequence* tokens) {
+    update_jepa_model(jepa_model);
+    update_tokens(tokens);
+}
+
+jepa_object_representation::~jepa_object_representation() {
+    if (tokens != NULL) {
+        delete tokens;
+        tokens = NULL;
+    }
+}
+
+void jepa_object_representation::update_image(opencv_image* image) {
+    hand_crafted_object_representation::update_image(image);
+    image_generated = true;
+    if (model_loaded && !tokens_generated) {
+        token_sequence* new_tokens = new token_sequence();
+        jepa_model->encode(*image->get_image(), new_tokens);
+        update_tokens(new_tokens);
+    }
+}
+
+void jepa_object_representation::update_tokens(token_sequence* tokens) {
+    if (this->tokens != NULL) {
+        delete this->tokens;
+    }
+    this->tokens = tokens;
+    tokens_generated = true;
+
+    if (model_loaded && !image_generated) {
+        cv::Mat* new_image_mat = new cv::Mat();
+        jepa_model->decode(tokens, *new_image_mat);
+        opencv_image* new_image = new opencv_image();
+        new_image->update_image(*new_image_mat);
+        delete new_image_mat;
+        update_image(new_image);
+        delete new_image;
+    }
+}
+
+void jepa_object_representation::update_jepa_model(img_factory_jepa* jepa_model) {
+    this->jepa_model = jepa_model;
+    model_loaded = true;
+
+    if (!tokens_generated && image_generated) {
+        token_sequence* new_tokens = new token_sequence();
+        jepa_model->encode(base_image, new_tokens);
+        update_tokens(new_tokens);
+    }
+    else if (tokens_generated && !image_generated) {
+        cv::Mat* new_image_mat = new cv::Mat();
+        jepa_model->decode(tokens, *new_image_mat);
+        opencv_image* new_image = new opencv_image();
+        new_image->update_image(*new_image_mat);
+        delete new_image_mat;
+        update_image(new_image);
+        delete new_image;
+    }
+}
+#endif
 
 //!SECTION

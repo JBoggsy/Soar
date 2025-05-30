@@ -134,6 +134,11 @@ public:
      * @param model_filepath The path to the model file to load.
      */
     void load_class_vcd_model(std::string vcd_id, std::string model_filepath);
+
+    img_factory_jepa* get_vcd_model() {
+        return _vcd_model;
+    }
+
     #endif
     #endif
 
@@ -268,6 +273,7 @@ public:
     // #define VLTM_TYPE visual_long_term_memory<latent_representation, exact_visual_concept_descriptor>
     // #define VLTM_TYPE visual_long_term_memory<latent_representation, vae_visual_concept_descriptor>
     #define VLTM_TYPE visual_long_term_memory<token_sequence, jepa_visual_concept_descriptor>
+    // #define VLTM_TYPE visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>
 #else
     #define VLTM_TYPE visual_long_term_memory<opencv_image, exact_visual_concept_descriptor>
 #endif

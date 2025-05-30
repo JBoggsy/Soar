@@ -602,6 +602,50 @@ namespace visual_ops
         source->update_image(object->get_object_image()(object->get_mask_bbox()));
     }
 
+    #ifdef ENABLE_TORCH
+    void extract_visible(data_dict args) {
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
+        OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
+        OBJ_REP_TYPE* base = (OBJ_REP_TYPE*)args[VOP_ARG_BASE];
+
+        token_sequence* query_tokens = query->get_tokens();
+        token_sequence* base_tokens = base->get_tokens();
+        if (query_tokens == NULL || base_tokens == NULL) {
+            throw std::runtime_error("Query or base object does not have JEPA tokens.");
+        }
+
+        token_sequence* out_tokens = new token_sequence();
+        vltm->get_vcd_model()->extract(base_tokens, query_tokens, out_tokens);
+
+        OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        object->update_jepa_model(vltm->get_vcd_model());
+        object->update_tokens(out_tokens);
+        source->update_image(object->get_base_image());
+    }
+
+    void deobscure_object(data_dict args) {
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
+        OBJ_REP_TYPE* template_obj = (OBJ_REP_TYPE*)args[VOP_ARG_TEMPLATE];
+        OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
+
+        token_sequence* template_tokens = template_obj->get_tokens();
+        token_sequence* query_tokens = query->get_tokens();
+        if (template_tokens == NULL || query_tokens == NULL) {
+            throw std::runtime_error("Template or query object does not have JEPA tokens.");
+        }
+
+        token_sequence* out_tokens = new token_sequence();
+        vltm->get_vcd_model()->deobscure(template_tokens, query_tokens, out_tokens);
+
+        OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        object->update_jepa_model(vltm->get_vcd_model());
+        object->update_tokens(out_tokens);
+        source->update_image(object->get_base_image());
+    }
+    #endif
+
     void object_distance(data_dict args) {
         OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
         OBJ_REP_TYPE* target = (OBJ_REP_TYPE*)args[VOP_ARG_TARGET];

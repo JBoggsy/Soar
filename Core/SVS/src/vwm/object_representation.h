@@ -10,6 +10,8 @@
 #include <opencv2/ximgproc.hpp>
 // SVS includes
 #include "image.h"
+#include "neural_network.h"
+#include "token_sequence.h"
 
 
 class object_representation
@@ -120,7 +122,7 @@ public:
      */
     std::string to_string();
 
-private:
+protected:
     static const int MIN_CONTOUR_POINTS = 32;
     static const cv::Scalar COLOR_RED;
     static const cv::Scalar COLOR_GREEN;
@@ -211,15 +213,36 @@ class jepa_object_representation : public hand_crafted_object_representation
 {
 public:
     jepa_object_representation();
-    jepa_object_representation(opencv_image* image, int border_size=16);
-    ~jepa_object_representation() {}
+    jepa_object_representation(opencv_image* image);
+    jepa_object_representation(opencv_image* image, img_factory_jepa* jepa_model);
+    jepa_object_representation(img_factory_jepa* jepa_model);
+    jepa_object_representation(img_factory_jepa* jepa_model, token_sequence* tokens);
+    ~jepa_object_representation();
 
-    // Override the base class methods to use the JEPA representation
-    void update_image(opencv_image* image) override;
+    void update_image(opencv_image* image);
 
-    // Additional methods specific to JEPA representation can be added here
+    void update_tokens(token_sequence* tokens);
+    token_sequence* get_tokens() { return tokens; }
+
+    void update_jepa_model(img_factory_jepa* jepa_model);
+    img_factory_jepa* get_jepa_model() { return jepa_model; }
+
+private:
+    img_factory_jepa* jepa_model = NULL;
+    token_sequence* tokens = NULL;
+    bool model_loaded = false;
+    bool tokens_generated = false;
+    bool image_generated = false;
+
+    int border_size = 0;
+
+    void _pad_base_image();
 };
 #endif
 
+#ifdef ENABLE_TORCH
+#define OBJ_REP_TYPE jepa_object_representation
+#else
 #define OBJ_REP_TYPE hand_crafted_object_representation
+#endif
 #endif

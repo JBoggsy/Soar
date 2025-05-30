@@ -392,7 +392,16 @@ void visual_working_memory::cli_get_node_image(const std::vector<std::string>& a
     vop_node = vop_nodes[node_id];
     node_img = vop_node->get_node_image();
     node_img_mat = node_img->get_image();
-    cv::imencode(std::string(".png"), *(node_img_mat), raw_png_data);
+
+    cv::Mat ret_img;
+    if (node_img_mat->type() != CV_8UC1 && node_img_mat->type() != CV_8UC3 && node_img_mat->type() != CV_8UC4) {
+        node_img_mat->convertTo(ret_img, CV_8U, 255.0);
+    }
+    else {
+        ret_img = *node_img_mat;
+    }
+
+    cv::imencode(std::string(".png"), ret_img, raw_png_data);
     b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
     os << b64_data << std::endl;
 }

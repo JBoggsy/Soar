@@ -39,7 +39,7 @@ void torch_module_wrapper::mat_to_tensor(cv::Mat& input, at::Tensor& output)
     cv::Mat input_float;
     input.convertTo(input_float, CV_32F);
     cv::Mat input_normalized;
-    cv::normalize(input_float, input_normalized, 0.0, 1.0, cv::NORM_MINMAX);
+    cv::normalize(input_float, input_normalized, -1.0, 1.0, cv::NORM_MINMAX);
     at::Tensor tensor = torch::from_blob(input_normalized.data, {1, input_normalized.rows, input_normalized.cols, input_normalized.channels()});
     tensor = tensor.permute({0, 3, 1, 2});
     output = tensor.clone();
@@ -52,6 +52,7 @@ void torch_module_wrapper::tensor_to_mat(at::Tensor& input, cv::Mat& output)
     tensor = tensor.permute({1, 2, 0});
     tensor = tensor.contiguous();
     cv::Mat result(tensor.size(0), tensor.size(1), CV_32FC(tensor.size(2)), tensor.data_ptr());
+    cv::normalize(result, result, 0, 1, cv::NORM_MINMAX);
     result.copyTo(output);
     output.convertTo(output, CV_32F, 255);
 }
@@ -85,8 +86,8 @@ void torch_module_wrapper::latent_to_tensor(latent_representation* latent, at::T
 
 void torch_module_wrapper::tensor_to_token_sequence(at::Tensor& input, token_sequence* output)
 {
-    int num_tokens = input.size(0);
-    int num_features = input.size(1);
+    int num_tokens = input.size(1);
+    int num_features = input.size(2);
     cv::Mat tokens(num_tokens, num_features, CV_32F, input.data_ptr<float>());
     output->set_tokens(tokens);
 }
@@ -94,10 +95,9 @@ void torch_module_wrapper::tensor_to_token_sequence(at::Tensor& input, token_seq
 void torch_module_wrapper::token_sequence_to_tensor(token_sequence* input, at::Tensor& output)
 {
     cv::Mat tokens = input->get_tokens();
-    at::Tensor tensor = torch::from_blob(tokens.data, {tokens.rows, tokens.cols}, at::kFloat);
+    at::Tensor tensor = torch::from_blob(tokens.data, {1, tokens.rows, tokens.cols}, at::kFloat);
     output = tensor.clone();
 }
-
 
 cv::Mat torch_module_wrapper::forward(cv::Mat& input)
 {
@@ -224,6 +224,7 @@ img_factory_jepa_wrapper::~img_factory_jepa_wrapper()
 
 void img_factory_jepa_wrapper::encode(cv::Mat& input, token_sequence* tokens)
 {
+    input = _pad_image(input);
     at::Tensor input_tensor;
     mat_to_tensor(input, input_tensor);
     std::vector<torch::jit::IValue> inputs;
@@ -242,6 +243,7 @@ void img_factory_jepa_wrapper::decode(token_sequence* tokens, cv::Mat& output)
     torch::jit::Method decode_method = module->get_method("decode");
     at::Tensor output_tensor = decode_method(inputs).toTensor();
     tensor_to_mat(output_tensor, output);
+    output = _simplify_image(output);
 }
 
 void img_factory_jepa_wrapper::deobscure(token_sequence* source, token_sequence* conditioning, token_sequence* output)
@@ -270,6 +272,45 @@ void img_factory_jepa_wrapper::extract(token_sequence* source, token_sequence* b
     torch::jit::Method extract_method = module->get_method("segment");
     at::Tensor output_tensor = extract_method(inputs).toTensor();
     tensor_to_token_sequence(output_tensor, output);
+}
+
+cv::Mat img_factory_jepa_wrapper::_pad_image(const cv::Mat& image) {
+    cv::Mat padded_image;
+    if (image.empty()) {
+        padded_image = cv::Mat(IMG_SIZE, IMG_SIZE, CV_8UC3, cv::Scalar(0, 0, 0));
+    } else {
+        padded_image = image.clone();
+    }
+    int top = 0, bottom = 0, left = 0, right = 0;
+    int height = padded_image.rows;
+    int width = padded_image.cols;
+    if (height < IMG_SIZE) {
+        int pad = IMG_SIZE - height;
+        top = pad / 2;
+        bottom = pad - top;
+    }
+    if (width < IMG_SIZE) {
+        int pad = IMG_SIZE - width;
+        left = pad / 2;
+        right = pad - left;
+    }
+    cv::copyMakeBorder(padded_image, padded_image, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+    return padded_image;
+}
+
+cv::Mat img_factory_jepa_wrapper::_simplify_image(const cv::Mat& image) {
+    cv::Mat simplified_image;
+    // Apply median blur to reduce noise
+    cv::medianBlur(image, simplified_image, 3);
+
+    // Threshold image to remove low-intensity pixels
+    cv::threshold(image, simplified_image, 0.25*255, 1.0*255, cv::THRESH_TOZERO);
+
+    // Set transparent pixels to black
+    cv::Mat mask = simplified_image > 0;
+    simplified_image.setTo(cv::Scalar(0, 0, 0), ~mask);
+
+    return simplified_image;
 }
 
 #endif

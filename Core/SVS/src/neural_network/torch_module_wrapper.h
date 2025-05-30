@@ -210,5 +210,11 @@ public:
      */
     void extract(token_sequence* source, token_sequence* base, token_sequence* output);
 
+private:
+    static const int IMG_SIZE = 240;
+
+    cv::Mat _pad_image(const cv::Mat& image);
+
+    cv::Mat _simplify_image(const cv::Mat& image);
 };
 #endif

@@ -437,12 +437,16 @@ void visual_long_term_memory<token_sequence, jepa_visual_concept_descriptor>::cl
 
     cv::Mat* gened_image_mat = new cv::Mat();
     _vcd_model->decode(gened_latent, *gened_image_mat);
-    opencv_image* gened_image = new opencv_image();
-    gened_image->set_image(gened_image_mat);
+
+    if (gened_image_mat->type() != CV_8UC1 && gened_image_mat->type() != CV_8UC3 && gened_image_mat->type() != CV_8UC4) {
+        cv::Mat converted;
+        gened_image_mat->convertTo(converted, CV_8U, 255.0);
+        *gened_image_mat = converted;
+    }
 
     std::vector<uchar> raw_png_data;
     std::string b64_data;
-    cv::imencode(std::string(".png"), *(gened_image->get_image()), raw_png_data);
+    cv::imencode(std::string(".png"), *gened_image_mat, raw_png_data);
     b64_data = base64_encode(raw_png_data.data(), raw_png_data.size());
     os << b64_data << std::endl;
 }

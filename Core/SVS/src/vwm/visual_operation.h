@@ -60,6 +60,8 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
 #define VOP_GET_OBJECT              std::string("get-object")
+#define VOP_EXTRACT_OBJECT          std::string("extract-object")
+#define VOP_DEOBSCURE_OBJECT        std::string("deobscure-object")
 #define VOP_OBJECT_DISTANCE         std::string("object-distance")
 #define VOP_SEGMENT                 std::string("segment")
 #define VOP_GET_SEGMENT             std::string("get-segment")
@@ -82,6 +84,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_ANCHORY     std::string("anchor-y")
 #define VOP_ARG_AXES        std::string{"axes"}
 #define VOP_ARG_B           std::string("b")
+#define VOP_ARG_BASE        std::string("base")
 #define VOP_ARG_BORDERTYPE  std::string("border-type")
 #define VOP_ARG_BUFFERINDEX std::string("buffer-index")
 #define VOP_ARG_CHANNEL     std::string("channel")
@@ -550,6 +553,57 @@ namespace visual_ops
      * - `object_representation* object`: The extracted object
      */
     void get_object(data_dict args);
+
+    /**
+     * ANCHOR extract_visible
+     * @brief Extract the visible portion of a query object from a base object.
+     *
+     * Given the unobscured original image of an object and a base image which
+     * contains a possibly-transformed, possibly-obscured instance of the
+     * original object as well as one or more other objects, generate a token
+     * sequence representing specifically the visible portion of the
+     * possibly-transformed, possibly-obscured instance of the original object.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `opencv_image* source`: The result of the extraction
+     *
+     * - `vltm* vltm`: The VLTM object which holds the JEPA model.
+     *
+     * - `object_representation* query`: The possibly-obscured,
+     *   possibly-transformed object
+     *
+     * - `object_representation* base`: The original, unobscured object
+     *
+     * - `object_representation* object`: The extracted object, which is the
+     *   visible portion of the query object relative to the base object.
+     *   *
+     */
+    void extract_visible(data_dict args);
+
+    /**
+     * ANCHOR deobscure_object
+     * @brief Deobscure a query object given an original template object.
+     *
+     * Given the unobscured template image of an object and a
+     * possibly-transformed, possibly-obscured final image of the object,
+     * generate the unobscured final image.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `opencv_image* source`: The result of the deobscuring operation
+     *
+     * - `vltm* vltm`: The VLTM object which holds the JEPA model.
+     *
+     * - `object_representation* template`: The original, unobscured object
+     *
+     * - `object_representation* query`: The possibly-obscured,
+     *   possibly-transformed object to deobscure
+     *
+     * - `object_representation* object`: The deobscured object, which is the
+     *   visible portion of the template object relative to the base object.
+     */
+    void deobscure_object(data_dict args);
 
     /**
      * ANCHOR object_distance
@@ -1165,6 +1219,26 @@ namespace visual_ops
         /* param_types = */         {CV_IMAGE_ARG, OBJECT_ARG},
         /* param_directions */      {INPUT_ARG, OUTPUT_ARG},
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    //ANCHOR - EXTRACT OBJECT
+    inline vop_params_metadata extract_visible_metadata = {
+        /* vop_function = */        extract_visible,
+        /* num_params = */          5,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_VLTM, VOP_ARG_QUERY, VOP_ARG_BASE, VOP_ARG_OBJECT},
+        /* param_types = */         {CV_IMAGE_ARG, VLTM_ARG, OBJECT_ARG, OBJECT_ARG, OBJECT_ARG},
+        /* param_directions */      {OUTPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
+    //ANCHOR - DEOBSCURE OBJECT
+    inline vop_params_metadata deobscure_object_metadata = {
+        /* vop_function = */        deobscure_object,
+        /* num_params = */          5,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_VLTM, VOP_ARG_TEMPLATE, VOP_ARG_QUERY, VOP_ARG_OBJECT},
+        /* param_types = */         {CV_IMAGE_ARG, VLTM_ARG, OBJECT_ARG, OBJECT_ARG, OBJECT_ARG},
+        /* param_directions */      {OUTPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
     //ANCHOR - OBJECT DISTANCE
