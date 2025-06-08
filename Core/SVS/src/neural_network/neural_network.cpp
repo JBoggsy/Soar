@@ -154,6 +154,11 @@ void img_factory_jepa::encode(cv::Mat& input, token_sequence* tokens)
     module->encode(input, tokens);
 }
 
+void img_factory_jepa::summarize(token_sequence* tokens, cv::Mat& output)
+{
+    module->summarize(tokens, output);
+}
+
 void img_factory_jepa::decode(token_sequence* tokens, cv::Mat& output)
 {
     module->decode(tokens, output);
@@ -167,6 +172,11 @@ void img_factory_jepa::deobscure(token_sequence* source, token_sequence* conditi
 void img_factory_jepa::extract(token_sequence* source, token_sequence* base, token_sequence* output)
 {
     module->extract(source, base, output);
+}
+
+double img_factory_jepa::get_shape_distance(token_sequence* a, token_sequence* b)
+{
+    return module->get_shape_distance(a, b);
 }
 
 

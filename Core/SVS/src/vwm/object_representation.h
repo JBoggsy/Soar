@@ -223,13 +223,17 @@ public:
 
     void update_tokens(token_sequence* tokens);
     token_sequence* get_tokens() { return tokens; }
+    cv::Mat* get_token_summary() { return token_summary; }
 
     void update_jepa_model(img_factory_jepa* jepa_model);
     img_factory_jepa* get_jepa_model() { return jepa_model; }
 
+    double get_shape_distance(jepa_object_representation* other);
+
 private:
     img_factory_jepa* jepa_model = NULL;
     token_sequence* tokens = NULL;
+    cv::Mat* token_summary = NULL;
     bool model_loaded = false;
     bool tokens_generated = false;
     bool image_generated = false;

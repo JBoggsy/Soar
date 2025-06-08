@@ -171,7 +171,13 @@ bool add_vop_node_command::update_sub() {
                         node_data_dict[param_name] = new std::vector<visual_ops::affine_transform_struct*>();
                         break;
                     case visual_ops::OBJECT_ARG:
+                        #ifdef ENABLE_TORCH
+                        node_data_dict[param_name] = new OBJ_REP_TYPE(
+                            state->get_svs()->get_vltm()->get_vcd_model()
+                        );
+                        #else
                         node_data_dict[param_name] = new OBJ_REP_TYPE();
+                        #endif
                         break;
                     #ifdef ENABLE_TORCH
                     case visual_ops::LATENT_REP_ARG:

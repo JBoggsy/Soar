@@ -119,6 +119,17 @@ public:
     void encode(cv::Mat& input, token_sequence* tokens);
 
     /**
+     * @brief Summarizes a token sequence into a single vector.
+     *
+     * Cosine similarity between two summarized token sequences can be used to
+     * determine how similar the two token sequences are.
+     *
+     * @param tokens The input token sequence.
+     * @param output The output summarized vector as a cv::Mat.
+     */
+    void summarize(token_sequence* tokens, cv::Mat& output);
+
+    /**
      * @brief Decodes a token sequence into an image.
      *
      * @param tokens The input token sequence.
@@ -161,6 +172,11 @@ public:
      * possibly-transformed, possibly-obscured instance of the original object.
      */
     void extract(token_sequence* source, token_sequence* base, token_sequence* output);
+
+    /**
+     * @brief Returns a distance measure between two token sequences.
+     */
+    double get_shape_distance(token_sequence* tokens1, token_sequence* tokens2);
 
 };
 #endif

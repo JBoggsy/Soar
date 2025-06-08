@@ -22,8 +22,8 @@ class token_sequence
 {
 private:
     cv::Mat _tokens; // 2D matrix of tokens
-    int _num_tokens; // number of tokens in the sequence
-    int _num_features; // number of features per token
+    int _num_tokens; // number of tokens in the sequence (rows in the matrix)
+    int _num_features; // number of features per token (columns in the matrix)
 
     // If the encoded image was padded, these values are used to
     // unpad the image after decoding.

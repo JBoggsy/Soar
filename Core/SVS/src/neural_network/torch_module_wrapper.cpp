@@ -57,6 +57,14 @@ void torch_module_wrapper::tensor_to_mat(at::Tensor& input, cv::Mat& output)
     output.convertTo(output, CV_32F, 255);
 }
 
+void torch_module_wrapper::tensor_to_vector(at::Tensor& input, cv::Mat& output)
+{
+    at::Tensor tensor = input.squeeze();
+    tensor = tensor.contiguous();
+    int dims = tensor.size(0);
+    output = cv::Mat(1, dims, CV_32F, tensor.data_ptr<float>()).clone();
+}
+
 void torch_module_wrapper::latent_dist_to_tensors(latent_representation* latent, at::Tensor& mu, at::Tensor& sigma)
 {
     std::vector<double>* mu_vec = latent->get_mu();
@@ -234,6 +242,17 @@ void img_factory_jepa_wrapper::encode(cv::Mat& input, token_sequence* tokens)
     tensor_to_token_sequence(output_tensor, tokens);
 }
 
+void img_factory_jepa_wrapper::summarize(token_sequence* tokens, cv::Mat& output)
+{
+    at::Tensor input_tensor;
+    token_sequence_to_tensor(tokens, input_tensor);
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(input_tensor);
+    torch::jit::Method summarize_method = module->get_method("summarize");
+    at::Tensor output_tensor = summarize_method(inputs).toTensor();
+    tensor_to_vector(output_tensor, output);
+}
+
 void img_factory_jepa_wrapper::decode(token_sequence* tokens, cv::Mat& output)
 {
     at::Tensor input_tensor;
@@ -274,6 +293,10 @@ void img_factory_jepa_wrapper::extract(token_sequence* source, token_sequence* b
     tensor_to_token_sequence(output_tensor, output);
 }
 
+double img_factory_jepa_wrapper::get_shape_distance(token_sequence* a, token_sequence* b) {
+    throw std::runtime_error("get_shape_distance is not implemented for img_factory_jepa_wrapper.");
+}
+
 cv::Mat img_factory_jepa_wrapper::_pad_image(const cv::Mat& image) {
     cv::Mat padded_image;
     if (image.empty()) {
@@ -295,6 +318,10 @@ cv::Mat img_factory_jepa_wrapper::_pad_image(const cv::Mat& image) {
         right = pad - left;
     }
     cv::copyMakeBorder(padded_image, padded_image, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0, 0));
+
+    int y = (padded_image.rows - IMG_SIZE) / 2;
+    int x = (padded_image.cols - IMG_SIZE) / 2;
+    padded_image = padded_image(cv::Rect(x, y, IMG_SIZE, IMG_SIZE));
     return padded_image;
 }
 

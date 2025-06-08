@@ -120,6 +120,7 @@ visual_operation_node::visual_operation_node(std::string op_type, data_dict* par
                     param_syms_[param_name] = si_->make_sym(-1);
                     param_wmes_[param_name] = si_->make_wme(node_link_, param_name, param_syms_[param_name]);
                 }
+                break;
             case visual_ops::LATENT_REP_ARG:
                 #ifdef ENABLE_TORCH
                 if (param_dir != visual_ops::OUTPUT_ARG) {

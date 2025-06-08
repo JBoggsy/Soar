@@ -60,8 +60,9 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_CROP_TO_ROI             std::string("crop-to-roi")
 #define VOP_MIN_MAX_LOC             std::string("min-max-loc")
 #define VOP_GET_OBJECT              std::string("get-object")
-#define VOP_EXTRACT_OBJECT          std::string("extract-object")
+#define VOP_EXTRACT_VISIBLE         std::string("extract-visible")
 #define VOP_DEOBSCURE_OBJECT        std::string("deobscure-object")
+#define VOP_EXTRACT_FULL_OBJECT     std::string("extract-full-object")
 #define VOP_OBJECT_DISTANCE         std::string("object-distance")
 #define VOP_SEGMENT                 std::string("segment")
 #define VOP_GET_SEGMENT             std::string("get-segment")
@@ -570,14 +571,16 @@ namespace visual_ops
      *
      * - `vltm* vltm`: The VLTM object which holds the JEPA model.
      *
-     * - `object_representation* query`: The possibly-obscured,
-     *   possibly-transformed object
+     * - `object_representation* query`: The original, unobscured object
+     *   which is to be extracted from the base object.
      *
-     * - `object_representation* base`: The original, unobscured object
+     * - `object_representation* base`: The base object, which contains a
+     *   possibly-transformed, possibly-obscured instance of the original
+     *   query object.
      *
      * - `object_representation* object`: The extracted object, which is the
      *   visible portion of the query object relative to the base object.
-     *   *
+     *
      */
     void extract_visible(data_dict args);
 
@@ -604,6 +607,30 @@ namespace visual_ops
      *   visible portion of the template object relative to the base object.
      */
     void deobscure_object(data_dict args);
+
+    /**
+     * ANCHOR extract_full_object
+     * @brief Combination of `extract_visible` and `deobscure_object`.
+     *
+     * This operation extracts the visible portion of a query object from a base
+     * object, and then deobscures the query object using the original template
+     * object.
+     *
+     * @param args Map of arguments to method:
+     *
+     * - `opencv_image* source`: The result of the extraction and deobscuring
+     *
+     * - `vltm* vltm`: The VLTM object which holds the JEPA model.
+     *
+     * - `object_representation* query`: The original, unobscured object
+     *
+     * - `object_representation* base`: The base object, which contains a
+     *   possibly-transformed, possibly-obscured instance of the original
+     *   query object.
+     *
+     * - `object_representation* object`: The final extracted and deobscured object.
+     */
+    void extract_full_object(data_dict args);
 
     /**
      * ANCHOR object_distance
@@ -1241,6 +1268,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    //ANCHOR - EXTRACT FULL OBJECT
+    inline vop_params_metadata extract_full_object_metadata = {
+        /* vop_function = */        extract_full_object,
+        /* num_params = */          5,
+        /* param_names = */         {VOP_ARG_SOURCE, VOP_ARG_VLTM, VOP_ARG_QUERY, VOP_ARG_BASE, VOP_ARG_OBJECT},
+        /* param_types = */         {CV_IMAGE_ARG, VLTM_ARG, OBJECT_ARG, OBJECT_ARG, OBJECT_ARG},
+        /* param_directions */      {OUTPUT_ARG, INPUT_ARG, INPUT_ARG, INPUT_ARG, OUTPUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - OBJECT DISTANCE
     inline vop_params_metadata object_distance_metadata = {
         /* vop_function = */        object_distance,
@@ -1394,6 +1431,9 @@ namespace visual_ops
         {VOP_CROP_TO_ROI, crop_to_roi_metadata},
         {VOP_MIN_MAX_LOC, min_max_loc_metadata},
         {VOP_GET_OBJECT, get_object_metadata},
+        {VOP_EXTRACT_VISIBLE, extract_visible_metadata},
+        {VOP_DEOBSCURE_OBJECT, deobscure_object_metadata},
+        {VOP_EXTRACT_FULL_OBJECT, extract_full_object_metadata},
         {VOP_OBJECT_DISTANCE, object_distance_metadata},
         {VOP_SEGMENT, segment_metadata},
         {VOP_GET_SEGMENT, get_segment_metadata},

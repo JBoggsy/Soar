@@ -57,6 +57,14 @@ protected:
     void tensor_to_mat(at::Tensor& input, cv::Mat& output);
 
     /**
+     * @brief Convert a PyTorch tensor to a cv::Mat with a single row.
+     *
+     * @param input The input PyTorch tensor.
+     * @param output The output cv::Mat vector.
+     */
+    void tensor_to_vector(at::Tensor& input, cv::Mat& output);
+
+    /**
      * @brief Convert a latent distribution to a pair of PyTorch tensors.
      *
      * This method converts the mean and standard deviation vectors of a latent
@@ -167,6 +175,17 @@ public:
     void encode(cv::Mat& input, token_sequence* tokens);
 
     /**
+     * @brief Summarizes a token sequence into a single vector.
+     *
+     * Cosine similarity between two summarized token sequences can be used to
+     * determine how similar the two token sequences are.
+     *
+     * @param tokens The input token sequence.
+     * @param output The output summarized vector as a cv::Mat.
+     */
+    void summarize(token_sequence* tokens, cv::Mat& output);
+
+    /**
      * @brief Decodes a token sequence into an image.
      *
      * @param tokens The input token sequence.
@@ -209,6 +228,11 @@ public:
      * possibly-transformed, possibly-obscured instance of the original object.
      */
     void extract(token_sequence* source, token_sequence* base, token_sequence* output);
+
+    /**
+     * @brief Returns a distance measure between two token sequences.
+     */
+    double get_shape_distance(token_sequence* tokens1, token_sequence* tokens2);
 
 private:
     static const int IMG_SIZE = 240;

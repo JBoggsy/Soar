@@ -86,6 +86,8 @@ void hand_crafted_object_representation::generate_object_image() {
     base_image.convertTo(base_image, CV_32FC4, 1.0 / 255.0);
     object_image = cv::Mat::zeros(base_image.size(), CV_32FC4);
     object_image = base_image.mul(mask_full_sized);
+    base_image.convertTo(base_image, CV_32FC4, 255.0);
+    object_image.convertTo(object_image, CV_32FC4, 255.0);
     // Generate the grayscaled object image
     cv::cvtColor(object_image, object_image_gray, cv::COLOR_RGBA2GRAY);
 
@@ -110,8 +112,6 @@ void hand_crafted_object_representation::generate_object_image() {
     }
     object_color_name = COLOR_NAMES[closestIndex];
     object_image_generated = true;
-    base_image.convertTo(base_image, CV_32FC4, 255.0);
-    object_image.convertTo(object_image, CV_32FC4, 255.0);
 
 }
 
@@ -516,6 +516,12 @@ void jepa_object_representation::update_tokens(token_sequence* tokens) {
         delete this->tokens;
     }
     this->tokens = tokens;
+
+    if (token_summary != NULL) {
+        delete token_summary;
+    }
+    token_summary = new cv::Mat();
+    jepa_model->summarize(tokens, *token_summary);
     tokens_generated = true;
 
     if (model_loaded && !image_generated) {
@@ -548,6 +554,28 @@ void jepa_object_representation::update_jepa_model(img_factory_jepa* jepa_model)
         delete new_image;
     }
 }
+
+double jepa_object_representation::get_shape_distance(jepa_object_representation* other) {
+    if (jepa_model == NULL || other->jepa_model == NULL) {
+        throw std::runtime_error("JEPA model is not loaded.");
+    }
+    if (tokens == NULL || other->tokens == NULL) {
+        throw std::runtime_error("Tokens are not generated.");
+    }
+    if (token_summary == NULL || other->token_summary == NULL) {
+        throw std::runtime_error("Token summary is not generated.");
+    }
+
+    double dot_product = this->token_summary->dot(*other->token_summary);
+    double this_norm = cv::norm(*token_summary);
+    double other_norm = cv::norm(*other->token_summary);
+
+    if (this_norm == 0 || other_norm == 0) {
+        throw std::runtime_error("Cannot compute shape distance: one of the token summaries has zero norm.");
+    }
+    return (dot_product / (this_norm * other_norm));
+}
+
 #endif
 
 //!SECTION

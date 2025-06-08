@@ -599,7 +599,11 @@ namespace visual_ops
         if (source->is_empty()) {
             object->set_object_null(true);
         }
+        #ifdef ENABLE_TORCH
+        source->update_image(object->get_base_image());
+        #else
         source->update_image(object->get_object_image()(object->get_mask_bbox()));
+        #endif
     }
 
     #ifdef ENABLE_TORCH
@@ -615,7 +619,7 @@ namespace visual_ops
         }
 
         token_sequence* out_tokens = new token_sequence();
-        vltm->get_vcd_model()->extract(base_tokens, query_tokens, out_tokens);
+        vltm->get_vcd_model()->extract(query_tokens, base_tokens, out_tokens);
 
         OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
         opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
@@ -643,6 +647,41 @@ namespace visual_ops
         object->update_jepa_model(vltm->get_vcd_model());
         object->update_tokens(out_tokens);
         source->update_image(object->get_base_image());
+    }
+
+    void extract_full_object(data_dict args) {
+        VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
+        OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
+        OBJ_REP_TYPE* base = (OBJ_REP_TYPE*)args[VOP_ARG_BASE];
+
+        token_sequence* query_tokens = query->get_tokens();
+        token_sequence* base_tokens = base->get_tokens();
+        if (query_tokens == NULL || base_tokens == NULL) {
+            throw std::runtime_error("Query or base object does not have JEPA tokens.");
+        }
+
+        token_sequence* partial_tokens = new token_sequence();
+        vltm->get_vcd_model()->extract(query_tokens, base_tokens, partial_tokens);
+
+        token_sequence* out_tokens = new token_sequence();
+        vltm->get_vcd_model()->deobscure(query_tokens, partial_tokens, out_tokens);
+
+        OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        object->update_jepa_model(vltm->get_vcd_model());
+        object->update_tokens(out_tokens);
+        source->update_image(object->get_base_image());
+    }
+
+    #else
+    void extract_visible(data_dict args) {
+        printf("Error: extract_visible not implemented without Torch support.\n");
+    }
+    void deobscure_object(data_dict args) {
+        printf("Error: deobscure_object not implemented without Torch support.\n");
+    }
+    void extract_full_object(data_dict args) {
+        printf("Error: extract_full_object not implemented without Torch support.\n");
     }
     #endif
 
@@ -685,7 +724,7 @@ namespace visual_ops
             segments->push_back(segment);
         }
 
-        *((int*)args[VOP_ARG_COUNT]) = segment_masks.size();
+        *((int*)args[VOP_ARG_COUNT]) = segments->size();
     }
 
     int __segment_image_colors(cv::Mat image, std::vector<cv::Mat> &masks) {
@@ -735,28 +774,28 @@ namespace visual_ops
         cv::inRange(image_hsv, lower_white, upper_white, mask_white);
 
         // Add the masks to the masks vector if they are not empty
-        if (cv::countNonZero(mask_red) > 0) {
+        if (cv::countNonZero(mask_red) > 16) {
             masks.push_back(mask_red);
         }
-        if (cv::countNonZero(mask_green) > 0) {
+        if (cv::countNonZero(mask_green) > 16) {
             masks.push_back(mask_green);
         }
-        if (cv::countNonZero(mask_blue) > 0) {
+        if (cv::countNonZero(mask_blue) > 16) {
             masks.push_back(mask_blue);
         }
-        if (cv::countNonZero(mask_cyan) > 0) {
+        if (cv::countNonZero(mask_cyan) > 16) {
             masks.push_back(mask_cyan);
         }
-        if (cv::countNonZero(mask_magenta) > 0) {
+        if (cv::countNonZero(mask_magenta) > 16) {
             masks.push_back(mask_magenta);
         }
-        if (cv::countNonZero(mask_yellow) > 0) {
+        if (cv::countNonZero(mask_yellow) > 16) {
             masks.push_back(mask_yellow);
         }
-        if (cv::countNonZero(mask_black) > 0) {
+        if (cv::countNonZero(mask_black) > 16) {
             masks.push_back(mask_black);
         }
-        if (cv::countNonZero(mask_white) > 0) {
+        if (cv::countNonZero(mask_white) > 16) {
             masks.push_back(mask_white);
         }
 
