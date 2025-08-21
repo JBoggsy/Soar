@@ -35,6 +35,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ROTATE_IMAGE            std::string("rotate-image")
 #define VOP_RESIZE_IMAGE            std::string("resize-image")
 #define VOP_SCALE_IMAGE             std::string("scale-image")
+#define VOP_SET_COLOR               std::string("set-color")
 // CLASSIC FEATURE DETECTION
 #define VOP_CANNY                   std::string("canny")
 #define VOP_HOUGH_LINES             std::string("hough-lines")
@@ -93,6 +94,7 @@ typedef std::map<std::string, void*> data_dict;
 #define VOP_ARG_CLASS2      std::string("class2")
 #define VOP_ARG_CLASS3      std::string("class3")
 #define VOP_ARG_CLASSNAME   std::string("class-name")
+#define VOP_ARG_COLOR       std::string("color")
 #define VOP_ARG_CONF1       std::string("confidence1")
 #define VOP_ARG_CONF2       std::string("confidence2")
 #define VOP_ARG_CONF3       std::string("confidence3")
@@ -304,6 +306,17 @@ namespace visual_ops
      *      `opencv_image* source`: The image to scale
      */
     void scale_image(data_dict args);
+
+    /**
+     * ANCHOR set_color
+     * @brief Set the color of the image to the given value.
+     *
+     * @param args
+     *      `std::string color`: The color to set the image to, one of "red",
+     *      "green", "blue", "yellow", "cyan", "magenta", "black", "white"
+     *      `opencv_image* source`: The image to set the color of
+     */
+    void set_color(data_dict args);
     //!SECTION VISUAL TRANSFORMATIONS
 
     /////////////////////////////
@@ -1088,6 +1101,16 @@ namespace visual_ops
         /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG, REQUIRED_ARG}
     };
 
+    //ANCHOR - SET COLOR
+    inline vop_params_metadata set_color_metadata = {
+        /* vop_function = */        set_color,
+        /* num_params = */          2,
+        /* param_names = */         {VOP_ARG_COLOR, VOP_ARG_SOURCE},
+        /* param_types = */         {STRING_ARG, CV_IMAGE_ARG},
+        /* param_directions */      {INPUT_ARG, INOUT_ARG},
+        /* param_optionalities = */ {REQUIRED_ARG, REQUIRED_ARG}
+    };
+
     //ANCHOR - CREATE INT FILLED MATRIX
     inline vop_params_metadata create_int_filled_mat_metadata = {
         /* vop_function = */        create_int_filled_mat,
@@ -1415,6 +1438,7 @@ namespace visual_ops
         {VOP_ROTATE_IMAGE, rotate_image_metadata},
         {VOP_RESIZE_IMAGE, resize_image_metadata},
         {VOP_SCALE_IMAGE, scale_image_metadata},
+        {VOP_SET_COLOR, set_color_metadata},
         {VOP_CREATE_INT_FILLED_MAT, create_int_filled_mat_metadata},
         {VOP_CREATE_FLOAT_FILLED_MAT, create_float_filled_mat_metadata},
         {VOP_CREATE_X_COORD_MAT, create_x_coord_mat_metadata},

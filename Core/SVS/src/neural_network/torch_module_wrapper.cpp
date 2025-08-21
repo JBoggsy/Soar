@@ -300,7 +300,7 @@ double img_factory_jepa_wrapper::get_shape_distance(token_sequence* a, token_seq
 cv::Mat img_factory_jepa_wrapper::_pad_image(const cv::Mat& image) {
     cv::Mat padded_image;
     if (image.empty()) {
-        padded_image = cv::Mat(IMG_SIZE, IMG_SIZE, CV_8UC3, cv::Scalar(0, 0, 0));
+        padded_image = cv::Mat(IMG_SIZE, IMG_SIZE, CV_8UC3, cv::Scalar(0, 0, 0, 0));
     } else {
         padded_image = image.clone();
     }
@@ -327,17 +327,57 @@ cv::Mat img_factory_jepa_wrapper::_pad_image(const cv::Mat& image) {
 
 cv::Mat img_factory_jepa_wrapper::_simplify_image(const cv::Mat& image) {
     cv::Mat simplified_image;
-    // Apply median blur to reduce noise
-    cv::medianBlur(image, simplified_image, 3);
 
-    // Threshold image to remove low-intensity pixels
-    cv::threshold(image, simplified_image, 0.25*255, 1.0*255, cv::THRESH_TOZERO);
+    // Check if image has alpha channel (4 channels)
+    if (image.channels() != 4) {
+        // If no alpha channel, return the image as-is
+        return image.clone();
+    }
 
-    // Set transparent pixels to black
-    cv::Mat mask = simplified_image > 0;
-    simplified_image.setTo(cv::Scalar(0, 0, 0), ~mask);
+    // Split the image into its channels
+    std::vector<cv::Mat> channels;
+    cv::split(image, channels);
+
+    // First, remove random floating pixels via erosion+dilation
+    // Separate the alpha channel
+    cv::Mat alpha_channel = channels[3];
+
+    // Erode and dilate the alpha channel to remove noise
+    cv::Mat eroded_alpha, dilated_alpha;
+    cv::erode(alpha_channel, eroded_alpha, cv::Mat(), cv::Point(-1, -1), 3);
+    cv::dilate(eroded_alpha, dilated_alpha, cv::Mat(), cv::Point(-1, -1), 5);
+
+    // Bit-wise AND the alpha channel with the dilated version
+    cv::Mat cleaned_alpha;
+    cv::bitwise_and(alpha_channel, dilated_alpha, cleaned_alpha);
+
+    // Replace the original alpha channel with the cleaned one
+    channels[3] = cleaned_alpha;
+
+
+    // For each channel, set each pixel value according to the following, i.e.,
+    // c'[i,j] =
+    //           0.0 if c[i,j] < 0.5*255
+    //           0.75*255 if 0.5*255 <= c[i,j] < 0.825*255
+    //           1.0*255 if c[i,j] >= 0.825*255
+    for (int i = 0; i < 4; i++) {
+        channels[i].convertTo(channels[i], CV_32F, 1.0 / 255.0); // Convert to float and normalize
+        channels[i].setTo(0, channels[i] < 0.5); // Set pixels below 0.5*255 to 0
+        channels[i].setTo(0.75, (channels[i] >= 0.5) & (channels[i] < 0.825)); // Set pixels in range to 0.75
+        channels[i].setTo(1.0, channels[i] >= 0.825); // Set pixels above or equal to 0.825 to 1.0
+        channels[i].convertTo(channels[i], image.type(), 255); // Convert back to original type
+    }
+
+    // Now zero out the RGB channels where the alpha channel is zero
+    for (int i = 0; i < 3; i++) {
+        channels[i].setTo(0, cleaned_alpha == 0);
+    }
+
+    // Merge the channels back together
+    cv::merge(channels, simplified_image);
 
     return simplified_image;
+    // return image;
 }
 
 #endif

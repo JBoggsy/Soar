@@ -506,7 +506,8 @@ void jepa_object_representation::update_image(opencv_image* image) {
     image_generated = true;
     if (model_loaded && !tokens_generated) {
         token_sequence* new_tokens = new token_sequence();
-        jepa_model->encode(*image->get_image(), new_tokens);
+        cv::Mat image = get_object_image();
+        jepa_model->encode(image, new_tokens);
         update_tokens(new_tokens);
     }
 }
@@ -541,7 +542,8 @@ void jepa_object_representation::update_jepa_model(img_factory_jepa* jepa_model)
 
     if (!tokens_generated && image_generated) {
         token_sequence* new_tokens = new token_sequence();
-        jepa_model->encode(base_image, new_tokens);
+        cv::Mat image = get_object_image();
+        jepa_model->encode(image, new_tokens);
         update_tokens(new_tokens);
     }
     else if (tokens_generated && !image_generated) {
@@ -556,19 +558,42 @@ void jepa_object_representation::update_jepa_model(img_factory_jepa* jepa_model)
 }
 
 double jepa_object_representation::get_shape_distance(jepa_object_representation* other) {
-    if (jepa_model == NULL || other->jepa_model == NULL) {
-        throw std::runtime_error("JEPA model is not loaded.");
-    }
-    if (tokens == NULL || other->tokens == NULL) {
-        throw std::runtime_error("Tokens are not generated.");
-    }
-    if (token_summary == NULL || other->token_summary == NULL) {
-        throw std::runtime_error("Token summary is not generated.");
-    }
+    token_sequence* centered_tokens_this = new token_sequence();
+    token_sequence* centered_tokens_other = new token_sequence();
+    cv::Mat centered_image_this;
+    cv::Mat centered_image_other;
+    get_cropped_image().copyTo(centered_image_this);
+    other->get_cropped_image().copyTo(centered_image_other);
 
-    double dot_product = this->token_summary->dot(*other->token_summary);
-    double this_norm = cv::norm(*token_summary);
-    double other_norm = cv::norm(*other->token_summary);
+    // DEBUG
+    cv::imwrite("centered_image_this.png", centered_image_this);
+    cv::imwrite("centered_image_other.png", centered_image_other);
+
+    jepa_model->encode(centered_image_this, centered_tokens_this);
+    jepa_model->encode(centered_image_other, centered_tokens_other);
+
+    cv::Mat centered_token_summary_this;
+    cv::Mat centered_token_summary_other;
+    jepa_model->summarize(centered_tokens_this, centered_token_summary_this);
+    jepa_model->summarize(centered_tokens_other, centered_token_summary_other);
+
+    cv::FileStorage fs_this("centered_token_summary_this.txt", cv::FileStorage::WRITE | cv::FileStorage::FORMAT_YAML);
+    fs_this << "centered_token_summary_this" << centered_token_summary_this;
+    fs_this.release();
+
+    cv::FileStorage fs_other("centered_token_summary_other.txt", cv::FileStorage::WRITE | cv::FileStorage::FORMAT_YAML);
+    fs_other << "centered_token_summary_other" << centered_token_summary_other;
+    fs_other.release();
+
+    delete centered_tokens_this;
+    delete centered_tokens_other;
+
+    // cv::Mat* centered_token_summary_this = get_token_summary();
+    // cv::Mat* centered_token_summary_other = other->get_token_summary();
+
+    double dot_product = centered_token_summary_this.dot(centered_token_summary_other);
+    double this_norm = cv::norm(centered_token_summary_this);
+    double other_norm = cv::norm(centered_token_summary_other);
 
     if (this_norm == 0 || other_norm == 0) {
         throw std::runtime_error("Cannot compute shape distance: one of the token summaries has zero norm.");

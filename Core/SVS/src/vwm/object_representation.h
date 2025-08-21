@@ -13,6 +13,12 @@
 #include "neural_network.h"
 #include "token_sequence.h"
 
+#ifdef ENABLE_TORCH
+#define BORDER_SIZE 0
+#else
+#define BORDER_SIZE 16
+#endif
+
 
 class object_representation
 {
@@ -26,8 +32,8 @@ public:
 class hand_crafted_object_representation : public object_representation
 {
 public:
-    hand_crafted_object_representation(int border_size=16);
-    hand_crafted_object_representation(opencv_image* image, int border_size=16);
+    hand_crafted_object_representation(int border_size=BORDER_SIZE);
+    hand_crafted_object_representation(opencv_image* image, int border_size=BORDER_SIZE);
     ~hand_crafted_object_representation() {}
 
     void update_image(opencv_image* image);

@@ -232,7 +232,9 @@ float opencv_image::compare(opencv_image* other) {
 }
 
 void opencv_image::draw_image(std::string filename) {
-    cv::imwrite(filename, *_img);
+    cv::Mat image_to_save;
+    cv::cvtColor(*_img, image_to_save, cv::COLOR_RGBA2BGRA);
+    cv::imwrite(filename, image_to_save);
 }
 
 void opencv_image::save_image_data(char* filename) {

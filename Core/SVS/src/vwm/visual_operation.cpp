@@ -219,6 +219,62 @@ namespace visual_ops
         cv::resize(*(image->get_image()), result, cv::Size(), scale_x, scale_y, cv::INTER_NEAREST);
         image->set_image(&result);
     }
+
+    void set_color(data_dict args) {
+        opencv_image* image = (opencv_image*)args[VOP_ARG_SOURCE];
+        std::string color = *(std::string*)args[VOP_ARG_COLOR];
+
+        int red_mult = 0;
+        int green_mult = 0;
+        int blue_mult = 0;
+        if (color.compare("red") == 0) {
+            red_mult = 1;
+        }
+        else if (color.compare("green") == 0) {
+            green_mult = 1;
+        }
+        else if (color.compare("blue") == 0) {
+            blue_mult = 1;
+        }
+        else if (color.compare("yellow") == 0) {
+            red_mult = 1;
+            green_mult = 1;
+        }
+        else if (color.compare("cyan") == 0) {
+            green_mult = 1;
+            blue_mult = 1;
+        }
+        else if (color.compare("magenta") == 0) {
+            red_mult = 1;
+            blue_mult = 1;
+        }
+        else if (color.compare("black") == 0) {
+            red_mult = 0;
+            green_mult = 0;
+            blue_mult = 0;
+        }
+        else if (color.compare("white") == 0) {
+            red_mult = 1;
+            green_mult = 1;
+            blue_mult = 1;
+        } else {
+            printf("Unknown color: %s\n", color.c_str());
+            return;
+        }
+
+        cv::Mat result = *(image->get_image());
+        for (int y = 0; y < result.rows; y++) {
+            for (int x = 0; x < result.cols; x++) {
+                cv::Vec4f& pixel = result.at<cv::Vec4f>(y, x);
+                float alpha = pixel[3];
+                pixel[2] = blue_mult * alpha;   // Blue channel
+                pixel[1] = green_mult * alpha;  // Green channel
+                pixel[0] = red_mult * alpha;    // Red channel
+            }
+        }
+
+        image->set_image(&result);
+    }
     //!SECTION
 
     //////////////////////////////
@@ -599,11 +655,7 @@ namespace visual_ops
         if (source->is_empty()) {
             object->set_object_null(true);
         }
-        #ifdef ENABLE_TORCH
-        source->update_image(object->get_base_image());
-        #else
         source->update_image(object->get_object_image()(object->get_mask_bbox()));
-        #endif
     }
 
     #ifdef ENABLE_TORCH
@@ -611,6 +663,8 @@ namespace visual_ops
         VLTM_TYPE* vltm = (VLTM_TYPE*)args[VOP_ARG_VLTM];
         OBJ_REP_TYPE* query = (OBJ_REP_TYPE*)args[VOP_ARG_QUERY];
         OBJ_REP_TYPE* base = (OBJ_REP_TYPE*)args[VOP_ARG_BASE];
+        OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
+        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
 
         token_sequence* query_tokens = query->get_tokens();
         token_sequence* base_tokens = base->get_tokens();
@@ -620,10 +674,19 @@ namespace visual_ops
 
         token_sequence* out_tokens = new token_sequence();
         vltm->get_vcd_model()->extract(query_tokens, base_tokens, out_tokens);
+        if (out_tokens == NULL) {
+            throw std::runtime_error("Failed to extract visible tokens from JEPA model.");
+        }
 
-        OBJ_REP_TYPE* object = (OBJ_REP_TYPE*)args[VOP_ARG_OBJECT];
-        opencv_image* source = (opencv_image*)args[VOP_ARG_SOURCE];
+        // cv::Mat visible;
+        // vltm->get_vcd_model()->decode(out_tokens, visible);
+        // if (visible.empty()) {
+        //     throw std::runtime_error("Decoded image from JEPA tokens is empty.");
+        // }
+
+        // source->update_image(visible);
         object->update_jepa_model(vltm->get_vcd_model());
+        // object->update_image(source);
         object->update_tokens(out_tokens);
         source->update_image(object->get_base_image());
     }
