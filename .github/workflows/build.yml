@@ -1,7 +1,7 @@
 # Build, test and upload executables to GitHub
 # depends on pre-installed software; see image definitions:
 #  - https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2404-Readme.md
-#  - https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+#  - https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
 # We use these tools from the runner images: git, gcc/XCode/MSVC, swig, Tcl/Tk on MacOS, pkg-config
 
 # TODO: not building svs_viewer ('Cannot find GL, GLU, not building svs_viewer' and 'Cannot find opengl32, glu32, not building svs_viewer')
@@ -31,7 +31,7 @@ jobs:
           # Use v24 beta for now to get newer SWIG; TODO: change back to ubuntu-latest once it points to v24
           ubuntu-24.04,
           # latest available X86_64 target
-          macos-12,
+          macos-13,
           # latest is ARM
           macos-latest,
         ]
@@ -56,12 +56,12 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu-')
         run: sudo apt-get update && sudo apt-get install tcl-dev
 
-      - name: Setup tcl (macos-latest)
-        if: matrix.os == 'macos-latest'
-        run: brew install tcl-tk
+      - name: Setup tcl (macos)
+        if: startsWith(matrix.os, 'macos')
+        run: brew install tcl-tk@8
 
-      - name: Setup SWIG (macos-latest)
-        if: matrix.os == 'macos-latest'
+      - name: Setup SWIG (macos)
+        if: startsWith(matrix.os, 'macos')
         run: brew install swig
 
       - name: build
@@ -75,7 +75,7 @@ jobs:
       - name: Pack artifacts
         run: tar -czvf build.tar.gz out/
       - name: upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Soar-${{ matrix.os }}
           path: ./build.tar.gz
@@ -98,11 +98,19 @@ jobs:
           PYTHONUTF8: 1
         run: python3 TestPythonSML.py
 
-      - name: SML Tcl tests
+      # different install directory, since tcl-tk default in homebrew is now 9.0, and we only support 8
+      # see https://github.com/SoarGroup/Soar/issues/524
+      - name: SML Tcl tests (macos)
+        if: startsWith(matrix.os, 'macos')
+        working-directory: ./out
+        run: $(brew --prefix tcl-tk@8)/bin/tclsh TestTclSML.tcl
+
+      - name: SML Tcl tests (ubuntu)
+        if: ${{ !startsWith(matrix.os, 'macos') }}
         working-directory: ./out
         run: tclsh TestTclSML.tcl
 
-        # TODO: run additional tests for CSharp
+      # TODO: run additional tests for CSharp
 
       # reports JUnit test results as GitHub PR check.
       - name: publish test report
@@ -121,7 +129,7 @@ jobs:
         run: sudo ./do_performance_test.sh
 
       - name: upload performance test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-PerformanceTestResults.txt
           path: ./out/SoarPerformanceTests/PerformanceTestResults.txt
@@ -132,7 +140,7 @@ jobs:
     runs-on: [windows-latest]
     env:
       TCL_HOME: c:\progra~1\tcl
-      TCL_DOWNLOAD_URL: https://kumisystems.dl.sourceforge.net/project/tcl/Tcl/8.6.13/tcl8613-src.zip
+      TCL_DOWNLOAD_URL: https://master.dl.sourceforge.net/project/tcl/Tcl/8.6.13/tcl8613-src.zip
       EXPECTED_TCL_HASH: 8999fcafab2d85473280e0bf6e390480496dfd53
 
     steps:
@@ -199,7 +207,7 @@ jobs:
         shell: bash
         run: tar -czvf build.tar.gz out/
       - name: upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Soar-Windows
           path: ./build.tar.gz
@@ -245,7 +253,7 @@ jobs:
 
       # reports JUnit test results as GitHub PR check.
       - name: publish test report
-        uses: mikepenz/action-junit-report@v3
+        uses: mikepenz/action-junit-report@v5
         # always run even if the previous step fails
         if: always()
         with:
@@ -263,7 +271,7 @@ jobs:
           }
 
       - name: upload performance test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Windows-PerformanceTestResults.txt
           path: ./out/SoarPerformanceTests/PerformanceTestResults.txt
@@ -275,10 +283,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [
-            # 20.04 to preserve compatibility with testing stage
-            ubuntu-20.04,
+            # Note that this version must match what we use at the testing stage
+            ubuntu-24.04,
             # latest available X86_64 target
-            macos-12,
+            macos-13,
             # latest is ARM
             macos-latest,
 
@@ -308,11 +316,11 @@ jobs:
       #   run: sudo apt-get update && sudo apt-get install tcl-dev
 
       # - name: Setup tcl (macos-latest)
-      #   if: matrix.os == 'macos-latest'
+      #   if: startsWith(matrix.os, 'macos')
       #   run: brew install tcl-tk
 
-      - name: Setup SWIG (macos-latest)
-        if: matrix.os == 'macos-latest'
+      - name: Setup SWIG (macos)
+        if: startsWith(matrix.os, 'macos')
         run: brew install swig
 
       - name: Setup SWIG (windows-latest)
@@ -326,8 +334,8 @@ jobs:
         with:
           package-dir: Core/ClientSMLSWIG/Python/
 
-      - name: Ensure unit tests built (ubuntu-20.04)
-        if: matrix.os == 'ubuntu-20.04'
+      - name: Ensure unit tests built (ubuntu-24.04)
+        if: matrix.os == 'ubuntu-24.04'
         # On Ubuntu, we run cibuildwheel inside docker containers, which don't retain the outputs.
         # However, we want out/SoarUnitTests/ to be availible for future tests, so we build it again here.
         run: python scons/scons.py tests
@@ -354,6 +362,9 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
+      - name: Identify dirty files
+        run: git diff
+
   test_python:
     name: Test wheel on all python versions
     runs-on: ${{ matrix.os }}
@@ -361,22 +372,20 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          # linux target which supports all python versions we want to install for
-          - ubuntu-20.04
+          # The Linux target has to be chosen so that we have support for all python versions we want to install for
+          - ubuntu-24.04
             # latest available X86_64 target
-          - macos-12
+          - macos-13
             # latest is ARM
           - macos-latest
           - windows-latest
         python-minor:
-          - 5
-          - 6
-          - 7
           - 8
           - 9
           - 10
           - 11
           - 12
+          - 13
 
         # for macos-latest, we can't use python 3.5 - 3.7
         exclude:

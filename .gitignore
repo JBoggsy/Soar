@@ -81,6 +81,7 @@ venv
 .Python
 env/
 build/
+install/
 develop-eggs/
 dist/
 downloads/
@@ -521,9 +522,16 @@ build/
 /.pydevproject
 user-env*.*
 build_*.*
+!build_time_date.h
 testCommandToFile-output.soar
 soarversion
 build_time_date
 .vscode/
 backup.sqlite
 temp_chunks.soar
+
+CMakeUserPresets.json
+Testing/*
+ConanPresets.json
+_CPack*/*
+soar-*

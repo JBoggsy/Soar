@@ -26,7 +26,7 @@ from build_support.tcl import prepare_for_compiling_with_tcl
 
 join = os.path.join
 
-SOAR_VERSION = "9.6.3"
+SOAR_VERSION = "9.6.4"
 CPP_STD_VERSION = "c++17"
 
 soarversionFile = open('soarversion', 'w')
@@ -194,20 +194,6 @@ env.Tool('compilation_db')
 compile_db_target = env.CompilationDatabase()
 env.Alias(COMPILE_DB_ALIAS, compile_db_target)
 
-# This creates a file for cli_version.cpp to source.  For optimized builds, this guarantees
-# that the build date will be correct in every build.  (Turned off for debug, b/c it was adding
-# extra compilation time.  (for some reason, this will build it the first two times you compile after
-# it exists.)
-
-if ((env['DEBUG'] == None) or (env['DEBUG'] == False) or (FindFile('build_time_date.h', 'Core/shared/') == None)):
-    cli_version_dep = open('Core/shared/build_time_date.h', 'w')
-    print("const char* kTimestamp = __TIME__;", file=cli_version_dep)
-    print("const char* kDatestamp = __DATE__;", file=cli_version_dep)
-    print("//* Last build of Soar " + SOAR_VERSION + " occurred at " + time.ctime(time.time()) + " *//", file=cli_version_dep)
-    cli_version_dep.close()
-else:
-    print("Build time stamp file was not built because this is a debug build.")
-
 if GetOption('cc') != None:
     env.Replace(CC=GetOption('cc'))
 elif sys.platform == 'darwin':
@@ -237,7 +223,7 @@ lnflags = []
 libs = ['Soar']
 
 # TODO: Enabling all the warnings is a WIP! These are very thorough and need to be disabled for
-# parts we don't control, like the SWIG-generated code.
+# parts we don't control, like the SWIG-generated code. See https://github.com/SoarGroup/Soar/issues/347.
 if compiler == "msvc":
     pass
     # show all warnings
@@ -251,7 +237,7 @@ else:
     # cflags.extend(['-Werror'])
 
     # We're starting with something simple. We'll add more as we go.
-    cflags.extend(['-Wunused-variable', '-Wreorder'])
+    cflags.extend(['-Wunused-variable', '-Wreorder', '-Wunused-but-set-variable'])
 
     # warning doesn't exist in Apple's clang
     if sys.platform != 'darwin':

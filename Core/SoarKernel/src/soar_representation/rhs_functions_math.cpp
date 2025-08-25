@@ -24,6 +24,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <vector>
 
 
 /* --------------------------------------------------------------------
@@ -1181,14 +1182,14 @@ Symbol* round_off_heading_air_rhs_function_code(agent* thisAgent, cons* args, vo
 
     if (!args)
     {
-        thisAgent->outputManager->printa(thisAgent, "Error: 'round_off_heading' function called with no arguments\n");
+        thisAgent->outputManager->printa(thisAgent, "Error: 'round-off-heading' function called with no arguments\n");
         return NIL;
     }
 
     if (!args->rest)
     {
         /* --- only one argument --- */
-        thisAgent->outputManager->printa(thisAgent, "Error: 'round_off_heading' function called with only one argument.\n");
+        thisAgent->outputManager->printa(thisAgent, "Error: 'round-off-heading' function called with only one argument.\n");
         return NIL;
     }
 
@@ -1207,7 +1208,7 @@ Symbol* round_off_heading_air_rhs_function_code(agent* thisAgent, cons* args, vo
     if (c->rest)
     {
         /* --- more than two arguments --- */
-        thisAgent->outputManager->printa(thisAgent, "Error: 'round_off_heading' function called with more than two arguments.\n");
+        thisAgent->outputManager->printa(thisAgent, "Error: 'round-off-heading' function called with more than two arguments.\n");
         return NIL;
     }
     arg = static_cast<Symbol*>(c->first);
@@ -1424,6 +1425,7 @@ int64_t heading_to_point(int64_t current_x, int64_t current_y, int64_t x, int64_
 }
 
 
+
 /* --------------------------------------------------------------------
                                 compute_x_point
 
@@ -1434,10 +1436,10 @@ int64_t compute_x_point(int64_t current_x, int64_t heading, int64_t speed, int64
 {
     // Convert heading from degrees to radians
     double heading_rad = heading * PI / 180.0;
-    
+
     // Calculate distance traveled
     double distance = speed * elapsed_time;
-    
+
     // Calculate new x positions
     return current_x + (int)(round(distance * sin(heading_rad)));
     //return current_y + (int)(distance * cos(heading_rad));
@@ -1453,23 +1455,24 @@ int64_t compute_y_point(int64_t current_y, int64_t heading, int64_t speed, int64
 {
     // Convert heading from degrees to radians
     double heading_rad = heading * PI / 180.0;
-    
+
     // Calculate distance traveled
     double distance = speed * elapsed_time;
-    
+
     // Calculate new y positions
     //return current_x + (int)(distance * sin(heading_rad));
     return current_y + (int)(round(distance * cos(heading_rad)));
 }
 
 /* --------------------------------------------------------------------
-                                predict-x
+                                extrapolate-x-position
 
  Takes 4 integer args: x1,heading(degrees),speed (distance/tick),elapsed_time(tick))
+ Assuming coordinate system where positive y is south and positive x is east
  and returns integer x position (rounded to nearest int)
 -------------------------------------------------------------------- */
 
-Symbol* predict_x_position_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*/)
+Symbol* extrapolate_x_position_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*/)
 {
     Symbol* arg;
     int64_t current_x;
@@ -1479,30 +1482,18 @@ Symbol* predict_x_position_rhs_function_code(agent* thisAgent, cons* args, void*
 
     if (!args)
     {
-        thisAgent->outputManager->printa(thisAgent, "Error: 'predict-x' function called with no arguments\n");
+        thisAgent->outputManager->printa(thisAgent, "Error: 'extrapolate-x-position' function called with no arguments\n");
         return NIL;
     }
+
+    count = 0;
 
     for (c = args; c != NIL; c = c->rest)
     {
         arg = static_cast<Symbol*>(c->first);
-        if ((arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE) &&
-                (arg->symbol_type != FLOAT_CONSTANT_SYMBOL_TYPE))
+        if (arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE)
         {
-            thisAgent->outputManager->printa_sf(thisAgent, "Error: non-number (%y) passed to - predict-x\n", arg);
-            return NIL;
-        }
-    }
-
-    count = 1;
-
-    for (c = args->rest; c != NIL; c = c->rest)
-    {
-        arg = static_cast<Symbol*>(c->first);
-        if ((arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE) &&
-                (arg->symbol_type != FLOAT_CONSTANT_SYMBOL_TYPE))
-        {
-            thisAgent->outputManager->printa_sf(thisAgent, "Error: non-number (%y) passed to compute-heading function.\n", arg);
+            thisAgent->outputManager->printa_sf(thisAgent, "Error: non int(%y) passed to extrapolate-x-position function.\n", arg);
             return NIL;
         }
         else
@@ -1513,7 +1504,7 @@ Symbol* predict_x_position_rhs_function_code(agent* thisAgent, cons* args, void*
 
     if (count != 4)
     {
-        thisAgent->outputManager->printa(thisAgent, "Error: 'predict-x' takes exactly 4 arguments.\n");
+        thisAgent->outputManager->printa(thisAgent, "Error: 'extrapolate-x-position' takes exactly 4 arguments.\n");
         return NIL;
     }
 
@@ -1533,12 +1524,13 @@ Symbol* predict_x_position_rhs_function_code(agent* thisAgent, cons* args, void*
 }
 
 /* --------------------------------------------------------------------
-                                predict-y
+                                extrapolate-y-position
 
  Takes 4 integer args: y1,heading(degrees),speed (distance/tick),elapsed_time(tick))
+  Assuming coordinate system where positive y is south and positive x is east
  and returns integer y position (rounded to nearest int)
 -------------------------------------------------------------------- */
-Symbol* predict_y_position_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*/)
+Symbol* extrapolate_y_position_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*/)
 {
     Symbol* arg;
     int64_t current_y;
@@ -1548,30 +1540,17 @@ Symbol* predict_y_position_rhs_function_code(agent* thisAgent, cons* args, void*
 
     if (!args)
     {
-        thisAgent->outputManager->printa(thisAgent, "Error: 'predict-y' function called with no arguments\n");
+        thisAgent->outputManager->printa(thisAgent, "Error: 'extrapolate-y-position' function called with no arguments\n");
         return NIL;
     }
 
+    count = 0;
     for (c = args; c != NIL; c = c->rest)
     {
         arg = static_cast<Symbol*>(c->first);
-        if ((arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE) &&
-                (arg->symbol_type != FLOAT_CONSTANT_SYMBOL_TYPE))
+        if (arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE)
         {
-            thisAgent->outputManager->printa_sf(thisAgent, "Error: non-number (%y) passed to - predict-y\n", arg);
-            return NIL;
-        }
-    }
-
-    count = 1;
-
-    for (c = args->rest; c != NIL; c = c->rest)
-    {
-        arg = static_cast<Symbol*>(c->first);
-        if ((arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE) &&
-                (arg->symbol_type != FLOAT_CONSTANT_SYMBOL_TYPE))
-        {
-            thisAgent->outputManager->printa_sf(thisAgent, "Error: non-number (%y) passed to compute-heading function.\n", arg);
+            thisAgent->outputManager->printa_sf(thisAgent, "Error: non int(%y) passed to extrapolate-y-position function.\n", arg);
             return NIL;
         }
         else
@@ -1582,14 +1561,15 @@ Symbol* predict_y_position_rhs_function_code(agent* thisAgent, cons* args, void*
 
     if (count != 4)
     {
-        thisAgent->outputManager->printa(thisAgent, "Error: 'predict-y' takes exactly 4 arguments.\n");
+        thisAgent->outputManager->printa(thisAgent, "Error: 'extrapolate-y-position' takes exactly 4 arguments.\n");
         return NIL;
     }
 
 
     arg = static_cast<Symbol*>(args->first);
     current_y = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? arg->ic->value : static_cast<int64_t>(arg->fc->value);
-
+    //Convert for coordinate system where postive y is down/south
+    current_y = -1 *current_y;
     arg = static_cast<Symbol*>(args->rest->first);
     heading = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? arg->ic->value : static_cast<int64_t>(arg->fc->value);
 
@@ -1599,7 +1579,10 @@ Symbol* predict_y_position_rhs_function_code(agent* thisAgent, cons* args, void*
     arg = static_cast<Symbol*>(args->rest->rest->rest->first);
     elapsed_time = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? arg->ic->value : static_cast<int64_t>(arg->fc->value);
 
-    return thisAgent->symbolManager->make_int_constant(compute_y_point(current_y, heading, speed, elapsed_time));
+    //For coordinate system where postive y is down/south
+    int64_t computed_y = -1 * compute_y_point(current_y, heading, speed, elapsed_time);
+
+    return thisAgent->symbolManager->make_int_constant(computed_y);
 }
 
 
@@ -2124,6 +2107,281 @@ struct wme_val_stats {
     wme_val_stats(): count(0), sum(0.0), product(1.0), min(DBL_MAX), max(-DBL_MAX), mean(0.0), sum_square(0.0) { }
 };
 
+
+
+typedef struct {
+    int64_t x;
+    int64_t y;
+    char * id;
+} Point;
+
+double calculate_angle(Point start, Point end)
+{
+    // Calculate angle in radians, with 0 pointing east
+    double angle_rad = atan2(end.y - start.y, end.x - start.x);
+
+    // Convert to degrees
+    double angle_deg = angle_rad * 180 / PI;
+
+    // Adjust to compass system (0 = North, clockwise)
+    angle_deg = 90 - angle_deg;
+    if (angle_deg < 0) angle_deg += 360;
+
+    return angle_deg;
+}
+
+double angle_difference(double angle1, double angle2)
+{
+    double diff = fabs(angle1 - angle2);
+    return (diff > 180) ? 360 - diff : diff;
+}
+
+double calculate_distance(Point p1, Point p2) {
+    int dx = p2.x - p1.x;
+    int dy = p2.y - p1.y;
+    return sqrt(dx*dx + dy*dy);
+}
+
+/* --------------------------------------------------------------------
+                                select_point_closest_to_vector
+
+ Takes 3 args: point{x,y,id}, heading(int compass degrees),array of points
+ and returns string id of nearest intercept
+-------------------------------------------------------------------- */
+char * select_point_closest_to_vector(Point starting, int heading, const std::vector<Point>& points)
+{
+    double min_angle_diff = DBL_MAX;
+    char nonvalid[] = "no_valid_point";
+    Point nearest_point = {1000, 1000, nonvalid};  // Initialize with invalid point
+
+    for (const auto& point : points)
+    {
+        double angle = calculate_angle(starting, point);
+        double angle_diff = angle_difference(heading, angle);
+
+        if (angle_diff < min_angle_diff)
+        {
+            min_angle_diff = angle_diff;
+            nearest_point = point;
+        }
+        //if the angle is the same choose closer point
+        if (angle_diff == min_angle_diff)
+        {
+            double previous_distance = calculate_distance(starting, nearest_point);
+            double new_distance = calculate_distance(starting, point);
+            if (new_distance < previous_distance)
+            {
+                min_angle_diff = angle_diff;
+                nearest_point = point;
+            }
+        }
+    }
+
+    return nearest_point.id;
+}
+
+/* --------------------------------------------------------------------
+                                compute_haversine_formula
+
+ Takes 4 args: lat1, long1, lat2, long2
+ and returns double of distance between latitude, longitude points in kilometeres
+-------------------------------------------------------------------- */
+double compute_haversine_formula(double lat1, double lon1, double lat2, double lon2)
+{
+    // Radius of Earth in kilometers
+    const double R = 6371.0;
+
+    // Convert degrees to radians
+    const double DEG_TO_RAD = PI / 180.0;
+    double lat_1 = lat1 * DEG_TO_RAD;
+    double long_1 = lon1 * DEG_TO_RAD;
+    double lat_2 = lat2 * DEG_TO_RAD;
+    double long_2 = lon2 * DEG_TO_RAD;
+
+    // Differences
+    double dLat = lat_2 - lat_1;
+    double dLon = long_2 - long_1;
+
+    // Haversine formula
+    double a = sin(dLat / 2) * sin(dLat / 2) +
+               cos(lat_1) * cos(lat_2) *
+               sin(dLon / 2) * sin(dLon / 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    // Distance in kilometers
+    double distance = R * c;
+
+    return distance;
+}
+
+
+/* --------------------------------------------------------------------
+                                compute_haversine_formula
+
+ Takes 4 args: lat1(double),long1(double),lat2(double),long2(double)
+ and returns double of distance between the two points in kilometers
+-------------------------------------------------------------------- */
+
+Symbol* compute_haversine_formula_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*/)
+{
+    Symbol* arg;
+    double lat_1, long_1, lat_2, long_2;
+
+    int count;
+    cons* c;
+
+    if (!args)
+    {
+        thisAgent->outputManager->printa(thisAgent, "Error: 'haversine' function called with no arguments\n");
+        return NIL;
+    }
+
+    count = 0;
+
+    for (c = args; c != NIL; c = c->rest)
+    {
+        arg = static_cast<Symbol*>(c->first);
+        //all 4 args are floats, but could be int
+        if (arg->symbol_type != FLOAT_CONSTANT_SYMBOL_TYPE && arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE)
+        {
+            thisAgent->outputManager->printa_sf(thisAgent, "Error: non int/float (%y) passed to haversine function.\n", arg);
+            return NIL;
+        }
+        count = count + 1;
+    }
+
+    if (count != 4)
+    {
+        thisAgent->outputManager->printa(thisAgent, "Error: 'haversine' takes exactly 4 arguments.\n");
+        return NIL;
+    }
+
+    arg = static_cast<Symbol*>(args->first);
+    lat_1 = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? static_cast<double>(arg->ic->value) : arg->fc->value;
+
+    arg = static_cast<Symbol*>(args->rest->first);
+    long_1  = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? static_cast<double>(arg->ic->value) : arg->fc->value;
+    
+    arg = static_cast<Symbol*>(args->rest->rest->first);
+    lat_2  = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? static_cast<double>(arg->ic->value) : arg->fc->value;
+
+    arg = static_cast<Symbol*>(args->rest->rest->rest->first);
+    long_2  = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? static_cast<double>(arg->ic->value) : arg->fc->value;
+
+    return thisAgent->symbolManager->make_float_constant(compute_haversine_formula(lat_1, long_1, lat_2, long_2));
+}
+
+/* --------------------------------------------------------------------
+                                select_point_closest_to_vector
+
+ Takes 4 args: x1(int),y1(int),heading(int compass degrees),set of x,y points with id)
+ set = points.point <p> (<p> ^x <xpos> ^y <ypos> ^id |str-id|)
+  Assuming coordinate system where positive y is south and positive x is east
+ and returns string id of nearest intercept
+-------------------------------------------------------------------- */
+
+
+Symbol* select_point_closest_to_vector_rhs_function_code(agent* thisAgent, cons* args, void* /*user_data*/)
+{
+    Symbol* arg;
+    int64_t current_x;
+    int64_t current_y;
+    int64_t heading;
+
+    int count;
+    cons* c;
+
+    if (!args)
+    {
+        thisAgent->outputManager->printa(thisAgent, "Error: 'select-point-closest-to-vector' function called with no arguments\n");
+        return NIL;
+    }
+
+    count = 0;
+
+    for (c = args; c != NIL; c = c->rest)
+    {
+        arg = static_cast<Symbol*>(c->first);
+        //first 3 args are ints
+        if (count < 3 && (arg->symbol_type != INT_CONSTANT_SYMBOL_TYPE))
+        {
+            thisAgent->outputManager->printa_sf(thisAgent, "Error: non int (%y) passed to select-point-closest-to-vector function.\n", arg);
+            return NIL;
+        }
+        else
+        {
+            count++;
+        }
+    }
+
+    if (count != 4)
+    {
+        thisAgent->outputManager->printa(thisAgent, "Error: 'select-point-closest-to-vector' takes exactly 4 arguments.\n");
+        return NIL;
+    }
+
+    arg = static_cast<Symbol*>(args->first);
+    current_x = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? arg->ic->value : static_cast<int64_t>(arg->fc->value);
+
+    arg = static_cast<Symbol*>(args->rest->first);
+    current_y  = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? arg->ic->value : static_cast<int64_t>(arg->fc->value);
+    //converting to positive y=south coordinates
+    current_y = -1 * current_y;
+
+    arg = static_cast<Symbol*>(args->rest->rest->first);
+    heading = (arg->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? arg->ic->value : static_cast<int64_t>(arg->fc->value);
+
+    Symbol* points_arg = static_cast<Symbol*>(args->rest->rest->rest->first);
+    if (points_arg->symbol_type != IDENTIFIER_SYMBOL_TYPE) {
+      thisAgent->outputManager->printa_sf(thisAgent, "Error: non-symbol (%y) passed to select-point-closest-to-vector function for points\n",points_arg);
+      return NIL;
+    }
+
+    count = 0;
+    slot* pointslot = points_arg->id->slots; //slots for points
+
+    //count number of points
+    for (wme* curwmeA = pointslot->wmes; curwmeA != 0; curwmeA = curwmeA->next) {
+        count = count + 1;
+    }
+    std::vector<Point> points(count);
+    count = 0;
+    //point attributes
+    Symbol * x_symbol = thisAgent->symbolManager->make_str_constant("x");
+    Symbol * y_symbol = thisAgent->symbolManager->make_str_constant("y");
+    Symbol * id_symbol = thisAgent->symbolManager->make_str_constant("id");
+
+    //for all points in set
+    for (wme* curwmeA = pointslot->wmes; curwmeA != 0; curwmeA = curwmeA->next) {
+        Symbol* next_point = curwmeA->value;
+        if (next_point->symbol_type != IDENTIFIER_SYMBOL_TYPE) {
+            thisAgent->outputManager->printa_sf(thisAgent, "Error: non-symbol (%y) passed to select-point-closest-to-vector function for a point\n",next_point);
+            return NIL;
+        }
+        wme* wme_x = get_wmes_for_named_slot(next_point, x_symbol);
+        wme* wme_y = get_wmes_for_named_slot(next_point, y_symbol);
+        wme* wme_id = get_wmes_for_named_slot(next_point, id_symbol);
+        Symbol * x_value = wme_x->value;
+        Symbol * y_value = wme_y->value;
+        Symbol * id_value = wme_id->value;
+
+        // get values
+        int64_t point_x = (x_value->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? x_value->ic->value : static_cast<int64_t>(x_value->fc->value);
+        int64_t point_y = (y_value->symbol_type == INT_CONSTANT_SYMBOL_TYPE) ? y_value->ic->value : static_cast<int64_t>(y_value->fc->value);
+        //converting to positive y=south coordinates
+        point_y = -1 * point_y;
+        char * id = id_value->to_string(false, false, NIL, 0);
+
+        // add to point array
+        points[count] = {point_x,point_y,id};
+        count = count + 1;
+    }
+
+    char starting_name[] = "starting";
+    Point starting = {current_x, current_y, starting_name};
+    return thisAgent->symbolManager->make_str_constant(select_point_closest_to_vector(starting, heading, points));
+}
+
 /*
  * Helper for set-based processes.  This calls the given fn for each wme in the set being processed.
  *
@@ -2504,8 +2762,11 @@ void init_built_in_rhs_math_functions(agent* thisAgent)
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("round-off"), round_off_air_rhs_function_code, 2, true, false, 0, true);
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("compute-heading"), compute_heading_rhs_function_code, 4, true, false, 0, true);
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("compute-range"), compute_range_rhs_function_code, 4, true, false, 0, true);
-    add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("predict-x"), predict_x_position_rhs_function_code, 4, true, false, 0, true);
-    add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("predict-y"), predict_y_position_rhs_function_code, 4, true, false, 0, true);
+    add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("extrapolate-x-position"), extrapolate_x_position_rhs_function_code, 4, true, false, 0, true);
+    add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("extrapolate-y-position"), extrapolate_y_position_rhs_function_code, 4, true, false, 0, true);
+    add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("select-point-closest-to-vector"), select_point_closest_to_vector_rhs_function_code, 4, true, false, 0, true);
+    add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("haversine"), compute_haversine_formula_rhs_function_code, 4, true, false, 0, true);
+
 
     /* RHS special purpose functions for Michigan Dice app*/
     add_rhs_function(thisAgent, thisAgent->symbolManager->make_str_constant("compute-dice-probability"), dice_prob_rhs_function_code, 4, true, false, 0, true);
@@ -2552,8 +2813,10 @@ void remove_built_in_rhs_math_functions(agent* thisAgent)
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("compute-heading"));
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("compute-range"));
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("compute-dice-probability"));
-    remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("predict-x"));
-    remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("predict-y"));
+    remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("extrapolate-x-position"));
+    remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("extrapolate-y-position"));
+    remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("select-point-closest-to-vector"));
+    remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("haversine"));
 
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("rand-int"));
     remove_rhs_function(thisAgent, thisAgent->symbolManager->find_str_constant("rand-float"));

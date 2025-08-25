@@ -20,6 +20,16 @@
 
 #include <functional>
 
+// Platform-specific includes for directory operations
+#ifdef _WIN32
+#include <sys/stat.h>
+#include <direct.h>
+#include <errno.h>
+#else
+#include <sys/stat.h>
+#include <errno.h>
+#endif
+
 bool g_Cancel = false;
 
 #ifdef _WIN32
@@ -1657,15 +1667,38 @@ void FullTests_Parent::testCommandToFile()
 
     std::string resourceDirectory = SoarHelper::ResourceDirectory;
 
-    if (workingDirectory)
+    if (workingDirectory) {
         resourceDirectory = workingDirectory;
+    } else {
+        // Ensure the resource directory exists (cross-platform alternative to std::filesystem::create_directories)
+#ifdef _WIN32
+        // Windows: use _mkdir
+        struct _stat st = {0};
+        if (_stat(resourceDirectory.c_str(), &st) == -1) {
+            if (_mkdir(resourceDirectory.c_str()) != 0 && errno != EEXIST) {
+                perror("Failed to create resource directory");
+            }
+        }
+#else
+        // Unix/Linux/macOS: use mkdir
+        struct stat st = {0};
+        if (stat(resourceDirectory.c_str(), &st) == -1) {
+            if (mkdir(resourceDirectory.c_str(), 0755) != 0 && errno != EEXIST) {
+                perror("Failed to create resource directory");
+            }
+        }
+#endif
+    }
 
-    agent->ExecuteCommandLine(("command-to-file \"" + resourceDirectory + "testCommandToFile-output.soar\" print --rl --full").c_str());
-    no_agent_assertTrue(agent->GetLastCommandLineResult());
-    const char* result = agent->ExecuteCommandLine(("source \"" + resourceDirectory + "/" + "testCommandToFile-output.soar\"").c_str());
-    no_agent_assertTrue(result);
-    const std::string resultString("#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*\nTotal: 144 productions sourced. 144 productions excised.\n");
-    no_agent_assertTrue(result == resultString);
+    std::string command = "command-to-file \"" + resourceDirectory + "testCommandToFile-output.soar\" print --rl --full";
+    const char* result = agent->ExecuteCommandLine(command.c_str());
+    no_agent_assertTrue_msg(result, agent->GetLastCommandLineResult());
+
+    command = "source \"" + resourceDirectory + "/" + "testCommandToFile-output.soar\"";
+    const char* actual = agent->ExecuteCommandLine(command.c_str());
+    no_agent_assertTrue_msg("source command failed", actual);
+    const std::string expected("#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*\nTotal: 144 productions sourced. 144 productions excised.\n");
+    assertEquals(expected, actual);
     remove(("\"" + resourceDirectory + "/" + "testCommandToFile-output.soar\"").c_str());
     SoarHelper::init_check_to_find_refcount_leaks(agent);
 }
