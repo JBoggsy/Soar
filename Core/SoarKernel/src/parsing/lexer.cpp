@@ -135,7 +135,7 @@ bool Lexer::determine_type_of_constituent_string () {
     if (possible_ic) {
         errno = 0;
         current_lexeme.type = INT_CONSTANT_LEXEME;
-        current_lexeme.int_val = strtol (current_lexeme.string(),NULL,10);
+        current_lexeme.int_val = strtoll (current_lexeme.string(),NULL,10);
         if (errno) {
             thisAgent->outputManager->printa(thisAgent, "Error: bad integer (probably too large)\n");
             current_lexeme.int_val = 0;
@@ -230,6 +230,18 @@ void Lexer::lex_at () {
 void Lexer::lex_tilde () {
   store_and_advance();
   current_lexeme.type = TILDE_LEXEME;
+}
+
+void Lexer::lex_dollar () {
+  store_and_advance();
+  
+  // Check if the next character is also '$' for double dollar
+  if (current_char == '$') {
+    store_and_advance(); // consume the second '$'
+    current_lexeme.type = DOUBLE_DOLLAR_LEXEME;
+  } else {
+    current_lexeme.type = DOLLAR_LEXEME;
+  }
 }
 
 void Lexer::lex_up_arrow () {
@@ -643,6 +655,9 @@ bool Lexer::init ()
       break;
     case '.':
       lexer_routines[(int)'.'] = &Lexer::lex_period;
+      break;
+    case '$':
+      lexer_routines[(int)'$'] = &Lexer::lex_dollar;
       break;
     case '"':
       lexer_routines[(int)'"'] = &Lexer::lex_quote;
